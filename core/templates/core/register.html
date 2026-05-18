@@ -1,0 +1,29 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white text-center">
+                <h4>Join CBSF-CUET</h4>
+                <small>Only for CUET students/alumni from Cox's Bazar district</small>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="alert alert-info">
+                        <small>Your CUET email must end with <strong>@student.cuet.ac.bd</strong> for current students. Alumni should use their registered email.</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Register</button>
+                </form>
+                <div class="text-center mt-3">
+                    Already have an account? <a href="{% url 'core:login' %}">Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

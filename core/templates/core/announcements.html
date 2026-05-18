@@ -1,0 +1,47 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Announcements{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">News & Announcements</h2>
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            {% for announcement in page_obj %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    {% if announcement.is_pinned %}
+                        <span class="badge bg-danger mb-2">Pinned</span>
+                    {% endif %}
+                    <h5 class="card-title">{{ announcement.title }}</h5>
+                    <p class="card-text">{{ announcement.content }}</p>
+                    {% if announcement.image_url %}
+                        <img src="{{ announcement.image_url }}" class="img-fluid rounded mb-2">
+                    {% endif %}
+                    <small class="text-muted">Posted on {{ announcement.created_at|date:"F j, Y, g:i a" }}</small>
+                </div>
+            </div>
+            {% empty %}
+            <p>No announcements found.</p>
+            {% endfor %}
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                    {% endif %}
+                    <li class="page-item active"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

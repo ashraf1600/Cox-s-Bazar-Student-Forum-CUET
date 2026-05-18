@@ -1,0 +1,62 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}{{ member.full_name }} - Profile{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-center">
+                {% if member.profile_photo %}
+                    <img src="{{ member.profile_photo.url }}" class="card-img-top rounded-circle mx-auto mt-3" style="width:150px;height:150px;object-fit:cover;">
+                {% else %}
+                    <div class="bg-secondary rounded-circle mx-auto mt-3" style="width:150px;height:150px;"></div>
+                {% endif %}
+                <div class="card-body">
+                    <h4>{{ member.full_name }}</h4>
+                    <p class="text-muted">Serial: {{ member.serial_no|default:"Pending" }}</p>
+                    <hr>
+                    <p><i class="fas fa-envelope"></i> {{ member.email }}</p>
+                    <p><i class="fas fa-phone"></i> {{ member.phone }}</p>
+                    <p><i class="fas fa-tint"></i> Blood Group: {{ member.blood_group }}</p>
+                    <p><i class="fas fa-birthday-cake"></i> DOB: {{ member.dob|date:"F j, Y"|default:"Not provided" }}</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Address: {{ member.address|default:"Not provided" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">Academic Information</div>
+                <div class="card-body">
+                    <p><strong>Batch:</strong> {{ member.batch }}</p>
+                    <p><strong>Department:</strong> {{ member.department.name }}</p>
+                    <p><strong>Upazila (Cox's Bazar):</strong> {{ member.upazila|default:"Not specified" }}</p>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">Contact & Social</div>
+                <div class="card-body">
+                    <p><i class="fab fa-linkedin"></i> LinkedIn: {{ member.linkedin|default:"Not provided" }}</p>
+                    <p><i class="fab fa-facebook"></i> Facebook: {{ member.facebook|default:"Not provided" }}</p>
+                    <p><i class="fab fa-twitter"></i> Twitter: {{ member.twitter|default:"Not provided" }}</p>
+                    <p><i class="fab fa-instagram"></i> Instagram: {{ member.instagram|default:"Not provided" }}</p>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">Professional Info</div>
+                <div class="card-body">
+                    <p><strong>Company:</strong> {{ member.company|default:"Not employed yet" }}</p>
+                    <p><strong>Designation:</strong> {{ member.designation|default:"—" }}</p>
+                    <p><strong>Work Address:</strong> {{ member.work_address|default:"—" }}</p>
+                </div>
+            </div>
+
+            {% if user.is_authenticated and user.id != member.id %}
+                <a href="#" class="btn btn-success"><i class="fas fa-envelope"></i> Send Message</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,176 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.http import JsonResponse, HttpResponseRedirect
+from .models import User, Department, CommitteeMember, Announcement, Post, Comment, Like
+from .forms import RegistrationForm, LoginForm, PostForm, CommentForm
+
+def is_admin(user):
+    return user.is_authenticated and (user.role == 'admin' or user.is_superuser)
+
+def homepage(request):
+    announcements = Announcement.objects.all()[:3]
+    total_members = User.objects.filter(status='active').count()
+    committees = CommitteeMember.objects.filter(is_current=True)[:4]
+    context = {
+        'announcements': announcements,
+        'total_members': total_members,
+        'committees': committees,
+    }
+    return render(request, 'core/homepage.html', context)
+
+def about(request):
+    return render(request, 'core/about.html')
+
+def committee_page(request):
+    current_committee = CommitteeMember.objects.filter(is_current=True).order_by('order')
+    past_committees = CommitteeMember.objects.filter(is_current=False).order_by('-session_year')
+    return render(request, 'core/committee.html', {
+        'current_committee': current_committee,
+        'past_committees': past_committees,
+    })
+
+def member_directory(request):
+    members = User.objects.filter(status='active')
+    
+    search_query = request.GET.get('search', '')
+    department_id = request.GET.get('department', '')
+    batch = request.GET.get('batch', '')
+    
+    if search_query:
+        members = members.filter(full_name__icontains=search_query)
+    if department_id:
+        members = members.filter(department_id=department_id)
+    if batch:
+        members = members.filter(batch=batch)
+    
+    paginator = Paginator(members, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    departments = Department.objects.all()
+    batches = User.objects.filter(status='active').values_list('batch', flat=True).distinct().order_by('-batch')
+    
+    return render(request, 'core/member_directory.html', {
+        'page_obj': page_obj,
+        'departments': departments,
+        'batches': batches,
+        'search_query': search_query,
+        'selected_department': department_id,
+        'selected_batch': batch,
+    })
+
+def member_profile(request, user_id):
+    member = get_object_or_404(User, id=user_id, status='active')
+    return render(request, 'core/member_profile.html', {'member': member})
+
+def register(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST, request.FILES)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.status = 'pending'
+            user.save()
+            messages.success(request, 'Registration successful! Please wait for admin approval.')
+            return redirect('login')
+    else:
+        form = RegistrationForm()
+    
+    return render(request, 'core/register.html', {'form': form})
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        form = LoginForm(request, data=request.POST)
+        if form.is_valid():
+            email = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=email, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, f'Welcome back, {user.full_name}!')
+                return redirect('dashboard')
+        messages.error(request, 'Invalid credentials or account pending approval.')
+    else:
+        form = LoginForm()
+    
+    return render(request, 'core/login.html', {'form': form})
+
+
+
+def logout_view(request):
+    logout(request)
+    messages.info(request, 'You have been logged out.')
+    return redirect('core:homepage')   # add namespace
+
+@login_required
+def dashboard(request):
+    if request.user.status != 'active':
+        messages.warning(request, 'Your account is pending approval.')
+        return redirect('homepage')
+    
+    posts = Post.objects.select_related('user').all()
+    announcements = Announcement.objects.all()[:5]
+    
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.user = request.user
+            post.save()
+            messages.success(request, 'Post created successfully!')
+            return redirect('dashboard')
+    else:
+        form = PostForm()
+    
+    paginator = Paginator(posts, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'core/dashboard.html', {
+        'form': form,
+        'page_obj': page_obj,
+        'announcements': announcements,
+    })
+
+@login_required
+def like_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    like, created = Like.objects.get_or_create(post=post, user=request.user)
+    if not created:
+        like.delete()
+        post.likes_count -= 1
+    else:
+        post.likes_count += 1
+    post.save()
+    return JsonResponse({'likes_count': post.likes_count, 'liked': created})
+
+@login_required
+def add_comment(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.user = request.user
+            comment.save()
+            messages.success(request, 'Comment added!')
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', 'dashboard'))
+
+@login_required
+def announcements_page(request):
+    announcements = Announcement.objects.all()
+    paginator = Paginator(announcements, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'core/announcements.html', {'page_obj': page_obj})
