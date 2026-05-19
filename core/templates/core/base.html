@@ -15,8 +15,9 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{% url 'core:homepage' %}">
-                <i class="fas fa-anchor me-2"></i> CSF-CUET
+            <a class="navbar-brand d-flex align-items-center fw-bold" href="{% url 'core:homepage' %}">
+                <img src="{% static 'images/logo.jpg' %}" alt="CSF-CUET Logo" height="36" class="me-2 rounded" loading="lazy">
+                CSF-CUET
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>

@@ -1,12 +1,13 @@
 {% extends 'core/base.html' %}
 {% load static %}
-{% block title %}Home - CBSF-CUET{% endblock %}
+{% block title %}Home - CSF-CUET{% endblock %}
 
 {% block content %}
 <!-- Hero Section with Background Image (inline style) -->
 <section class="hero-section text-white"
-         style="background: linear-gradient(135deg, rgba(0,102,204,0.85), rgba(0,77,153,0.9)),
-                 url('{% static 'core/images/image.png' %}') center/cover no-repeat fixed;">
+         style="background: linear-gradient(135deg, rgba(0,102,204,0.45), rgba(0,77,153,0.5)),
+                 url('{% static 'images/image.png' %}') center/cover no-repeat fixed;
+                 background-blend-mode: overlay;">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-7">
