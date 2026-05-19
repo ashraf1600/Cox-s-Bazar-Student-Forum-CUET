@@ -9,7 +9,7 @@ urlpatterns = [
     path('committee/', views.committee_page, name='committee'),
     path('members/', views.member_directory, name='member_directory'),
     path('members/<int:user_id>/', views.member_profile, name='member_profile'),
-    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('profile/edit/', views.update_profile, name='update_profile'),
     path('register/', views.register, name='register'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
@@ -19,6 +19,8 @@ urlpatterns = [
     path('announcements/', views.announcements_page, name='announcements'),
     path('events/', views.events_list, name='events'),
     path('events/<int:event_id>/', views.event_detail, name='event_detail'),
+    path('profile/', views.view_profile, name='view_profile'),
+    path('profile/edit/', views.update_profile, name='update_profile'),
 ]
 
 

@@ -123,9 +123,9 @@
             <div class="card-body p-0">
                 {% for announcement in recent_announcements %}
                     <div class="border-bottom p-3">
-                        {% if announcement.image %}
+                        {% comment %} {% if announcement.image %}
                             <img src="{{ announcement.image.url }}" loading="lazy" class="img-fluid rounded mb-2" style="max-height: 100px; width: 100%; object-fit: cover;">
-                        {% endif %}
+                        {% endif %} {% endcomment %}
                         <h6 class="mb-1">
                             {{ announcement.title }}
                             {% if announcement.is_pinned %}

@@ -89,7 +89,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                 new_num = last_num + 1
             else:
                 new_num = 1
-            self.serial_no = f"CBSF{new_num:05d}"
+            self.serial_no = f"CSF{new_num:05d}"
         super().save(*args, **kwargs)
 
 # CommitteeMember

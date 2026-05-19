@@ -218,4 +218,27 @@ def events_list(request):
 
 def event_detail(request, event_id):
     event = get_object_or_404(Event, id=event_id, status='published')
-    return render(request, 'core/event_detail.html', {'event': event})
+    return render(request, 'core/event_detail.html', {'event': event, 'now': timezone.now()})
+
+
+
+@login_required
+def view_profile(request):
+    """Display the logged-in user's profile."""
+    return render(request, 'core/view_profile.html', {'profile_user': request.user})
+
+@login_required
+def update_profile(request):
+    """Allow the user to update their profile information."""
+    if request.method == 'POST':
+        form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('core:view_profile')
+    else:
+        form = ProfileUpdateForm(instance=request.user)
+    return render(request, 'core/update_profile.html', {'form': form})
+
+
+

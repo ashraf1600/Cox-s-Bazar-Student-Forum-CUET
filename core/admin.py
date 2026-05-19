@@ -44,6 +44,11 @@ class EventAdmin(admin.ModelAdmin):
         ('Event Details', {'fields': ('date', 'venue', 'ticket_price', 'capacity', 'status')}),
     )
 
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:  # Only when creating a new event
+            obj.creator = request.user   # Set creator to the logged-in admin
+        super().save_model(request, obj, form, change)
+
 class PostAdmin(admin.ModelAdmin):
     list_display = ['id', 'user', 'category', 'likes_count', 'created_at']
     list_filter = ['category', 'created_at']

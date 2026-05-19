@@ -45,40 +45,57 @@ class RegistrationForm(forms.ModelForm):
             raise forms.ValidationError('Passwords do not match')
         return cleaned_data
 
-# LoginForm, PostForm, CommentForm remain unchanged
+# LoginForm, PostForm, CommentForm remain unchanged# forms.py
+from django import forms
+from .models import User
+
 class ProfileUpdateForm(forms.ModelForm):
+    # upazila already has choices from the model; we only need to add a blank option.
     upazila = forms.ChoiceField(
         choices=[('', 'Select Upazila')] + User.UPAZILA_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-control'}),
         required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
     )
 
     class Meta:
         model = User
+        # Exclude fields that should not be changed after account creation
+        exclude = ['email', 'batch', 'department', 'serial_no', 'status', 'role', 
+                   'date_joined', 'is_active', 'is_staff', 'password', 'last_login']
         fields = [
-            'full_name', 'email', 'batch', 'department', 'blood_group',
-            'gender', 'phone', 'address', 'dob', 'upazila', 'profile_photo',
-            'linkedin', 'facebook', 'twitter', 'instagram',
+            'full_name', 'phone', 'address', 'dob', 'upazila', 'blood_group', 'gender',
+            'profile_photo', 'linkedin', 'facebook', 'twitter', 'instagram',
             'company', 'designation', 'work_address'
         ]
         widgets = {
             'full_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'batch': forms.NumberInput(attrs={'class': 'form-control'}),
-            'department': forms.Select(attrs={'class': 'form-control'}),
-            'blood_group': forms.Select(attrs={'class': 'form-control'}),
-            'gender': forms.Select(attrs={'class': 'form-control'}),
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'dob': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'blood_group': forms.Select(attrs={'class': 'form-control'}),
+            'gender': forms.Select(attrs={'class': 'form-control'}),
             'profile_photo': forms.FileInput(attrs={'class': 'form-control'}),
-            'linkedin': forms.URLInput(attrs={'class': 'form-control'}),
-            'facebook': forms.URLInput(attrs={'class': 'form-control'}),
-            'twitter': forms.URLInput(attrs={'class': 'form-control'}),
-            'instagram': forms.URLInput(attrs={'class': 'form-control'}),
+            'linkedin': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://linkedin.com/in/username'}),
+            'facebook': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://facebook.com/username'}),
+            'twitter': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://twitter.com/username'}),
+            'instagram': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://instagram.com/username'}),
             'company': forms.TextInput(attrs={'class': 'form-control'}),
             'designation': forms.TextInput(attrs={'class': 'form-control'}),
             'work_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+        labels = {
+            'full_name': 'Full Name',
+            'dob': 'Date of Birth',
+            'upazila': 'Upazila (Cox\'s Bazar)',
+            'blood_group': 'Blood Group',
+            'profile_photo': 'Profile Picture',
+            'linkedin': 'LinkedIn URL',
+            'facebook': 'Facebook URL',
+            'twitter': 'Twitter/X URL',
+            'instagram': 'Instagram URL',
+            'company': 'Current Company',
+            'designation': 'Designation',
+            'work_address': 'Work Address',
         }
 
 class LoginForm(AuthenticationForm):
