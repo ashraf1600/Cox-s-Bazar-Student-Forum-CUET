@@ -34,6 +34,7 @@ def committee_page(request):
         'past_committees': past_committees,
     })
 
+@login_required
 def member_directory(request):
     members = User.objects.filter(status='active')
     
