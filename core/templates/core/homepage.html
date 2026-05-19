@@ -3,7 +3,10 @@
 {% block title %}Home - CBSF-CUET{% endblock %}
 
 {% block content %}
-<section class="hero-section text-white">
+<!-- Hero Section with Background Image (inline style) -->
+<section class="hero-section text-white"
+         style="background: linear-gradient(135deg, rgba(0,102,204,0.85), rgba(0,77,153,0.9)),
+                 url('{% static 'core/images/image.png' %}') center/cover no-repeat fixed;">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-7">
@@ -18,10 +21,13 @@
         </div>
     </div>
     <div class="hero-wave" aria-hidden="true">
-        <svg viewBox="0 0 1440 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 24C180 84 360 84 540 54C720 24 900 -6 1080 2C1260 10 1440 65 1440 65V120H0V24Z" fill="#f8f9fa"/></svg>
+        <svg viewBox="0 0 1440 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 24C180 84 360 84 540 54C720 24 900 -6 1080 2C1260 10 1440 65 1440 65V120H0V24Z" fill="#f8f9fa"/>
+        </svg>
     </div>
 </section>
 
+<!-- Rest of your content remains unchanged -->
 <section class="container mt-5">
     <div class="row g-4">
         <div class="col-md-3">
