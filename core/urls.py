@@ -17,6 +17,8 @@ urlpatterns = [
     path('post/<int:post_id>/like/', views.like_post, name='like_post'),
     path('post/<int:post_id>/comment/', views.add_comment, name='add_comment'),
     path('announcements/', views.announcements_page, name='announcements'),
+    path('events/', views.events_list, name='events'),
+    path('events/<int:event_id>/', views.event_detail, name='event_detail'),
 ]
 
 

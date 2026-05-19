@@ -152,15 +152,22 @@ class Like(models.Model):
         return f"Like by {self.user.full_name}"
 
 # Announcement
+class Event(models.Model):
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    date = models.DateTimeField()
+    venue = models.CharField(max_length=200)
+    cover_image = models.ImageField(upload_to='events/', null=True, blank=True)
+    ticket_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    capacity = models.IntegerField(default=0)
+    status = models.CharField(max_length=10, choices=[('draft','Draft'),('published','Published')], default='draft')
+    created_at = models.DateTimeField(auto_now_add=True)
+
 class Announcement(models.Model):
-    id = models.AutoField(primary_key=True)
     admin = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='announcements')
     title = models.CharField(max_length=200)
     content = models.TextField()
-    image_url = models.URLField(blank=True, null=True)
+    image = models.ImageField(upload_to='announcements/', null=True, blank=True)
     is_pinned = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    class Meta:
-        ordering = ['-is_pinned', '-created_at']
-    def __str__(self):
-        return self.title

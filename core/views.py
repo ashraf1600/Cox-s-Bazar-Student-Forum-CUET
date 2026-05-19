@@ -128,35 +128,48 @@ def logout_view(request):
     messages.info(request, 'You have been logged out.')
     return redirect('core:homepage')   # add namespace
 
+from django.utils import timezone
+from .models import Event, Announcement
+
 @login_required
 def dashboard(request):
     if request.user.status != 'active':
         messages.warning(request, 'Your account is pending approval.')
         return redirect('core:homepage')
-    
+
+    # --- Timeline posts (unchanged) ---
     posts = Post.objects.select_related('user').all()
-    announcements = Announcement.objects.all()[:5]
-    
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
         if form.is_valid():
             post = form.save(commit=False)
             post.user = request.user
             post.save()
-            messages.success(request, 'Post created successfully!')
+            messages.success(request, 'Post created!')
             return redirect('core:dashboard')
     else:
         form = PostForm()
-    
+
     paginator = Paginator(posts, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
-    return render(request, 'core/dashboard.html', {
+
+    # --- Upcoming events (published, date >= now) ---
+    upcoming_events = Event.objects.filter(
+        status='published',
+        date__gte=timezone.now()
+    ).order_by('date')[:5]   # limit to 5
+
+    # --- Recent announcements (latest 5) ---
+    recent_announcements = Announcement.objects.all().order_by('-is_pinned', '-created_at')[:5]
+
+    context = {
         'form': form,
         'page_obj': page_obj,
-        'announcements': announcements,
-    })
+        'upcoming_events': upcoming_events,
+        'recent_announcements': recent_announcements,
+    }
+    return render(request, 'core/dashboard.html', context)
 
 @login_required
 def like_post(request, post_id):
@@ -190,3 +203,19 @@ def announcements_page(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'core/announcements.html', {'page_obj': page_obj})
+
+
+
+
+def events_list(request):
+    """Public page showing all published events (upcoming & past)"""
+    events = Event.objects.filter(status='published').order_by('-date')
+    paginator = Paginator(events, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'core/events.html', {'page_obj': page_obj})
+
+
+def event_detail(request, event_id):
+    event = get_object_or_404(Event, id=event_id, status='published')
+    return render(request, 'core/event_detail.html', {'event': event})

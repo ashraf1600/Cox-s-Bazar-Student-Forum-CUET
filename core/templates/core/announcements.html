@@ -8,21 +8,26 @@
     <div class="row">
         <div class="col-md-8 mx-auto">
             {% for announcement in page_obj %}
-            <div class="card mb-3">
+            <div class="card mb-4 shadow-sm">
+                {% if announcement.image %}
+                    <img src="{{ announcement.image.url }}" class="card-img-top" style="max-height: 300px; object-fit: cover;" alt="{{ announcement.title }}">
+                {% endif %}
                 <div class="card-body">
                     {% if announcement.is_pinned %}
                         <span class="badge bg-danger mb-2">Pinned</span>
                     {% endif %}
-                    <h5 class="card-title">{{ announcement.title }}</h5>
-                    <p class="card-text">{{ announcement.content }}</p>
-                    {% if announcement.image_url %}
-                        <img src="{{ announcement.image_url }}" class="img-fluid rounded mb-2">
-                    {% endif %}
-                    <small class="text-muted">Posted on {{ announcement.created_at|date:"F j, Y, g:i a" }}</small>
+                    <h3 class="card-title h4">{{ announcement.title }}</h3>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-user-circle"></i> <strong>{{ announcement.admin.full_name|default:"CBSF-CUET Admin" }}</strong><br>
+                        <i class="far fa-calendar-alt"></i> {{ announcement.created_at|date:"F j, Y, g:i a" }}
+                    </p>
+                    <div class="card-text mt-3">
+                        {{ announcement.content|linebreaks }}
+                    </div>
                 </div>
             </div>
             {% empty %}
-            <p>No announcements found.</p>
+            <div class="alert alert-info">No announcements found.</div>
             {% endfor %}
 
             <!-- Pagination -->
