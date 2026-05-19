@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 from .models import User, Department, CommitteeMember, Announcement, Post, Comment, Like
-from .forms import RegistrationForm, LoginForm, PostForm, CommentForm
+from .forms import RegistrationForm, LoginForm, ProfileUpdateForm, PostForm, CommentForm
 
 def is_admin(user):
     return user.is_authenticated and (user.role == 'admin' or user.is_superuser)
@@ -65,9 +65,22 @@ def member_directory(request):
         'selected_batch': batch,
     })
 
+@login_required
 def member_profile(request, user_id):
     member = get_object_or_404(User, id=user_id, status='active')
     return render(request, 'core/member_profile.html', {'member': member})
+
+@login_required
+def edit_profile(request):
+    if request.method == 'POST':
+        form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile has been updated.')
+            return redirect('core:member_profile', user_id=request.user.id)
+    else:
+        form = ProfileUpdateForm(instance=request.user)
+    return render(request, 'core/edit_profile.html', {'form': form})
 
 def register(request):
     if request.user.is_authenticated:
@@ -131,7 +144,7 @@ def dashboard(request):
             post.user = request.user
             post.save()
             messages.success(request, 'Post created successfully!')
-            return redirect('dashboard')
+            return redirect('core:dashboard')
     else:
         form = PostForm()
     

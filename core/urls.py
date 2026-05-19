@@ -9,6 +9,7 @@ urlpatterns = [
     path('committee/', views.committee_page, name='committee'),
     path('members/', views.member_directory, name='member_directory'),
     path('members/<int:user_id>/', views.member_profile, name='member_profile'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
     path('register/', views.register, name='register'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),

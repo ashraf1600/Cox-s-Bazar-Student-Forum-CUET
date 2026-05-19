@@ -25,11 +25,16 @@
             </div>
         </div>
         <div class="col-md-8">
+            {% if user.is_authenticated and user.id == member.id %}
+            <div class="mb-3 text-end">
+                <a href="{% url 'core:edit_profile' %}" class="btn btn-primary">Edit Profile</a>
+            </div>
+            {% endif %}
             <div class="card mb-3">
                 <div class="card-header bg-primary text-white">Academic Information</div>
                 <div class="card-body">
-                    <p><strong>Batch:</strong> {{ member.batch }}</p>
-                    <p><strong>Department:</strong> {{ member.department.name }}</p>
+                    <p><strong>Batch:</strong> {{ member.batch|default:"None" }}</p>
+                    <p><strong>Department:</strong> {{ member.department.name|default:"Not specified" }}</p>
                     <p><strong>Upazila (Cox's Bazar):</strong> {{ member.upazila|default:"Not specified" }}</p>
                 </div>
             </div>

@@ -8,18 +8,19 @@
     <div class="row g-4">
         {% for member in current_committee %}
         <div class="col-md-4 col-lg-3">
-            <div class="card text-center h-100">
-                {% if member.photo %}
-                    <img src="{{ member.photo.url }}" class="card-img-top rounded-circle mx-auto mt-3" style="width:120px;height:120px;object-fit:cover;">
-                {% elif member.user.profile_photo %}
+            <div class="card text-center h-100 position-relative">
+                {% if member.user.profile_photo %}
                     <img src="{{ member.user.profile_photo.url }}" class="card-img-top rounded-circle mx-auto mt-3" style="width:120px;height:120px;object-fit:cover;">
                 {% else %}
                     <div class="bg-secondary rounded-circle mx-auto mt-3" style="width:120px;height:120px;"></div>
                 {% endif %}
                 <div class="card-body">
-                    <h5 class="card-title">{{ member.name|default:member.user.full_name }}</h5>
+                    <h5 class="card-title">{{ member.user.full_name }}</h5>
                     <p class="card-text text-primary">{{ member.designation }}</p>
                     <small class="text-muted">Session: {{ member.session_year }}</small>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'core:member_profile' member.user.id %}" class="stretched-link"></a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -38,15 +39,13 @@
             {% for member in year_group.list %}
             <div class="col-md-3 col-sm-6">
                 <div class="card text-center">
-                    {% if member.photo %}
-                        <img src="{{ member.photo.url }}" class="card-img-top rounded-circle mx-auto mt-2" style="width:80px;height:80px;object-fit:cover;">
-                    {% elif member.user.profile_photo %}
+                    {% if member.user.profile_photo %}
                         <img src="{{ member.user.profile_photo.url }}" class="card-img-top rounded-circle mx-auto mt-2" style="width:80px;height:80px;object-fit:cover;">
                     {% else %}
                         <div class="bg-secondary rounded-circle mx-auto mt-2" style="width:80px;height:80px;"></div>
                     {% endif %}
                     <div class="card-body">
-                        <h6>{{ member.name|default:member.user.full_name }}</h6>
+                        <h6>{{ member.user.full_name }}</h6>
                         <small>{{ member.designation }}</small>
                     </div>
                 </div>

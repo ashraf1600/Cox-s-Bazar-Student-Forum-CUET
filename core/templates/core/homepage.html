@@ -117,13 +117,13 @@
         {% for member in committees %}
         <div class="col-sm-6 col-lg-3">
             <article class="card committee-card text-center h-100 shadow-sm">
-                {% if member.photo %}
-                    <img src="{{ member.photo.url }}" loading="lazy" alt="{{ member.name }} profile photo" class="committee-avatar mb-3">
+                {% if member.user.profile_photo %}
+                    <img src="{{ member.user.profile_photo.url }}" loading="lazy" alt="{{ member.user.full_name }} profile photo" class="committee-avatar mb-3">
                 {% else %}
                     <div class="committee-avatar placeholder mb-3"></div>
                 {% endif %}
                 <div class="card-body">
-                    <h6 class="mb-1">{{ member.name }}</h6>
+                    <h6 class="mb-1">{{ member.user.full_name }}</h6>
                     <p class="text-muted mb-0">{{ member.designation }}</p>
                 </div>
             </article>

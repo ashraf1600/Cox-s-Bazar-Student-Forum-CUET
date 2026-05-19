@@ -46,6 +46,41 @@ class RegistrationForm(forms.ModelForm):
         return cleaned_data
 
 # LoginForm, PostForm, CommentForm remain unchanged
+class ProfileUpdateForm(forms.ModelForm):
+    upazila = forms.ChoiceField(
+        choices=[('', 'Select Upazila')] + User.UPAZILA_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        required=False,
+    )
+
+    class Meta:
+        model = User
+        fields = [
+            'full_name', 'email', 'batch', 'department', 'blood_group',
+            'gender', 'phone', 'address', 'dob', 'upazila', 'profile_photo',
+            'linkedin', 'facebook', 'twitter', 'instagram',
+            'company', 'designation', 'work_address'
+        ]
+        widgets = {
+            'full_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'batch': forms.NumberInput(attrs={'class': 'form-control'}),
+            'department': forms.Select(attrs={'class': 'form-control'}),
+            'blood_group': forms.Select(attrs={'class': 'form-control'}),
+            'gender': forms.Select(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'dob': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'profile_photo': forms.FileInput(attrs={'class': 'form-control'}),
+            'linkedin': forms.URLInput(attrs={'class': 'form-control'}),
+            'facebook': forms.URLInput(attrs={'class': 'form-control'}),
+            'twitter': forms.URLInput(attrs={'class': 'form-control'}),
+            'instagram': forms.URLInput(attrs={'class': 'form-control'}),
+            'company': forms.TextInput(attrs={'class': 'form-control'}),
+            'designation': forms.TextInput(attrs={'class': 'form-control'}),
+            'work_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+
 class LoginForm(AuthenticationForm):
     username = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
