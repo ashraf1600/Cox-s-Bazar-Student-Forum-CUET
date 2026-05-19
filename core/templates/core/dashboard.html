@@ -1,4 +1,4 @@
-{% extends 'core/base.html' %}
+﻿{% extends 'core/base.html' %}
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
@@ -8,18 +8,15 @@
         <div class="card composer-card mb-4 shadow-sm">
             <div class="card-body">
                 <h5 class="mb-4">What's on your mind, {{ user.full_name }}?</h5>
-                <form method="POST" enctype="multipart/form-data">
+                <form method="POST" enctype="multipart/form-data" class="row g-4">
                     {% csrf_token %}
-                    <div class="mb-3">{{ form.content }}</div>
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-6">{{ form.image }}</div>
-                        <div class="col-md-4">{{ form.category }}</div>
-                        <div class="col-md-2 d-grid"><button type="submit" class="btn btn-primary">Post Now</button></div>
-                    </div>
+                    <div class="col-12">{{ form.content }}</div>
+                    <div class="col-md-6">{{ form.image }}</div>
+                    <div class="col-md-4">{{ form.category }}</div>
+                    <div class="col-md-2 d-grid"><button type="submit" class="btn btn-primary">Post Now</button></div>
                 </form>
             </div>
         </div>
-        
         {% for post in page_obj %}
         <article class="card post-card mb-4 shadow-sm">
             <div class="card-body">
@@ -39,7 +36,7 @@
                     <img src="{{ post.image.url }}" loading="lazy" class="img-fluid rounded mb-3">
                 {% endif %}
                 <div class="d-flex flex-wrap gap-2">
-                    <button type="button" class="btn btn-sm btn-like like-btn" data-post-id="{{ post.id }}">
+                    <button type="button" class="btn btn-sm btn-soft btn-like like-btn" data-post-id="{{ post.id }}">
                         <i class="fas fa-heart"></i> <span class="likes-count">{{ post.likes_count }}</span>
                     </button>
                     <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#comments-{{ post.id }}">
@@ -64,20 +61,18 @@
             </div>
         </article>
         {% empty %}
-        <p>No posts yet. Be the first to post!</p>
+        <div class="alert alert-info">No posts yet. Be the first to post!</div>
         {% endfor %}
-        
+
         {% if page_obj.has_other_pages %}
             <nav class="mt-3"><ul class="pagination justify-content-center flex-wrap gap-2">
                 {% for num in page_obj.paginator.page_range %}
-                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                </li>
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
                 {% endfor %}
             </ul></nav>
         {% endif %}
     </div>
-    
+
     <!-- Right Sidebar: Events & Announcements -->
     <aside class="col-lg-4">
         <!-- Upcoming Events Widget -->
@@ -89,13 +84,10 @@
                 {% for event in upcoming_events %}
                     <div class="border-bottom p-3">
                         {% if event.cover_image %}
-                            <img src="{{ event.cover_image.url }}" loading="lazy" class="img-fluid rounded mb-2" style="max-height: 140px; width: 100%; object-fit: cover;">
+                            <img src="{{ event.cover_image.url }}" loading="lazy" class="img-fluid rounded mb-3" style="max-height: 140px; width: 100%; object-fit: cover;">
                         {% endif %}
                         <h6 class="mb-1">{{ event.title }}</h6>
-                        <p class="small text-muted mb-1">
-                            <i class="far fa-calendar-alt"></i> {{ event.date|date:"M d, Y - g:i A" }}<br>
-                            <i class="fas fa-map-marker-alt"></i> {{ event.venue }}
-                        </p>
+                        <p class="small text-muted mb-1"><i class="far fa-calendar-alt"></i> {{ event.date|date:"M d, Y - g:i A" }}<br><i class="fas fa-map-marker-alt"></i> {{ event.venue }}</p>
                         <p class="small">{{ event.description|truncatewords:18 }}</p>
                         <div class="d-flex justify-content-between align-items-center">
                             {% if event.ticket_price > 0 %}
@@ -115,7 +107,7 @@
             </div>
         </div>
 
-        <!-- Recent Announcements Widget (Dynamic) -->
+        <!-- Recent Announcements Widget -->
         <div class="card sidebar-card shadow-sm">
             <div class="card-header bg-primary text-white">
                 <i class="fas fa-bullhorn me-2"></i> Announcements
@@ -123,21 +115,8 @@
             <div class="card-body p-0">
                 {% for announcement in recent_announcements %}
                     <div class="border-bottom p-3">
-                        {% comment %} {% if announcement.image %}
-                            <img src="{{ announcement.image.url }}" loading="lazy" class="img-fluid rounded mb-2" style="max-height: 100px; width: 100%; object-fit: cover;">
-                        {% endif %} {% endcomment %}
-                        <h6 class="mb-1">
-                            {{ announcement.title }}
-                            {% if announcement.is_pinned %}
-                                <span class="badge bg-danger ms-1">Pinned</span>
-                            {% endif %}
-                        </h6>
-                        <p class="small text-muted mb-1">
-                            <i class="fas fa-user-circle"></i> 
-                            {{ announcement.admin.full_name|default:"CBSF-CUET Admin" }} &nbsp;|&nbsp;
-                            <i class="far fa-clock"></i> 
-                            {{ announcement.created_at|date:"F j, Y, g:i a" }}
-                        </p>
+                        <h6 class="mb-1">{{ announcement.title }}{% if announcement.is_pinned %} <span class="badge bg-danger ms-1">Pinned</span>{% endif %}</h6>
+                        <p class="small text-muted mb-1"><i class="fas fa-user-circle"></i> {{ announcement.admin.full_name|default:"CBSF-CUET Admin" }} &nbsp;|&nbsp; <i class="far fa-clock"></i> {{ announcement.created_at|date:"F j, Y, g:i a" }}</p>
                         <p class="small mb-0">{{ announcement.content|truncatewords:20 }}</p>
                     </div>
                 {% empty %}

@@ -1,26 +1,41 @@
-{% extends 'core/base.html' %}
+﻿{% extends 'core/base.html' %}
 {% load crispy_forms_tags %}
 {% block title %}Sign Up{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card">
-            <div class="card-header bg-primary text-white text-center">
-                <h4>Join CSF-CUET</h4>
-                <small>Only for CUET students/alumni from Cox's Bazar district</small>
-            </div>
-            <div class="card-body">
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <div class="alert alert-info">
-                        <small>Your CUET email must end with <strong>@student.cuet.ac.bd</strong> for current students. Alumni should use their registered email.</small>
+    <div class="col-xl-10">
+        <div class="card auth-card shadow-sm overflow-hidden">
+            <div class="row g-0">
+                <div class="col-md-5 d-none d-md-flex auth-panel flex-column justify-content-center">
+                    <div class="p-4 text-white">
+                        <h4 class="mb-3">Join the Community</h4>
+                        <p class="mb-4">Register to connect with peers, alumni, and event organizers from Cox's Bazar at CUET.</p>
+                        <div class="d-flex flex-column gap-2">
+                            <span class="badge bg-white text-primary rounded-pill px-3 py-2">Verified membership</span>
+                            <span class="badge bg-white text-primary rounded-pill px-3 py-2">Scholarship updates</span>
+                            <span class="badge bg-white text-primary rounded-pill px-3 py-2">Career support</span>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Register</button>
-                </form>
-                <div class="text-center mt-3">
-                    Already have an account? <a href="{% url 'core:login' %}">Login</a>
+                </div>
+                <div class="col-md-7">
+                    <div class="card-body p-5">
+                        <h4 class="mb-3">Create your CSF-CUET account</h4>
+                        <p class="text-muted mb-4">Only students and alumni from Cox's Bazar are eligible to register.</p>
+                        <form method="POST" enctype="multipart/form-data" class="row g-3">
+                            {% csrf_token %}
+                            <div class="col-12">{{ form|crispy }}</div>
+                            <div class="col-12">
+                                <div class="alert alert-info rounded-pill">Your CUET email must end with <strong>@student.cuet.ac.bd</strong> for current students. Alumni should use their registered email.</div>
+                            </div>
+                            <div class="col-12 d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">Register</button>
+                            </div>
+                        </form>
+                        <div class="text-center mt-4">
+                            Already have an account? <a href="{% url 'core:login' %}" class="text-decoration-none">Login</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

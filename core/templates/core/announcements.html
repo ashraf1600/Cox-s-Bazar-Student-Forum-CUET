@@ -1,52 +1,54 @@
-{% extends 'core/base.html' %}
+﻿{% extends 'core/base.html' %}
 {% load static %}
 {% block title %}Announcements{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h2 class="mb-4">News & Announcements</h2>
-    <div class="row">
-        <div class="col-md-8 mx-auto">
+<div class="section bg-white">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-column flex-md-row gap-3">
+            <div>
+                <h2 class="section-title mb-1">News & Announcements</h2>
+                <p class="section-description">Stay updated on the latest news and important forum announcements.</p>
+            </div>
+            <a href="{% url 'core:homepage' %}" class="btn btn-outline-primary">Back to home</a>
+        </div>
+        <div class="row g-4">
             {% for announcement in page_obj %}
-            <div class="card mb-4 shadow-sm">
-                {% if announcement.image %}
-                    <img src="{{ announcement.image.url }}" class="card-img-top" style="max-height: 300px; object-fit: cover;" alt="{{ announcement.title }}">
-                {% endif %}
-                <div class="card-body">
-                    {% if announcement.is_pinned %}
-                        <span class="badge bg-danger mb-2">Pinned</span>
+            <div class="col-md-8 mx-auto">
+                <div class="card announcement-card shadow-sm">
+                    {% if announcement.image %}
+                        <img src="{{ announcement.image.url }}" class="card-img-top" style="max-height: 320px; object-fit: cover;" alt="{{ announcement.title }}">
                     {% endif %}
-                    <h3 class="card-title h4">{{ announcement.title }}</h3>
-                    <p class="text-muted mb-2">
-                        <i class="fas fa-user-circle"></i> <strong>{{ announcement.admin.full_name|default:"CBSF-CUET Admin" }}</strong><br>
-                        <i class="far fa-calendar-alt"></i> {{ announcement.created_at|date:"F j, Y, g:i a" }}
-                    </p>
-                    <div class="card-text mt-3">
-                        {{ announcement.content|linebreaks }}
+                    <div class="card-body">
+                        {% if announcement.is_pinned %}
+                            <span class="badge bg-danger mb-2">Pinned</span>
+                        {% endif %}
+                        <h3 class="card-title h4">{{ announcement.title }}</h3>
+                        <p class="text-muted mb-2"><i class="fas fa-user-circle me-2"></i> <strong>{{ announcement.admin.full_name|default:"CBSF-CUET Admin" }}</strong> • {{ announcement.created_at|date:"F j, Y, g:i a" }}</p>
+                        <div class="card-text">{{ announcement.content|linebreaks }}</div>
                     </div>
                 </div>
             </div>
             {% empty %}
-            <div class="alert alert-info">No announcements found.</div>
+            <div class="col-12"><div class="alert alert-info">No announcements found.</div></div>
             {% endfor %}
-
-            <!-- Pagination -->
-            {% if page_obj.has_other_pages %}
-            <nav>
-                <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
-                        <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li>
-                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
-                    {% endif %}
-                    <li class="page-item active"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
-                    {% if page_obj.has_next %}
-                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
-                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a></li>
-                    {% endif %}
-                </ul>
-            </nav>
-            {% endif %}
         </div>
+
+        {% if page_obj.has_other_pages %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

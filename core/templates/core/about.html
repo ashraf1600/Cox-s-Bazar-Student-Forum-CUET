@@ -1,77 +1,74 @@
-{% extends 'core/base.html' %}
+﻿{% extends 'core/base.html' %}
 {% load static %}
 {% block title %}About Us{% endblock %}
 
 {% block content %}
-<!-- Hero Banner -->
 <div class="bg-primary text-white text-center py-5 mb-5">
     <div class="container">
-        <h1>About Us — Cox's Bazar Student Forum, CUET</h1>
-        <p class="lead">Empowering students from Cox's Bazar at CUET since 2015</p>
+        <h1>About Cox's Bazar Student Forum, CUET</h1>
+        <p class="lead">Empowering students and alumni from Cox's Bazar at CUET through connection, leadership, and community impact.</p>
     </div>
 </div>
 
 <div class="container">
-    <!-- Core Values -->
     <div class="row text-center mb-5">
-        <div class="col-md-3"><span class="badge bg-primary fs-5 p-3">Innovation</span></div>
-        <div class="col-md-3"><span class="badge bg-primary fs-5 p-3">Excellence</span></div>
-        <div class="col-md-3"><span class="badge bg-primary fs-5 p-3">Leadership</span></div>
-        <div class="col-md-3"><span class="badge bg-primary fs-5 p-3">Community</span></div>
+        <div class="col-md-3 mb-3 mb-md-0"><span class="badge bg-white text-primary fs-6 p-3 rounded-pill">Innovation</span></div>
+        <div class="col-md-3 mb-3 mb-md-0"><span class="badge bg-white text-primary fs-6 p-3 rounded-pill">Excellence</span></div>
+        <div class="col-md-3 mb-3 mb-md-0"><span class="badge bg-white text-primary fs-6 p-3 rounded-pill">Leadership</span></div>
+        <div class="col-md-3"><span class="badge bg-white text-primary fs-6 p-3 rounded-pill">Community</span></div>
     </div>
 
-    <!-- Mission & Vision -->
-    <div class="row mb-5">
+    <div class="row g-4 mb-5">
         <div class="col-md-6">
-            <h3>Our Mission</h3>
-            <p>To unite students and alumni from Cox's Bazar district studying at CUET, foster academic excellence, provide career support, and contribute to the development of our home district.</p>
+            <div class="card feature-card h-100">
+                <div class="card-body">
+                    <h3>Our Mission</h3>
+                    <p>To unite students and alumni from Cox's Bazar studying at CUET, foster academic excellence, provide career support, and contribute to the development of our home district.</p>
+                </div>
+            </div>
         </div>
         <div class="col-md-6">
-            <h3>Our Vision</h3>
-            <p>Build a strong, connected, and resourceful community of Cox's Bazar talent that uplifts each other and gives back to society.</p>
+            <div class="card feature-card h-100">
+                <div class="card-body">
+                    <h3>Our Vision</h3>
+                    <p>Build a strong, connected, and resourceful community of Cox's Bazar talent that uplifts each other and gives back to society.</p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- What We Do -->
-    <h3 class="mb-4">What We Do</h3>
+    <h3 class="section-title mb-4">What We Do</h3>
     <div class="row g-4 mb-5">
         <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center">
-                    <i class="fas fa-chalkboard-user fa-3x text-primary mb-3"></i>
-                    <h5>Academic Events</h5>
-                    <p>Workshops, seminars, and study circles</p>
-                </div>
+            <div class="feature-card h-100 text-center">
+                <i class="fas fa-chalkboard-user fa-3x text-primary mb-3"></i>
+                <h5>Academic Events</h5>
+                <p>Workshops, seminars, and study circles designed to grow knowledge and skills.</p>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center">
-                    <i class="fas fa-hand-holding-usd fa-3x text-primary mb-3"></i>
-                    <h5>Scholarships</h5>
-                    <p>Financial aid for meritorious students</p>
-                </div>
+            <div class="feature-card h-100 text-center">
+                <i class="fas fa-hand-holding-usd fa-3x text-primary mb-3"></i>
+                <h5>Scholarships</h5>
+                <p>Financial aid and support for meritorious students from our community.</p>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center">
-                    <i class="fas fa-network-wired fa-3x text-primary mb-3"></i>
-                    <h5>Networking</h5>
-                    <p>Connect with alumni and industry professionals</p>
-                </div>
+            <div class="feature-card h-100 text-center">
+                <i class="fas fa-network-wired fa-3x text-primary mb-3"></i>
+                <h5>Networking</h5>
+                <p>Connect with alumni, professionals, and peers who can help build your future.</p>
             </div>
         </div>
     </div>
 
-    <!-- History Timeline (placeholder) -->
-    <div class="bg-light p-4 rounded">
-        <h3>Our History</h3>
-        <ul class="timeline">
-            <li><strong>2015</strong> - Forum established with 20 founding members</li>
-            <li><strong>2018</strong> - First annual reunion and cultural program</li>
-            <li><strong>2022</strong> - Launched scholarship program for underprivileged students</li>
-            <li><strong>2026</strong> - Digital platform launched to connect 500+ members</li>
+    <div class="bg-white p-4 rounded-4 shadow-sm">
+        <h3>Our Story</h3>
+        <ul class="timeline mt-4">
+            <li><strong>2015</strong> - Forum established with 20 founding members.</li>
+            <li><strong>2018</strong> - First annual reunion and cultural program.</li>
+            <li><strong>2022</strong> - Launched scholarship program for underprivileged students.</li>
+            <li><strong>2026</strong> - Digital platform launched to connect 500+ members.</li>
         </ul>
     </div>
 </div>

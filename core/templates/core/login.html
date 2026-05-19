@@ -1,23 +1,37 @@
-{% extends 'core/base.html' %}
+﻿{% extends 'core/base.html' %}
 {% load crispy_forms_tags %}
 {% block title %}Login{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card">
-            <div class="card-header bg-primary text-white text-center">
-                <h4>Login to Your Account</h4>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <button type="submit" class="btn btn-primary w-100">Login</button>
-                </form>
-                <div class="text-center mt-3">
-                    <a href="#">Forgot Password?</a> | 
-                    <a href="{% url 'core:register' %}">Create New Account</a>
+    <div class="col-xl-10">
+        <div class="card auth-card shadow-sm overflow-hidden">
+            <div class="row g-0">
+                <div class="col-md-5 d-none d-md-flex auth-panel flex-column justify-content-center">
+                    <div class="p-4 text-white">
+                        <h4 class="mb-3">Welcome Back!</h4>
+                        <p class="mb-4">Sign in to your CSF-CUET account and join discussions, events, and alumni networking built for Cox's Bazar talent.</p>
+                        <div class="d-flex flex-column gap-2">
+                            <span class="badge bg-white text-primary rounded-pill px-3 py-2">Secure access</span>
+                            <span class="badge bg-white text-primary rounded-pill px-3 py-2">Member community</span>
+                            <span class="badge bg-white text-primary rounded-pill px-3 py-2">Quick event updates</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="card-body p-5">
+                        <h4 class="mb-4">Login to Your Account</h4>
+                        <form method="POST" class="row g-3">
+                            {% csrf_token %}
+                            <div class="col-12">{{ form|crispy }}</div>
+                            <div class="col-12 d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">Login</button>
+                            </div>
+                        </form>
+                        <div class="text-center mt-4">
+                            <a href="#" class="text-decoration-none">Forgot Password?</a> &nbsp;|&nbsp; <a href="{% url 'core:register' %}" class="text-decoration-none">Create New Account</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,70 +1,57 @@
-{% extends 'core/base.html' %}
-{% load static %}
+﻿{% extends 'core/base.html' %}
 {% block title %}My Profile{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row">
-        <!-- Left Column -->
-        <div class="col-md-4">
-            <div class="card text-center shadow-sm">
-                {% if profile_user.profile_photo %}
-                    <img src="{{ profile_user.profile_photo.url }}" class="card-img-top rounded-circle mx-auto mt-3" style="width:150px;height:150px;object-fit:cover;">
-                {% else %}
-                    <div class="bg-secondary rounded-circle mx-auto mt-3" style="width:150px;height:150px;"></div>
-                {% endif %}
-                <div class="card-body">
-                    <h4>{{ profile_user.full_name }}</h4>
-                    <p class="text-muted">{{ profile_user.serial_no|default:"No serial assigned" }}</p>
-                    <hr>
-                    <p><i class="fas fa-envelope"></i> {{ profile_user.email }}</p>
-                    <p><i class="fas fa-phone"></i> {{ profile_user.phone|default:"Not provided" }}</p>
-                    <p><i class="fas fa-tint"></i> Blood: {{ profile_user.blood_group }}</p>
-                    <p><i class="fas fa-birthday-cake"></i> DOB: {{ profile_user.dob|date:"F j, Y"|default:"Not set" }}</p>
-                    <p><i class="fas fa-map-marker-alt"></i> Address: {{ profile_user.address|default:"Not provided" }}</p>
-                    <p><i class="fas fa-map-pin"></i> Upazila: {{ profile_user.get_upazila_display|default:"Not specified" }}</p>
-                    <a href="{% url 'core:update_profile' %}" class="btn btn-primary w-100"><i class="fas fa-edit"></i> Edit Profile</a>
+<div class="section bg-white py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card text-center shadow-sm">
+                    <div class="card-body px-4 py-5">
+                        {% if profile_user.profile_photo %}
+                            <img src="{{ profile_user.profile_photo.url }}" class="rounded-circle mx-auto mb-3" style="width:150px;height:150px;object-fit:cover;" alt="{{ profile_user.full_name }}">
+                        {% else %}
+                            <div class="bg-secondary rounded-circle mx-auto mb-3" style="width:150px;height:150px;"></div>
+                        {% endif %}
+                        <h4>{{ profile_user.full_name }}</h4>
+                        <p class="text-muted">{{ profile_user.serial_no|default:"No serial assigned" }}</p>
+                        <div class="text-start mt-4">
+                            <p><i class="fas fa-envelope me-2"></i>{{ profile_user.email }}</p>
+                            <p><i class="fas fa-phone me-2"></i>{{ profile_user.phone|default:"Not provided" }}</p>
+                            <p><i class="fas fa-tint me-2"></i>Blood: {{ profile_user.blood_group }}</p>
+                            <p><i class="fas fa-birthday-cake me-2"></i>DOB: {{ profile_user.dob|date:"F j, Y"|default:"Not set" }}</p>
+                        </div>
+                        <a href="{% url 'core:update_profile' %}" class="btn btn-primary w-100 mt-3"><i class="fas fa-edit me-2"></i> Edit Profile</a>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Right Column -->
-        <div class="col-md-8">
-            <div class="card mb-3 shadow-sm">
-                <div class="card-header bg-primary text-white">Academic Information</div>
-                <div class="card-body">
-                    <p><strong>Batch:</strong> {{ profile_user.batch|default:"Not set" }}</p>
-                    <p><strong>Department:</strong> {{ profile_user.department.name|default:"Not set" }}</p>
+            <div class="col-lg-8">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-primary text-white">Academic Information</div>
+                    <div class="card-body">
+                        <p><strong>Batch:</strong> {{ profile_user.batch|default:"Not set" }}</p>
+                        <p><strong>Department:</strong> {{ profile_user.department.name|default:"Not set" }}</p>
+                    </div>
                 </div>
-            </div>
-
-            <div class="card mb-3 shadow-sm">
-                <div class="card-header bg-primary text-white">Professional Information</div>
-                <div class="card-body">
-                    <p><strong>Company:</strong> {{ profile_user.company|default:"Not provided" }}</p>
-                    <p><strong>Designation:</strong> {{ profile_user.designation|default:"Not provided" }}</p>
-                    <p><strong>Work Address:</strong> {{ profile_user.work_address|default:"Not provided" }}</p>
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-primary text-white">Professional Information</div>
+                    <div class="card-body">
+                        <p><strong>Company:</strong> {{ profile_user.company|default:"Not provided" }}</p>
+                        <p><strong>Designation:</strong> {{ profile_user.designation|default:"Not provided" }}</p>
+                        <p><strong>Work Address:</strong> {{ profile_user.work_address|default:"Not provided" }}</p>
+                    </div>
                 </div>
-            </div>
-
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">Social Links</div>
-                <div class="card-body">
-                    {% if profile_user.linkedin %}
-                        <p><i class="fab fa-linkedin"></i> <a href="{{ profile_user.linkedin }}" target="_blank">LinkedIn</a></p>
-                    {% endif %}
-                    {% if profile_user.facebook %}
-                        <p><i class="fab fa-facebook"></i> <a href="{{ profile_user.facebook }}" target="_blank">Facebook</a></p>
-                    {% endif %}
-                    {% if profile_user.twitter %}
-                        <p><i class="fab fa-twitter"></i> <a href="{{ profile_user.twitter }}" target="_blank">Twitter/X</a></p>
-                    {% endif %}
-                    {% if profile_user.instagram %}
-                        <p><i class="fab fa-instagram"></i> <a href="{{ profile_user.instagram }}" target="_blank">Instagram</a></p>
-                    {% endif %}
-                    {% if not profile_user.linkedin and not profile_user.facebook and not profile_user.twitter and not profile_user.instagram %}
-                        <p class="text-muted">No social links added yet.</p>
-                    {% endif %}
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">Social Links</div>
+                    <div class="card-body">
+                        {% if profile_user.linkedin %}<p><i class="fab fa-linkedin me-2"></i><a href="{{ profile_user.linkedin }}" target="_blank">LinkedIn</a></p>{% endif %}
+                        {% if profile_user.facebook %}<p><i class="fab fa-facebook me-2"></i><a href="{{ profile_user.facebook }}" target="_blank">Facebook</a></p>{% endif %}
+                        {% if profile_user.twitter %}<p><i class="fab fa-twitter me-2"></i><a href="{{ profile_user.twitter }}" target="_blank">Twitter/X</a></p>{% endif %}
+                        {% if profile_user.instagram %}<p><i class="fab fa-instagram me-2"></i><a href="{{ profile_user.instagram }}" target="_blank">Instagram</a></p>{% endif %}
+                        {% if not profile_user.linkedin and not profile_user.facebook and not profile_user.twitter and not profile_user.instagram %}
+                            <p class="text-muted">No social links added yet.</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

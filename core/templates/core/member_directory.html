@@ -1,26 +1,67 @@
-{% extends 'core/base.html' %}
+﻿{% extends 'core/base.html' %}
 {% block title %}Member Directory{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Member Directory</h2>
-<form method="GET" class="row g-3 mb-4">
-    <div class="col-md-4"><input type="text" name="search" class="form-control" placeholder="Search by name" value="{{ search_query }}"></div>
-    <div class="col-md-3"><select name="department" class="form-control"><option value="">All Departments</option>{% for dept in departments %}<option value="{{ dept.id }}" {% if selected_department == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>{% endfor %}</select></div>
-    <div class="col-md-3"><select name="batch" class="form-control"><option value="">All Batches</option>{% for b in batches %}<option value="{{ b }}" {% if selected_batch == b|stringformat:"s" %}selected{% endif %}>{{ b }}</option>{% endfor %}</select></div>
-    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Search Now</button></div>
-</form>
-
-<table class="table table-bordered table-hover">
-    <thead><tr><th>Avatar</th><th>Serial No</th><th>Full Name</th><th>Batch</th><th>Department</th><th>Blood Group</th><th>Action</th></tr></thead>
-    <tbody>{% for member in page_obj %}<tr>
-        <td>{% if member.profile_photo %}<img src="{{ member.profile_photo.url }}" width="40" class="rounded-circle">{% else %}<div class="bg-secondary rounded-circle" style="width:40px;height:40px;"></div>{% endif %}</td>
-        <td>{{ member.serial_no }}</td><td>{{ member.full_name }}</td><td>{{ member.batch }}</td><td>{{ member.department.name }}</td><td>{{ member.blood_group }}</td>
-        <td><a href="{% url 'core:member_profile' member.id %}" class="btn btn-sm btn-info"><i class="fas fa-eye"></i> View</a></td>
-    </tr>{% empty %}<tr><td colspan="7">No members found.</td></tr>{% endfor %}</tbody>
-</table>
-
-<div class="pagination">{% if page_obj.has_previous %}<a href="?page=1">&laquo; First</a> <a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
-    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a> <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>{% endif %}
+<div class="section bg-white">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-column flex-md-row gap-3">
+            <div>
+                <h2 class="section-title mb-1">Member Directory</h2>
+                <p class="section-description">Search and filter the community directory for students and alumni from Cox's Bazar at CUET.</p>
+            </div>
+            <a href="{% url 'core:homepage' %}" class="btn btn-outline-primary">Back to home</a>
+        </div>
+        <form method="GET" class="row g-3 mb-4">
+            <div class="col-md-4"><input type="text" name="search" class="form-control" placeholder="Search by name" value="{{ search_query }}"></div>
+            <div class="col-md-3"><select name="department" class="form-select"><option value="">All Departments</option>{% for dept in departments %}<option value="{{ dept.id }}" {% if selected_department == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>{% endfor %}</select></div>
+            <div class="col-md-3"><select name="batch" class="form-select"><option value="">All Batches</option>{% for b in batches %}<option value="{{ b }}" {% if selected_batch == b|stringformat:"s" %}selected{% endif %}>{{ b }}</option>{% endfor %}</select></div>
+            <div class="col-md-2 d-grid"><button type="submit" class="btn btn-primary">Search Now</button></div>
+        </form>
+        <div class="table-responsive rounded-4 shadow-sm overflow-hidden">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Avatar</th>
+                        <th>Serial No</th>
+                        <th>Full Name</th>
+                        <th>Batch</th>
+                        <th>Department</th>
+                        <th>Blood Group</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in page_obj %}
+                    <tr>
+                        <td>{% if member.profile_photo %}<img src="{{ member.profile_photo.url }}" width="40" class="rounded-circle">{% else %}<div class="bg-secondary rounded-circle" style="width:40px;height:40px;"></div>{% endif %}</td>
+                        <td>{{ member.serial_no }}</td>
+                        <td>{{ member.full_name }}</td>
+                        <td>{{ member.batch }}</td>
+                        <td>{{ member.department.name }}</td>
+                        <td>{{ member.blood_group }}</td>
+                        <td><a href="{% url 'core:member_profile' member.id %}" class="btn btn-sm btn-primary"><i class="fas fa-eye me-1"></i> View</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center py-4">No members found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if page_obj.has_other_pages %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
