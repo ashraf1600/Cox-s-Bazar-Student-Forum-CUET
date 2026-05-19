@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBSF-CUET - {% block title %}Home{% endblock %}</title>
+    <title>CSF-CUET - {% block title %}Home{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,10 +13,10 @@
     <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'core:homepage' %}">
-                <i class="fas fa-anchor"></i> CBSF-CUET
+            <a class="navbar-brand fw-bold" href="{% url 'core:homepage' %}">
+                <i class="fas fa-anchor me-2"></i> CSF-CUET
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -31,17 +31,17 @@
                     
                     {% if user.is_authenticated and user.status == 'active' %}
                         <!-- Dashboard button -->
-                        <li class="nav-item">
-                            <a class="nav-link btn btn-light text-primary ms-2" href="{% url 'core:dashboard' %}">
-                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                        <li class="nav-item ms-2">
+                            <a class="nav-link btn btn-light text-primary px-3" href="{% url 'core:dashboard' %}">
+                                <i class="fas fa-tachometer-alt me-1"></i> Dashboard
                             </a>
                         </li>
                         <!-- Profile Dropdown -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarProfileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user-circle"></i> {{ user.full_name }}
+                                <i class="fas fa-user-circle me-1"></i> {{ user.full_name }}
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarProfileDropdown">
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="navbarProfileDropdown">
                                 <li>
                                     <a class="dropdown-item" href="{% url 'core:view_profile' %}">
                                         <i class="fas fa-id-card me-2"></i> My Profile
@@ -62,10 +62,10 @@
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link btn btn-outline-light ms-2" href="{% url 'core:register' %}">Sign Up</a>
+                            <a class="nav-link btn btn-outline-light ms-2 px-3" href="{% url 'core:register' %}">Sign Up</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link btn btn-light ms-2" href="{% url 'core:login' %}">Login</a>
+                            <a class="nav-link btn btn-light ms-2 px-3" href="{% url 'core:login' %}">Login</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -87,9 +87,9 @@
         </div>
     </main>
 
-    <footer class="site-footer">
+    <footer class="site-footer mt-5">
         <div class="container text-center">
-            <p>&copy; 2026 Cox's Bazar Student Forum, CUET | Connecting Cox's Bazar Talent</p>
+            <p class="mb-0">&copy; 2026 Cox's Bazar Student Forum, CUET | Connecting Cox's Bazar Talent</p>
         </div>
     </footer>
 

@@ -1,27 +1,294 @@
+/* ============================================
+   CSS Variables (Ocean Blue + White Theme)
+   ============================================ */
+:root {
+    --primary: #0066cc;
+    --primary-dark: #004d99;
+    --primary-light: #e6f0ff;
+    --primary-gradient: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    --secondary: #f8f9fa;
+    --text-dark: #2c3e50;
+    --text-muted: #6c757d;
+    --white: #ffffff;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+    --border-radius: 0.75rem;
+    --transition: all 0.2s ease-in-out;
+}
+
+/* Base Styles */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f9fa;
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: var(--secondary);
+    color: var(--text-dark);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
 }
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+/* Hero Section (Homepage) */
 .hero-section {
-    background: linear-gradient(135deg, #0066cc 0%, #004d99 100%);
-    color: white;
-    padding: 80px 0;
+    background: var(--primary-gradient);
+    color: var(--white);
+    padding: 4rem 0;
+    position: relative;
+    overflow: hidden;
 }
+
+.hero-section .btn-light {
+    background: var(--white);
+    color: var(--primary);
+    border: none;
+    transition: var(--transition);
+}
+
+.hero-section .btn-light:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.hero-section .btn-outline-light {
+    border: 1px solid var(--white);
+    transition: var(--transition);
+}
+
+.hero-section .btn-outline-light:hover {
+    background: var(--white);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* Cards */
 .card {
-    transition: transform 0.3s;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: none;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    background: var(--white);
+    box-shadow: var(--shadow-sm);
 }
+
 .card:hover {
     transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
 }
+
+.card-header {
+    background: var(--primary-gradient);
+    color: var(--white);
+    border-bottom: none;
+    font-weight: 600;
+    padding: 1rem 1.25rem;
+}
+
+/* Statistics Counters */
 .stat-counter {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #0066cc;
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
 }
+
+.stat-item {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.stat-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Buttons */
+.btn-primary {
+    background: var(--primary-gradient);
+    border: none;
+    padding: 0.6rem 1.2rem;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+    filter: brightness(1.02);
+}
+
+.btn-outline-primary {
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    transition: var(--transition);
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary);
+    color: var(--white);
+    transform: translateY(-1px);
+}
+
+/* Dashboard Post Cards */
+.post-card {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background: var(--white);
+    transition: var(--transition);
+}
+
+.post-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* Like Button */
 .like-btn {
+    background: transparent;
+    border: none;
+    color: #adb5bd;
+    font-size: 0.95rem;
+    transition: var(--transition);
     cursor: pointer;
 }
+
+.like-btn i {
+    margin-right: 0.35rem;
+}
+
+.like-btn:hover {
+    color: #e83e8c;
+    transform: scale(1.05);
+}
+
 .like-btn.liked {
-    color: red;
+    color: #e83e8c;
+}
+
+.like-btn.liked i {
+    font-weight: 900;
+}
+
+/* Comment Box */
+.input-group {
+    border-radius: 50px;
+    overflow: hidden;
+    background: var(--white);
+    border: 1px solid #dee2e6;
+    transition: var(--transition);
+}
+
+.input-group:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(0,102,204,0.1);
+}
+
+/* Sidebar Widgets */
+.sidebar-card {
+    border-radius: var(--border-radius);
+    background: var(--white);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.sidebar-card .card-footer {
+    background: transparent;
+    border-top: 1px solid #e9ecef;
+    padding: 0.75rem;
+}
+
+/* Footer */
+.site-footer {
+    background: var(--text-dark);
+    color: #adb5bd;
+    padding: 1.5rem 0;
+    margin-top: 3rem;
+    font-size: 0.9rem;
+}
+
+/* Forms */
+.form-control, .form-select {
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+    transition: var(--transition);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(0,102,204,0.15);
+}
+
+/* Pagination */
+.pagination .page-link {
+    color: var(--primary);
+    border-radius: 0.5rem;
+    margin: 0 0.2rem;
+    transition: var(--transition);
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: var(--white);
+}
+
+.pagination .page-link:hover {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+/* Responsive Tweaks */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 2.5rem 0;
+    }
+    .stat-counter {
+        font-size: 2rem;
+    }
+    .card-header h4, .card-header h5 {
+        font-size: 1.25rem;
+    }
+}
+
+/* Utility Classes */
+.bg-primary-light {
+    background-color: var(--primary-light);
+}
+
+.text-primary-gradient {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.shadow-hover {
+    transition: var(--transition);
+}
+
+.shadow-hover:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* Animation for counters (if you use JavaScript) */
+.counter-animate {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
