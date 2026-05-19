@@ -1,10 +1,16 @@
 from django import forms
 from .models import User, Department, Post, Comment
+from django.contrib.auth.forms import AuthenticationForm
 
 class RegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
     confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
     profile_photo = forms.ImageField(required=False, widget=forms.FileInput(attrs={'class': 'form-control'}))
+    upazila = forms.ChoiceField(
+        choices=[('', 'Select Upazila')] + User.UPAZILA_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        required=False,
+    )
 
     class Meta:
         model = User
@@ -40,10 +46,9 @@ class RegistrationForm(forms.ModelForm):
         return cleaned_data
 
 # LoginForm, PostForm, CommentForm remain unchanged
-class LoginForm(forms.Form):
-    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
+class LoginForm(AuthenticationForm):
+    username = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
-
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post

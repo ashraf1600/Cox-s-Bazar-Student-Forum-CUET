@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponseRedirect
+from django.urls import reverse
 from .models import User, Department, CommitteeMember, Announcement, Post, Comment, Like
 from .forms import RegistrationForm, LoginForm, PostForm, CommentForm
 
@@ -69,7 +70,7 @@ def member_profile(request, user_id):
 
 def register(request):
     if request.user.is_authenticated:
-        return redirect('dashboard')
+        return redirect('core:dashboard')
     
     if request.method == 'POST':
         form = RegistrationForm(request.POST, request.FILES)
@@ -79,7 +80,7 @@ def register(request):
             user.status = 'pending'
             user.save()
             messages.success(request, 'Registration successful! Please wait for admin approval.')
-            return redirect('login')
+            return redirect('core:login')
     else:
         form = RegistrationForm()
     
@@ -87,9 +88,10 @@ def register(request):
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('dashboard')
+        return redirect('core:dashboard')
     
     if request.method == 'POST':
+        # ✅ Correct way: pass request as first argument, data as keyword
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
             email = form.cleaned_data.get('username')
@@ -98,8 +100,8 @@ def login_view(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, f'Welcome back, {user.full_name}!')
-                return redirect('dashboard')
-        messages.error(request, 'Invalid credentials or account pending approval.')
+                return redirect('core:dashboard')
+        # If form invalid, it will re-render with errors
     else:
         form = LoginForm()
     
@@ -116,7 +118,7 @@ def logout_view(request):
 def dashboard(request):
     if request.user.status != 'active':
         messages.warning(request, 'Your account is pending approval.')
-        return redirect('homepage')
+        return redirect('core:homepage')
     
     posts = Post.objects.select_related('user').all()
     announcements = Announcement.objects.all()[:5]
@@ -165,7 +167,7 @@ def add_comment(request, post_id):
             comment.user = request.user
             comment.save()
             messages.success(request, 'Comment added!')
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER', 'dashboard'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('core:dashboard')))
 
 @login_required
 def announcements_page(request):

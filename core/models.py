@@ -35,12 +35,24 @@ class User(AbstractBaseUser, PermissionsMixin):
     STATUS_CHOICES = [('pending', 'Pending Approval'), ('active', 'Active'), ('inactive', 'Inactive')]
     BLOOD_GROUPS = [('A+','A+'),('A-','A-'),('B+','B+'),('B-','B-'),('AB+','AB+'),('AB-','AB-'),('O+','O+'),('O-','O-')]
     GENDER_CHOICES = [('Male','Male'),('Female','Female'),('Other','Other')]
+    UPAZILA_CHOICES = [
+        ('Cox\'s Bazar Sadar', "Cox's Bazar Sadar"),
+        ('Teknaf', 'Teknaf'),
+        ('Ukhiya', 'Ukhiya'),
+        ('Chakaria', 'Chakaria'),
+        ('Ramu', 'Ramu'),
+        ('Pekua', 'Pekua'),
+        ('Maheshkhali', 'Maheshkhali'),
+        ('Kutubdia', 'Kutubdia'),
+        ('Eidgaon', 'Eidgaon'),
+        ('Other', 'Other'),
+    ]
 
     id = models.AutoField(primary_key=True)
     serial_no = models.CharField(max_length=20, unique=True, blank=True, null=True)
     full_name = models.CharField(max_length=200)
     email = models.EmailField(unique=True)
-    batch = models.IntegerField(null=True, blank=True)   # ← add null=True, blank=True
+    batch = models.IntegerField(null=True, blank=True)
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True)
     blood_group = models.CharField(max_length=3, choices=BLOOD_GROUPS)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
@@ -48,7 +60,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     address = models.TextField(blank=True)
     dob = models.DateField(null=True, blank=True)
     profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)
-    upazila = models.CharField(max_length=100, blank=True)
+    upazila = models.CharField(max_length=100, choices=UPAZILA_CHOICES, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='member')
     date_joined = models.DateTimeField(default=timezone.now)
