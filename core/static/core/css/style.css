@@ -49,7 +49,7 @@ a {
 /* ==================== NAVBAR (Consistent Dark) ==================== */
 .navbar {
     background: var(--dark-bg) !important;
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 0;
     transition: var(--transition);
     border-bottom: 1px solid rgba(255,255,255,0.08);
 }
