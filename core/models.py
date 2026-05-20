@@ -85,7 +85,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self.status == 'active' and not self.serial_no:
             last_user = User.objects.filter(serial_no__isnull=False).order_by('-id').first()
             if last_user and last_user.serial_no:
-                last_num = int(last_user.serial_no.replace('CBSF', ''))
+                last_num = int(last_user.serial_no.replace('CSF', ''))
                 new_num = last_num + 1
             else:
                 new_num = 1

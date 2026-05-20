@@ -1,9 +1,10 @@
+from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Exists, OuterRef
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 from .models import User, Department, CommitteeMember, Announcement, Post, Comment, Like
@@ -11,6 +12,17 @@ from .forms import RegistrationForm, LoginForm, ProfileUpdateForm, PostForm, Com
 
 def is_admin(user):
     return user.is_authenticated and (user.role == 'admin' or user.is_superuser)
+
+def active_member_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('core:login')
+        if request.user.status != 'active':
+            messages.warning(request, 'Your account is pending approval.')
+            return redirect('core:homepage')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
 
 def homepage(request):
     announcements = Announcement.objects.all()[:3]
@@ -34,7 +46,7 @@ def committee_page(request):
         'past_committees': past_committees,
     })
 
-@login_required
+@active_member_required
 def member_directory(request):
     members = User.objects.filter(status='active')
     
@@ -65,22 +77,10 @@ def member_directory(request):
         'selected_batch': batch,
     })
 
-@login_required
+@active_member_required
 def member_profile(request, user_id):
     member = get_object_or_404(User, id=user_id, status='active')
     return render(request, 'core/member_profile.html', {'member': member})
-
-@login_required
-def edit_profile(request):
-    if request.method == 'POST':
-        form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Your profile has been updated.')
-            return redirect('core:member_profile', user_id=request.user.id)
-    else:
-        form = ProfileUpdateForm(instance=request.user)
-    return render(request, 'core/edit_profile.html', {'form': form})
 
 def register(request):
     if request.user.is_authenticated:
@@ -131,14 +131,11 @@ def logout_view(request):
 from django.utils import timezone
 from .models import Event, Announcement
 
-@login_required
+@active_member_required
 def dashboard(request):
-    if request.user.status != 'active':
-        messages.warning(request, 'Your account is pending approval.')
-        return redirect('core:homepage')
-
-    # --- Timeline posts (unchanged) ---
-    posts = Post.objects.select_related('user').all()
+    posts = Post.objects.select_related('user').prefetch_related('comments', 'comments__user').annotate(
+        user_has_liked=Exists(Like.objects.filter(post=OuterRef('pk'), user=request.user))
+    ).all()
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
         if form.is_valid():
@@ -171,7 +168,7 @@ def dashboard(request):
     }
     return render(request, 'core/dashboard.html', context)
 
-@login_required
+@active_member_required
 def like_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     like, created = Like.objects.get_or_create(post=post, user=request.user)
@@ -183,7 +180,7 @@ def like_post(request, post_id):
     post.save()
     return JsonResponse({'likes_count': post.likes_count, 'liked': created})
 
-@login_required
+@active_member_required
 def add_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if request.method == 'POST':
@@ -194,9 +191,11 @@ def add_comment(request, post_id):
             comment.user = request.user
             comment.save()
             messages.success(request, 'Comment added!')
+        else:
+            messages.error(request, 'Failed to add comment. Please try again.')
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('core:dashboard')))
 
-@login_required
+@active_member_required
 def announcements_page(request):
     announcements = Announcement.objects.all()
     paginator = Paginator(announcements, 10)
@@ -222,12 +221,12 @@ def event_detail(request, event_id):
 
 
 
-@login_required
+@active_member_required
 def view_profile(request):
     """Display the logged-in user's profile."""
     return render(request, 'core/view_profile.html', {'profile_user': request.user})
 
-@login_required
+@active_member_required
 def update_profile(request):
     """Allow the user to update their profile information."""
     if request.method == 'POST':

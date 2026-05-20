@@ -1,4 +1,4 @@
-﻿{% extends 'core/base.html' %}
+{% extends 'core/base.html' %}
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
@@ -36,7 +36,7 @@
                     <img src="{{ post.image.url }}" loading="lazy" class="img-fluid rounded mb-3">
                 {% endif %}
                 <div class="d-flex flex-wrap gap-2">
-                    <button type="button" class="btn btn-sm btn-soft btn-like like-btn" data-post-id="{{ post.id }}">
+                    <button type="button" class="btn btn-sm btn-soft btn-like like-btn{% if post.user_has_liked %} liked{% endif %}" data-post-id="{{ post.id }}">
                         <i class="fas fa-heart"></i> <span class="likes-count">{{ post.likes_count }}</span>
                     </button>
                     <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#comments-{{ post.id }}">

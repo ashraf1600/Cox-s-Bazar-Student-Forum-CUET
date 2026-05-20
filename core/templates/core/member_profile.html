@@ -27,7 +27,7 @@
         <div class="col-md-8">
             {% if user.is_authenticated and user.id == member.id %}
             <div class="mb-3 text-end">
-                <a href="{% url 'core:edit_profile' %}" class="btn btn-primary">Edit Profile</a>
+                <a href="{% url 'core:update_profile' %}" class="btn btn-primary">Edit Profile</a>
             </div>
             {% endif %}
             <div class="card mb-3">

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     {% load static %}
@@ -37,7 +37,7 @@
                     
                     {% if user.is_authenticated and user.status == 'active' %}
                         <li class="nav-item ms-lg-3">
-                            <a class=class="nav-item"><a class="nav-link"  href="{% url 'core:dashboard' %}">
+                            <a class="nav-link" href="{% url 'core:dashboard' %}">
                                 <i class="fas fa-tachometer-alt me-1"></i> Dashboard
                             </a>
                         </li>

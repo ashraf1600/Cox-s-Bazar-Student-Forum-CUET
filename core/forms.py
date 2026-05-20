@@ -29,10 +29,18 @@ class RegistrationForm(forms.ModelForm):
             'upazila': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.field_order = [
+            'full_name', 'email', 'batch', 'department', 'blood_group', 
+            'gender', 'phone', 'address', 'dob', 'upazila', 'profile_photo',
+            'password', 'confirm_password'
+        ]
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        if not email.endswith('@student.cuet.ac.bd'):
-            raise forms.ValidationError('Please use your CUET student email (@student.cuet.ac.bd)')
+        # We accept both students and alumni. Alumni may use their personal/current email domains.
+        # Pending accounts are manually verified and approved by the admin committee.
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError('Email already registered')
         return email
