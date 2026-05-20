@@ -3,27 +3,61 @@
 {% block title %}About Us{% endblock %}
 
 {% block content %}
-<div class="bg-primary text-white text-center py-5 mb-5">
-    <div class="container">
-        <h1>About Cox's Bazar Student Forum, CUET</h1>
-        <p class="lead">Empowering students and alumni from Cox's Bazar at CUET through connection, leadership, and community impact.</p>
+<section class="about-hero mb-5">
+    <div class="container py-6 position-relative">
+        <div class="row align-items-center">
+            <div class="col-lg-7 text-white">
+                <span class="section-eyebrow text-white">About Us</span>
+                <h1 class="display-5 fw-bold mb-3">Cox's Bazar Student Forum at CUET</h1>
+                <p class="lead text-white-75 mb-4">Empowering students and alumni from Cox's Bazar at CUET through connection, leadership, and community impact.</p>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <span class="badge about-badge">Innovation</span>
+                    <span class="badge about-badge">Excellence</span>
+                    <span class="badge about-badge">Leadership</span>
+                    <span class="badge about-badge">Community</span>
+                </div>
+                <div class="about-hero-stats d-flex flex-wrap gap-4 align-items-center">
+                    <div>
+                        <p class="mb-1 text-white-75">Members Connected</p>
+                        <h2 class="mb-0 text-white fw-bold">500+</h2>
+                    </div>
+                    <div>
+                        <p class="mb-1 text-white-75">Annual Events</p>
+                        <h2 class="mb-0 text-white fw-bold">20+</h2>
+                    </div>
+                    <div>
+                        <p class="mb-1 text-white-75">Scholarships Awarded</p>
+                        <h2 class="mb-0 text-white fw-bold">100+</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5 mt-5 mt-lg-0">
+                <div class="about-hero-card p-4 rounded-4 shadow-lg">
+                    <h4 class="mb-3">A stronger community begins here.</h4>
+                    <p class="text-white-75 mb-4">We are dedicated to building a network of motivated learners and supporters who uplift each other.</p>
+                    <div class="d-flex gap-3">
+                        <div class="text-center flex-fill">
+                            <span class="d-block fs-4 fw-bold text-white">05</span>
+                            <small class="text-white-50">Years Active</small>
+                        </div>
+                        <div class="text-center flex-fill">
+                            <span class="d-block fs-4 fw-bold text-white">15</span>
+                            <small class="text-white-50">Partner Groups</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
+</section>
 
 <div class="container">
-    <div class="row text-center mb-5">
-        <div class="col-md-3 mb-3 mb-md-0"><span class="badge bg-white text-primary fs-6 p-3 rounded-pill">Innovation</span></div>
-        <div class="col-md-3 mb-3 mb-md-0"><span class="badge bg-white text-primary fs-6 p-3 rounded-pill">Excellence</span></div>
-        <div class="col-md-3 mb-3 mb-md-0"><span class="badge bg-white text-primary fs-6 p-3 rounded-pill">Leadership</span></div>
-        <div class="col-md-3"><span class="badge bg-white text-primary fs-6 p-3 rounded-pill">Community</span></div>
-    </div>
-
     <div class="row g-4 mb-5">
         <div class="col-md-6">
             <div class="card feature-card h-100">
                 <div class="card-body">
                     <h3>Our Mission</h3>
-                    <p>To unite students and alumni from Cox's Bazar studying at CUET, foster academic excellence, provide career support, and contribute to the development of our home district.</p>
+                    <p class="mb-0">To unite students and alumni from Cox's Bazar studying at CUET, foster academic excellence, provide career support, and contribute to the development of our home district.</p>
                 </div>
             </div>
         </div>
@@ -31,33 +65,49 @@
             <div class="card feature-card h-100">
                 <div class="card-body">
                     <h3>Our Vision</h3>
-                    <p>Build a strong, connected, and resourceful community of Cox's Bazar talent that uplifts each other and gives back to society.</p>
+                    <p class="mb-0">Build a strong, connected, and resourceful community of Cox's Bazar talent that uplifts each other and gives back to society.</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <h3 class="section-title mb-4">What We Do</h3>
-    <div class="row g-4 mb-5">
-        <div class="col-md-4">
-            <div class="feature-card h-100 text-center">
-                <i class="fas fa-chalkboard-user fa-3x text-primary mb-3"></i>
-                <h5>Academic Events</h5>
-                <p>Workshops, seminars, and study circles designed to grow knowledge and skills.</p>
+    <div class="row align-items-start g-4 mb-5">
+        <div class="col-lg-8">
+            <h3 class="section-title mb-4">What We Do</h3>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card h-100 text-center">
+                        <div class="icon-circle mx-auto mb-3"><i class="fas fa-chalkboard-user"></i></div>
+                        <h5>Academic Events</h5>
+                        <p>Workshops, seminars, and study circles designed to grow knowledge and skills.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card h-100 text-center">
+                        <div class="icon-circle mx-auto mb-3"><i class="fas fa-hand-holding-dollar"></i></div>
+                        <h5>Scholarships</h5>
+                        <p>Financial aid and support for meritorious students from our community.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card h-100 text-center">
+                        <div class="icon-circle mx-auto mb-3"><i class="fas fa-network-wired"></i></div>
+                        <h5>Networking</h5>
+                        <p>Connect with alumni, professionals, and peers who can help build your future.</p>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="feature-card h-100 text-center">
-                <i class="fas fa-hand-holding-usd fa-3x text-primary mb-3"></i>
-                <h5>Scholarships</h5>
-                <p>Financial aid and support for meritorious students from our community.</p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="feature-card h-100 text-center">
-                <i class="fas fa-network-wired fa-3x text-primary mb-3"></i>
-                <h5>Networking</h5>
-                <p>Connect with alumni, professionals, and peers who can help build your future.</p>
+        <div class="col-lg-4">
+            <div class="callout-card p-4 rounded-4 h-100 shadow-sm">
+                <span class="section-eyebrow">Why join us</span>
+                <h4>Grow with like-minded leaders.</h4>
+                <p>From mentorship to career guidance, our forum helps you learn, contribute, and inspire your peers.</p>
+                <ul class="list-unstyled mt-4 mb-0">
+                    <li class="mb-3"><strong>Hands-on opportunities</strong> with real events and projects.</li>
+                    <li class="mb-3"><strong>Peer support</strong> from an active academic community.</li>
+                    <li><strong>Career growth</strong> through alumni connections and workshops.</li>
+                </ul>
             </div>
         </div>
     </div>
