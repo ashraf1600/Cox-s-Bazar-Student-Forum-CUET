@@ -125,7 +125,7 @@ CSF-CUET/
 
 *Add additional screenshots here as you like (e.g., dashboard, member directory).*
 
-![Screenshot Placeholder](https://via.placeholder.com/800x450/0066cc/white?text=Add+screenshot+here)
+![Project Banner](https://raw.githubusercontent.com/ashraf1600/Cox-s-Bazar-Student-Forum-CUET/main/image/landing.png)
 
 ---
 
