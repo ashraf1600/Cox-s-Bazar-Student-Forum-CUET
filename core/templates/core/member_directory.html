@@ -1,67 +1,205 @@
 ﻿{% extends 'core/base.html' %}
-{% block title %}Member Directory{% endblock %}
+{% load static %}
+{% block title %}Member Directory — CSF-CUET{% endblock %}
 
 {% block content %}
-<div class="section bg-white">
+<!-- Minimal Hero Section -->
+<section class="bg-primary bg-opacity-10 py-4 mb-5">
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-column flex-md-row gap-3">
-            <div>
-                <h2 class="section-title mb-1">Member Directory</h2>
-                <p class="section-description">Search and filter the community directory for students and alumni from Cox's Bazar at CUET.</p>
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-6 fw-bold text-primary mb-2">Member Directory</h1>
+                <p class="text-muted mb-0">
+                    Connect with fellow students and alumni from Cox's Bazar at CUET. 
+                    Search, filter, and explore the growing network of talent.
+                </p>
             </div>
-            <a href="{% url 'core:homepage' %}" class="btn btn-outline-primary">Back to home</a>
         </div>
-        <form method="GET" class="row g-3 mb-4">
-            <div class="col-md-4"><input type="text" name="search" class="form-control" placeholder="Search by name" value="{{ search_query }}"></div>
-            <div class="col-md-3"><select name="department" class="form-select"><option value="">All Departments</option>{% for dept in departments %}<option value="{{ dept.id }}" {% if selected_department == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>{% endfor %}</select></div>
-            <div class="col-md-3"><select name="batch" class="form-select"><option value="">All Batches</option>{% for b in batches %}<option value="{{ b }}" {% if selected_batch == b|stringformat:"s" %}selected{% endif %}>{{ b }}</option>{% endfor %}</select></div>
-            <div class="col-md-2 d-grid"><button type="submit" class="btn btn-primary">Search Now</button></div>
-        </form>
+    </div>
+</section>
+
+<div class="container">
+    <!-- Filter Bar -->
+    <div class="card border-0 shadow-sm rounded-4 mb-5">
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold text-muted">Search by name</label>
+                    <input type="text" name="search" class="form-control rounded-pill" placeholder="Full name..." value="{{ search_query }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-muted">Department</label>
+                    <select name="department" class="form-select rounded-pill">
+                        <option value="">All Departments</option>
+                        {% for dept in departments %}
+                            <option value="{{ dept.id }}" {% if selected_department == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-muted">Batch</label>
+                    <select name="batch" class="form-select rounded-pill">
+                        <option value="">All Batches</option>
+                        {% for b in batches %}
+                            <option value="{{ b }}" {% if selected_batch == b|stringformat:"s" %}selected{% endif %}>{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary rounded-pill"><i class="fas fa-search me-1"></i> Search</button>
+                </div>
+                <div class="col-12 text-end mt-2">
+                    <a href="{% url 'core:member_directory' %}" class="small text-decoration-none">
+                        <i class="fas fa-undo-alt me-1"></i> Reset filters
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Total Members Count + Back Link -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <span class="text-muted small">Showing</span>
+            <span class="fw-bold text-primary fs-5">{{ page_obj.paginator.count }}</span>
+            <span class="text-muted small"> members</span>
+        </div>
+        <a href="{% url 'core:homepage' %}" class="btn btn-outline-primary rounded-pill btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back to home
+        </a>
+    </div>
+
+    <!-- Desktop Table View -->
+    <div class="d-none d-md-block">
         <div class="table-responsive rounded-4 shadow-sm overflow-hidden">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>Avatar</th>
-                        <th>Serial No</th>
-                        <th>Full Name</th>
-                        <th>Batch</th>
-                        <th>Department</th>
-                        <th>Blood Group</th>
-                        <th>Action</th>
+            <table class="table table-hover align-middle mb-0 bg-white">
+                <thead class="bg-light">
+                    <tr class="text-nowrap">
+                        <th scope="col" style="width: 70px;">Avatar</th>
+                        <th scope="col">Serial</th>
+                        <th scope="col">Full Name</th>
+                        <th scope="col">Batch</th>
+                        <th scope="col">Department</th>
+                        <th scope="col">Blood Group</th>
+                        <th scope="col" style="width: 100px;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for member in page_obj %}
                     <tr>
-                        <td>{% if member.profile_photo %}<img src="{{ member.profile_photo.url }}" width="40" class="rounded-circle">{% else %}<div class="bg-secondary rounded-circle" style="width:40px;height:40px;"></div>{% endif %}</td>
-                        <td>{{ member.serial_no }}</td>
-                        <td>{{ member.full_name }}</td>
+                        <td>
+                            {% if member.profile_photo %}
+                                <img src="{{ member.profile_photo.url }}" width="45" height="45" class="rounded-circle" style="object-fit: cover;" alt="{{ member.full_name }}">
+                            {% else %}
+                                <div class="bg-secondary bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                    <i class="fas fa-user text-secondary"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ member.serial_no|default:"—" }}</td>
+                        <td class="fw-semibold">{{ member.full_name }}</td>
                         <td>{{ member.batch }}</td>
-                        <td>{{ member.department.name }}</td>
-                        <td>{{ member.blood_group }}</td>
-                        <td><a href="{% url 'core:member_profile' member.id %}" class="btn btn-sm btn-primary"><i class="fas fa-eye me-1"></i> View</a></td>
+                        <td>{{ member.department.name|default:"—" }}</td>
+                        <td><span class="badge bg-light text-dark px-2 py-1 rounded-pill">{{ member.blood_group }}</span></td>
+                        <td>
+                            <a href="{% url 'core:member_profile' member.id %}" class="btn btn-sm btn-outline-primary rounded-pill">
+                                <i class="fas fa-eye me-1"></i> View
+                            </a>
+                        </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="7" class="text-center py-4">No members found.</td></tr>
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="fas fa-users-slash fa-3x mb-3 opacity-25"></i><br>
+                            No members found matching your criteria.
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        {% if page_obj.has_other_pages %}
-        <nav class="mt-4">
-            <ul class="pagination justify-content-center">
-                {% if page_obj.has_previous %}
-                    <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li>
-                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
-                {% endif %}
-                <li class="page-item active"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
-                {% if page_obj.has_next %}
-                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
-                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a></li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
     </div>
+
+    <!-- Mobile Card View -->
+    <div class="d-md-none">
+        <div class="row g-3">
+            {% for member in page_obj %}
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+                    <div class="d-flex gap-3 align-items-start">
+                        <div>
+                            {% if member.profile_photo %}
+                                <img src="{{ member.profile_photo.url }}" width="60" height="60" class="rounded-circle" style="object-fit: cover;" alt="{{ member.full_name }}">
+                            {% else %}
+                                <div class="bg-secondary bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-user fa-2x text-secondary"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1 fw-bold">{{ member.full_name }}</h6>
+                            <div class="small text-muted mb-1">
+                                <span class="badge bg-primary-light text-primary rounded-pill px-2">{{ member.batch }}</span>
+                                <span class="ms-2">{{ member.department.name|default:"—" }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span><i class="fas fa-tint me-1 text-danger"></i> {{ member.blood_group }}</span>
+                                <a href="{% url 'core:member_profile' member.id %}" class="btn btn-sm btn-primary rounded-pill">
+                                    View Profile
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="fas fa-users-slash fa-3x mb-3 opacity-25"></i><br>
+                No members found.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-5">
+        <ul class="pagination justify-content-center flex-wrap gap-1">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link rounded-pill" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.batch %}&batch={{ request.GET.batch }}{% endif %}">&laquo; First</a></li>
+                <li class="page-item"><a class="page-link rounded-pill" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.batch %}&batch={{ request.GET.batch }}{% endif %}">Previous</a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link rounded-pill">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link rounded-pill" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.batch %}&batch={{ request.GET.batch }}{% endif %}">Next</a></li>
+                <li class="page-item"><a class="page-link rounded-pill" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.batch %}&batch={{ request.GET.batch }}{% endif %}">Last &raquo;</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <!-- Call to Action for non-members -->
+    {% if not user.is_authenticated %}
+    <div class="row mt-5 pt-4">
+        <div class="col-12">
+            <div class="callout-card p-4 rounded-4 text-center bg-primary text-white shadow-sm">
+                <h4 class="fw-bold">Not a member yet?</h4>
+                <p>Join the forum to connect with the community and appear in this directory.</p>
+                <a href="{% url 'core:register' %}" class="btn btn-gold btn-lg mt-2">
+                    <i class="fas fa-user-plus me-2"></i> Sign Up Now
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
+
+<style>
+    .bg-primary-light {
+        background-color: var(--primary-light);
+    }
+    .btn-outline-primary, .btn-primary, .btn-outline-secondary {
+        transition: all 0.2s;
+    }
+</style>
 {% endblock %}

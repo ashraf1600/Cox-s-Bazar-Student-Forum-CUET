@@ -3,7 +3,7 @@
 {% block title %}Home — Cox's Bazar Student Forum, CUET{% endblock %}
 
 {% block content %}
-<!-- ── Hero ── -->
+<!-- ── Hero Section ── -->
 <section class="hero-section"
          style="background: linear-gradient(135deg, rgba(11,31,75,0.92) 0%, rgba(19,41,102,0.85) 50%, rgba(11,31,75,0.95) 100%),
                 url('{% static 'images/image.png' %}') center/cover no-repeat fixed;">
@@ -71,8 +71,8 @@
             <article class="card value-card h-100 text-center">
                 <div class="card-body py-5">
                     <div class="icon-circle"><i class="fas fa-users"></i></div>
-                    <h5 style="font-weight:700;color:var(--navy);margin-bottom:.5rem;">Connect</h5>
-                    <p class="text-muted" style="font-size:.875rem;">Network with peers from Cox's Bazar across all batches and departments.</p>
+                    <h5 class="value-title">Connect</h5>
+                    <p class="text-muted">Network with peers from Cox's Bazar across all batches and departments.</p>
                 </div>
             </article>
         </div>
@@ -80,8 +80,8 @@
             <article class="card value-card h-100 text-center">
                 <div class="card-body py-5">
                     <div class="icon-circle"><i class="fas fa-calendar-alt"></i></div>
-                    <h5 style="font-weight:700;color:var(--navy);margin-bottom:.5rem;">Participate</h5>
-                    <p class="text-muted" style="font-size:.875rem;">Discover academic, cultural, and social events throughout the year.</p>
+                    <h5 class="value-title">Participate</h5>
+                    <p class="text-muted">Discover academic, cultural, and social events throughout the year.</p>
                 </div>
             </article>
         </div>
@@ -89,8 +89,8 @@
             <article class="card value-card h-100 text-center">
                 <div class="card-body py-5">
                     <div class="icon-circle"><i class="fas fa-graduation-cap"></i></div>
-                    <h5 style="font-weight:700;color:var(--navy);margin-bottom:.5rem;">Scholarships</h5>
-                    <p class="text-muted" style="font-size:.875rem;">Support and access financial aid for talented students from Cox's Bazar.</p>
+                    <h5 class="value-title">Scholarships</h5>
+                    <p class="text-muted">Support and access financial aid for talented students from Cox's Bazar.</p>
                 </div>
             </article>
         </div>
@@ -98,8 +98,8 @@
             <article class="card value-card h-100 text-center">
                 <div class="card-body py-5">
                     <div class="icon-circle"><i class="fas fa-briefcase"></i></div>
-                    <h5 style="font-weight:700;color:var(--navy);margin-bottom:.5rem;">Grow</h5>
-                    <p class="text-muted" style="font-size:.875rem;">Share jobs, internships, and professional leads with your network.</p>
+                    <h5 class="value-title">Grow</h5>
+                    <p class="text-muted">Share jobs, internships, and professional leads with your network.</p>
                 </div>
             </article>
         </div>
@@ -145,14 +145,14 @@
             <article class="card announcement-card h-100 shadow-sm">
                 <div class="card-body">
                     {% if announcement.is_pinned %}
-                        <span class="badge bg-danger mb-2" style="font-size:0.65rem;letter-spacing:.06em;">
+                        <span class="badge bg-danger mb-2">
                             <i class="fas fa-thumbtack me-1"></i> PINNED
                         </span>
                     {% endif %}
-                    <h5 class="card-title" style="font-weight:700;color:var(--navy);font-size:1rem;line-height:1.4;">{{ announcement.title }}</h5>
-                    <p class="card-text text-muted" style="font-size:.875rem;">{{ announcement.content|truncatewords:22 }}</p>
+                    <h5 class="card-title">{{ announcement.title }}</h5>
+                    <p class="card-text text-muted">{{ announcement.content|truncatewords:22 }}</p>
                 </div>
-                <div class="card-footer" style="background:transparent;border-top:1px solid var(--border);">
+                <div class="card-footer bg-transparent border-0">
                     <small class="text-muted">
                         <i class="far fa-calendar-alt me-1"></i> {{ announcement.created_at|date:"F j, Y" }}
                     </small>
@@ -186,12 +186,12 @@
                     <img src="{{ member.user.profile_photo.url }}" loading="lazy" alt="{{ member.user.full_name }}" class="committee-avatar">
                 {% else %}
                     <div class="committee-avatar placeholder">
-                        <i class="fas fa-user" style="font-size:2rem;color:var(--gray-400);"></i>
+                        <i class="fas fa-user"></i>
                     </div>
                 {% endif %}
                 <div class="card-body pt-2 pb-4">
-                    <h6 style="font-weight:700;color:var(--navy);font-size:.9rem;margin-bottom:.25rem;">{{ member.user.full_name }}</h6>
-                    <p class="text-muted mb-0" style="font-size:.78rem;">{{ member.designation }}</p>
+                    <h6 class="committee-name">{{ member.user.full_name }}</h6>
+                    <p class="text-muted mb-0 committee-designation">{{ member.designation }}</p>
                 </div>
             </article>
         </div>

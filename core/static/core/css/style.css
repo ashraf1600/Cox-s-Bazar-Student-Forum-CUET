@@ -114,7 +114,7 @@ a {
     color: var(--dark-bg);
 }
 
-/* Dropdown menu */
+/* Dropdown menu - ensures visibility */
 .dropdown-menu {
     background: var(--white);
     border: none;
@@ -122,6 +122,13 @@ a {
     box-shadow: var(--shadow-md);
     padding: 0.5rem;
     margin-top: 0.5rem;
+    z-index: 9999;
+}
+
+.navbar .dropdown.show .dropdown-menu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .dropdown-item {
@@ -140,13 +147,18 @@ a {
     background: var(--primary-light);
 }
 
-/* ==================== HERO SECTION ==================== */
+/* ==================== HERO SECTION (fixed – no negative margins) ==================== */
 .hero-section {
     position: relative;
     overflow: hidden;
     padding: 5rem 0 6rem;
     background-size: cover;
     background-position: center;
+}
+
+.hero-section .container {
+    position: relative;
+    z-index: 2;
 }
 
 .hero-title {
@@ -199,7 +211,7 @@ a {
     color: white;
 }
 
-/* Hero stats card */
+/* Hero stats glass card */
 .hero-stats-card {
     background: rgba(255,255,255,0.05);
     backdrop-filter: blur(12px);
@@ -247,7 +259,7 @@ a {
     height: 80px;
 }
 
-/* Floating shapes (optional) */
+/* Floating shapes */
 .floating-shapes .shape {
     position: absolute;
     background: rgba(255,255,255,0.03);
@@ -288,7 +300,7 @@ a {
     border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
 }
 
-/* Value Cards */
+/* Value Cards (Homepage) */
 .value-card {
     text-align: center;
     padding: 0.5rem;
@@ -325,6 +337,8 @@ a {
     background: linear-gradient(135deg, rgba(4, 42, 90, 0.96), rgba(0, 71, 148, 0.95));
     border-radius: 2rem;
     overflow: hidden;
+    position: relative;
+    margin-bottom: 3rem;
 }
 
 .about-hero::after {
@@ -337,11 +351,6 @@ a {
 
 .about-hero .section-eyebrow {
     color: rgba(255,255,255,0.9);
-}
-
-.about-hero .lead,
-.about-hero p {
-    color: rgba(255,255,255,0.8);
 }
 
 .about-badge {
@@ -471,63 +480,7 @@ a {
     color: var(--text-dark);
 }
 
-.committee-table-wrap {
-    background: #ffffff;
-    border-radius: 1.5rem;
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-}
-
-.committee-table {
-    min-width: 720px;
-}
-
-.committee-table th,
-.committee-table td {
-    vertical-align: middle;
-    border-top: none;
-}
-
-.committee-avatar-sm {
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 2px solid rgba(0, 102, 204, 0.16);
-}
-
-.committee-name-cell {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.member-name {
-    font-weight: 700;
-    margin-bottom: 0;
-}
-
-.committee-status {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-}
-
-.committee-email {
-    max-width: 280px;
-    word-break: break-word;
-}
-
-.committee-action .btn {
-    min-width: 150px;
-}
-
-@media (max-width: 991px) {
-    .about-hero {
-        border-radius: 1.5rem;
-    }
-}
-
-/* Stats Grid */
+/* ==================== STATS GRID ==================== */
 .stats-grid {
     background: white;
     border-radius: 3rem;
@@ -554,7 +507,7 @@ a {
     margin-bottom: 0.25rem;
 }
 
-/* Committee cards */
+/* ==================== COMMITTEE CARDS ==================== */
 .committee-avatar {
     width: 100px;
     height: 100px;
@@ -650,6 +603,14 @@ a {
     border: 1px solid var(--border);
 }
 
+/* ==================== SIDEBAR (Dashboard) ==================== */
+.sidebar-card {
+    border-radius: 1.25rem;
+    overflow: hidden;
+    background: white;
+    box-shadow: var(--shadow-sm);
+}
+
 /* ==================== PAGINATION ==================== */
 .pagination .page-link {
     color: var(--primary);
@@ -664,7 +625,7 @@ a {
     color: white;
 }
 
-/* ==================== FOOTER (same dark as navbar) ==================== */
+/* ==================== FOOTER ==================== */
 .site-footer {
     background: var(--dark-bg);
     color: #adb5bd;
@@ -746,4 +707,17 @@ a {
 
 .text-gold {
     color: var(--gold);
+}
+
+.text-white-75 {
+    color: rgba(255,255,255,0.75);
+}
+
+/* ==================== EXTRA FIXES ==================== */
+.navbar, .navbar .container, .navbar-collapse {
+    overflow: visible !important;
+}
+
+.navbar-toggler-icon {
+    filter: invert(1) brightness(1.2);
 }

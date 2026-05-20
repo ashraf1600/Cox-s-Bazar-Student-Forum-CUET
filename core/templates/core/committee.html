@@ -1,87 +1,217 @@
 {% extends 'core/base.html' %}
 {% load static %}
-{% block title %}Committee{% endblock %}
+{% block title %}Committee — CSF-CUET{% endblock %}
 
 {% block content %}
-<div class="section bg-white">
+<!-- Hero Section for Committee -->
+<section class="hero-section pt-5 pb-4"
+         style="background: linear-gradient(135deg, rgba(11,31,75,0.92), rgba(19,41,102,0.85));
+                background-size: cover;">
     <div class="container">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div class="row align-items-center">
+            <div class="col-lg-8 text-white">
+                <div class="hero-eyebrow">Leadership & Governance</div>
+                <h1 class="hero-title display-4 fw-bold">Our Committee</h1>
+                <p class="hero-lead fs-5 mt-3">
+                    Dedicated members who drive the vision and activities of Cox's Bazar Student Forum at CUET.
+                    Meet the team leading community growth, events, and student welfare.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="hero-wave">
+        <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 40C240 80 480 0 720 40C960 80 1200 0 1440 40V80H0V40Z" fill="#FAFAF7"/>
+        </svg>
+    </div>
+</section>
+
+<div class="container mt-5 pt-2">
+    <!-- Current Committee Section -->
+    <div class="mb-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-end mb-4 gap-3">
             <div>
-                <h2 class="section-title mb-1">Current Committee</h2>
-                <p class="section-description text-muted mb-0">The current committee is publicly visible. Log in to see full profile details.</p>
+                <span class="section-eyebrow">Present Term</span>
+                <h2 class="section-title mb-0">Current Committee</h2>
+                <p class="text-muted mt-2 mb-0">Meet the executive body steering CSF-CUET this session.</p>
+            </div>
+            <div>
+                <span class="badge bg-primary px-3 py-2 rounded-pill">{{ current_committee|length }} members</span>
             </div>
         </div>
 
-        <div class="table-responsive committee-table-wrap">
-            <table class="table table-hover committee-table mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">Member</th>
-                        <th scope="col">Designation</th>
-                        <th scope="col">Email</th>
-                        <th scope="col">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for member in current_committee %}
-                    <tr>
-                        <td>
-                            <div class="committee-name-cell">
-                                {% if member.user.profile_photo %}
-                                    <img src="{{ member.user.profile_photo.url }}" class="committee-avatar-sm" alt="{{ member.user.full_name }}">
-                                {% else %}
-                                    <div class="bg-secondary rounded-circle committee-avatar-sm"></div>
-                                {% endif %}
-                                <div>
-                                    <p class="mb-1 member-name">{{ member.user.full_name }}</p>
-                                    <small class="committee-status">Session {{ member.session_year }}</small>
+        <!-- Responsive table (desktop) / card list (mobile fallback) -->
+        <div class="d-none d-md-block">
+            <div class="table-responsive committee-table-wrap shadow-sm rounded-4 overflow-hidden">
+                <table class="table table-hover align-middle mb-0 bg-white">
+                    <thead class="bg-light">
+                        <tr>
+                            <th scope="col" style="width: 35%;">Member</th>
+                            <th scope="col" style="width: 30%;">Designation</th>
+                            <th scope="col" style="width: 25%;">Email</th>
+                            <th scope="col" style="width: 10%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in current_committee %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    {% if member.user.profile_photo %}
+                                        <img src="{{ member.user.profile_photo.url }}" class="rounded-circle" width="50" height="50" style="object-fit: cover; border: 2px solid var(--primary);" alt="{{ member.user.full_name }}">
+                                    {% else %}
+                                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-user text-white"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-0 fw-bold">{{ member.user.full_name }}</h6>
+                                        <small class="text-muted">Session {{ member.session_year }}</small>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>{{ member.designation }}</td>
-                        <td class="committee-email">{{ member.user.email }}</td>
-                        <td class="committee-action">
-                            {% if user.is_authenticated %}
-                                <a href="{% url 'core:member_profile' member.user.id %}" class="btn btn-sm btn-primary"><i class="fas fa-eye me-1"></i> View Profile</a>
-                            {% else %}
-                                <a href="{% url 'core:login' %}?next={% url 'core:committee' %}" class="btn btn-sm btn-outline-primary">Login to View</a>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" class="text-center py-4">No current committee members found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+                            <td class="fw-semibold">{{ member.designation }}</td>
+                            <td class="text-muted small">{{ member.user.email }}</td>
+                            <td>
+                                {% if user.is_authenticated %}
+                                    <a href="{% url 'core:member_profile' member.user.id %}" class="btn btn-sm btn-outline-primary rounded-pill">
+                                        <i class="fas fa-eye me-1"></i> Profile
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'core:login' %}?next={% url 'core:committee' %}" class="btn btn-sm btn-outline-secondary rounded-pill">
+                                        Login
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">No current committee members listed.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        {% if past_committees %}
-        <hr class="my-5">
-        <h2 class="section-title mb-4">Past Committees</h2>
-        {% regroup past_committees by session_year as committee_years %}
-        {% for year_group in committee_years %}
-            <h4 class="mt-4">{{ year_group.grouper }}</h4>
-            <div class="row g-4">
-                {% for member in year_group.list %}
-                <div class="col-md-3 col-sm-6">
-                    <div class="card text-center">
-                        {% if member.user.profile_photo %}
-                            <img src="{{ member.user.profile_photo.url }}" class="card-img-top rounded-circle mx-auto mt-2" style="width:80px;height:80px;object-fit:cover;">
-                        {% else %}
-                            <div class="bg-secondary rounded-circle mx-auto mt-2" style="width:80px;height:80px;"></div>
-                        {% endif %}
-                        <div class="card-body">
-                            <h6>{{ member.user.full_name }}</h6>
-                            <small>{{ member.designation }}</small>
+        <!-- Mobile card view for current committee -->
+        <div class="d-md-none">
+            <div class="row g-3">
+                {% for member in current_committee %}
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4 p-3">
+                        <div class="d-flex gap-3 align-items-center">
+                            {% if member.user.profile_photo %}
+                                <img src="{{ member.user.profile_photo.url }}" class="rounded-circle" width="60" height="60" style="object-fit: cover; border: 2px solid var(--primary);">
+                            {% else %}
+                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-user fa-2x text-white"></i>
+                                </div>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 fw-bold">{{ member.user.full_name }}</h6>
+                                <span class="badge bg-primary-light text-primary rounded-pill px-2 py-1 small">{{ member.designation }}</span>
+                                <div class="small text-muted mt-1">{{ member.user.email }}</div>
+                            </div>
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'core:member_profile' member.user.id %}" class="btn btn-sm btn-outline-primary rounded-pill">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            {% else %}
+                                <a href="{% url 'core:login' %}?next={% url 'core:committee' %}" class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    Login
+                                </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
-        {% endfor %}
-        {% endif %}
+        </div>
     </div>
+
+    <!-- Past Committees Section -->
+    {% if past_committees %}
+    <hr class="my-5 opacity-25">
+    <div class="mt-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-end mb-4 gap-3">
+            <div>
+                <span class="section-eyebrow">Previous Terms</span>
+                <h2 class="section-title mb-0">Past Committees</h2>
+                <p class="text-muted mt-2 mb-0">Honouring the leaders who served before.</p>
+            </div>
+        </div>
+
+        {% regroup past_committees by session_year as committee_years %}
+        {% for year_group in committee_years %}
+        <div class="mb-5">
+            <h3 class="h5 fw-bold text-primary mb-3 pb-2 border-start border-4 border-primary ps-3">{{ year_group.grouper }}</h3>
+            <div class="row g-4">
+                {% for member in year_group.list %}
+                <div class="col-sm-6 col-md-4 col-lg-3">
+                    <div class="card committee-card h-100 border-0 shadow-sm rounded-4 overflow-hidden transition-all">
+                        <div class="text-center pt-4">
+                            {% if member.user.profile_photo %}
+                                <img src="{{ member.user.profile_photo.url }}" class="rounded-circle" width="100" height="100" style="object-fit: cover; border: 3px solid var(--primary);" alt="{{ member.user.full_name }}">
+                            {% else %}
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 100px; height: 100px;">
+                                    <i class="fas fa-user fa-3x text-secondary"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-body text-center">
+                            <h6 class="fw-bold mb-1">{{ member.user.full_name }}</h6>
+                            <p class="small text-muted mb-0">{{ member.designation }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Call to Action for non-members -->
+    {% if not user.is_authenticated %}
+    <div class="row mt-5 pt-4">
+        <div class="col-12">
+            <div class="callout-card p-4 rounded-4 text-center bg-primary text-white shadow-sm">
+                <h4 class="fw-bold">Become a part of our community</h4>
+                <p>Join the forum to connect with committee members and access exclusive opportunities.</p>
+                <a href="{% url 'core:register' %}" class="btn btn-gold btn-lg mt-2">
+                    <i class="fas fa-user-plus me-2"></i> Sign Up Now
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
+
+<!-- Add transition/animation -->
+<style>
+    .transition-all {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .transition-all:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    }
+    .bg-primary-light {
+        background-color: var(--primary-light);
+    }
+    .btn-outline-secondary {
+        border-color: #ced4da;
+        color: #6c757d;
+    }
+    .btn-outline-secondary:hover {
+        background: #6c757d;
+        color: white;
+    }
+    @media (max-width: 767px) {
+        .committee-table-wrap {
+            display: none;
+        }
+    }
+</style>
 {% endblock %}
