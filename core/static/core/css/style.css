@@ -46,12 +46,18 @@ a {
     transition: var(--transition);
 }
 
-/* ==================== NAVBAR (Consistent Dark) ==================== */
+/* ==================== NAVBAR (Consistent Dark + Glass) ==================== */
 .navbar {
     background: var(--dark-bg) !important;
     padding: 0.75rem 0;
     transition: var(--transition);
     border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.navbar-glass {
+    background: rgba(11, 31, 75, 0.92) !important;
+    backdrop-filter: blur(14px);
+    border-bottom-color: rgba(255,255,255,0.14);
 }
 
 .navbar-scrolled {
@@ -172,11 +178,32 @@ a {
     max-width: 90%;
 }
 
+.hero-actions {
+    margin-top: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.hero-actions .btn {
+    min-width: 170px;
+}
+
+.hero-section .btn-outline-light {
+    border-color: rgba(255,255,255,0.85);
+    color: white;
+}
+
+.hero-section .btn-outline-light:hover {
+    background: rgba(255,255,255,0.16);
+    color: white;
+}
+
 /* Hero stats card */
 .hero-stats-card {
     background: rgba(255,255,255,0.05);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,215,0,0.25);
+    border: 1px solid rgba(255,215,0,0.22);
     border-radius: 2rem;
     padding: 1.8rem 1.5rem;
 }
@@ -212,6 +239,12 @@ a {
     left: 0;
     width: 100%;
     line-height: 0;
+}
+
+.hero-wave svg {
+    display: block;
+    width: 100%;
+    height: 80px;
 }
 
 /* Floating shapes (optional) */
