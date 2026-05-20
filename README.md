@@ -123,7 +123,7 @@ CSF-CUET/
 
 *Replace the following image with your own screenshot.*
 
-![Homepage Preview](https://via.placeholder.com/800x450/0066cc/white?text=Homepage+Preview)
+![Homepage Preview](https://github.com/ashraf1600/Cox-s-Bazar-Student-Forum-CUET/blob/main/image/landing.png)
 
 *Dashboard timeline, member directory, profile editing – all fully functional.*
 
