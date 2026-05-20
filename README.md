@@ -1,9 +1,11 @@
-Here is a professional `README.md` for your CSF-CUET project on GitHub, including a **placeholder image** (you can replace with an actual screenshot later). The file covers all major aspects: description, features, tech stack, installation, usage, and contribution guidelines.
+Perfect! Your `landing.png` is inside the `image/` folder at the root of the repository. To use it in the README, the correct relative path is `image/landing.png`.
+
+Below is the **final README** with your real image link. Copy this into your `README.md` – it will display the uploaded banner directly from your repo.
 
 ```markdown
 # CSF-CUET – Cox's Bazar Student Forum at CUET
 
-![Project Banner](https://via.placeholder.com/1200x400/0066cc/ffffff?text=CSF-CUET+Community+Platform)
+![Project Banner](image/landing.png)
 
 > A modern web platform for students and alumni of Chittagong University of Engineering & Technology (CUET) who originate from the Cox's Bazar district. Built with Django, Bootstrap 5, and Jazzmin – featuring member directory, events, announcements, job board, private messaging, and more.
 
@@ -46,7 +48,6 @@ Here is a professional `README.md` for your CSF-CUET project on GitHub, includin
 ## 📁 Project Structure
 
 ```
-
 CSF-CUET/
 ├── core/                      # Main application
 │   ├── static/                # CSS, JS, images
@@ -57,12 +58,13 @@ CSF-CUET/
 │   ├── admin.py               # Custom admin panels
 │   └── urls.py                # App‑level routes
 ├── csf_cuet/                  # Project settings
+├── image/                     # Screenshots and assets
+│   └── landing.png            # Banner image
 ├── staticfiles/               # Collected static files (production)
 ├── media/                     # User‑uploaded images
 ├── manage.py
 ├── requirements.txt
 └── README.md
-
 ```
 
 ---
@@ -73,59 +75,57 @@ CSF-CUET/
    ```bash
    git clone https://github.com/ashraf1600/Cox-s-Bazar-Student-Forum-CUET.git
    cd Cox-s-Bazar-Student-Forum-CUET
-```
+   ```
 
 2. **Create a virtual environment & activate it**
-
    ```bash
    python -m venv venv
    source venv/bin/activate   # Linux/Mac
    venv\Scripts\activate      # Windows
    ```
-3. **Install dependencies**
 
+3. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
-4. **Apply migrations**
 
+4. **Apply migrations**
    ```bash
    python manage.py makemigrations
    python manage.py migrate
    ```
-5. **Create a superuser (admin)**
 
+5. **Create a superuser (admin)**
    ```bash
    python manage.py createsuperuser
    ```
-6. **Load initial departments** (optional, run in Django shell)
 
+6. **Load initial departments** (optional, run in Django shell)
    ```python
    from core.models import Department
    depts = ['CSE','EEE','ME','CE','IPE','URP','ARCH','BT','MSE','CEE']
    for d in depts: Department.objects.get_or_create(name=d)
    ```
-7. **Collect static files**
 
+7. **Collect static files**
    ```bash
    python manage.py collectstatic
    ```
-8. **Run the development server**
 
+8. **Run the development server**
    ```bash
    python manage.py runserver
    ```
+
 9. Visit `http://127.0.0.1:8000/` to explore the site, and `/admin` for the admin panel.
 
 ---
 
-## 📸 Screenshots (Placeholder)
+## 📸 Screenshots
 
-*Replace the following image with your own screenshot.*
+*Add additional screenshots here as you like (e.g., dashboard, member directory).*
 
-![Homepage Preview](https://github.com/ashraf1600/Cox-s-Bazar-Student-Forum-CUET/blob/main/image/landing.png)
-
-*Dashboard timeline, member directory, profile editing – all fully functional.*
+![Screenshot Placeholder](https://via.placeholder.com/800x450/0066cc/white?text=Add+screenshot+here)
 
 ---
 
@@ -163,8 +163,6 @@ This project is licensed under the MIT License – see the [LICENSE](LICENSE) fi
 ---
 
 **Made with ❤️ for the Cox's Bazar student community at CUET.**
-
 ```
 
-You can replace the placeholder image URLs (e.g., `https://via.placeholder.com/...`) with your actual screenshot paths once you have them. Just upload the images to the repository and change the `src` accordingly. The README is ready to be committed.
-```
+Now your README will **automatically display the real `landing.png`** as the project banner – no external placeholder needed. Commit and push the updated `README.md` to GitHub.
