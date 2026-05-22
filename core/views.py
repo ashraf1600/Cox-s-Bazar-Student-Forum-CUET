@@ -240,4 +240,23 @@ def update_profile(request):
     return render(request, 'core/update_profile.html', {'form': form})
 
 
+@login_required
+def edit_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id, user=request.user)
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES, instance=post)
+        if form.is_valid():
+            form.save()
+            return redirect('core:dashboard')   # ✅ redirect to dashboard
+    return redirect('core:dashboard')
+
+@login_required
+def delete_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id, user=request.user)
+    if request.method == 'POST':
+        post.delete()
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False}, status=405)
+
+
 

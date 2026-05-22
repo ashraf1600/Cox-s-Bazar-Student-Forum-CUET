@@ -110,12 +110,23 @@ class CommitteeMember(models.Model):
 # Post
 class Post(models.Model):
     CATEGORY_CHOICES = [
-        ('General', 'General'),
-        ('Help Needed', 'Help Needed'),
-        ('Blood Request', 'Blood Request'),
-        ('Job Opportunity', 'Job Opportunity'),
-        ('Event', 'Event'),
-    ]
+    ('General', 'General'),
+    ('Help Needed', 'Help Needed'),
+    ('Blood Request', 'Blood Request'),
+    ('Job Opportunity', 'Job Opportunity'),
+    ('Event', 'Event'),
+    ('Tuition Offer', 'Tuition Offer'),
+    ('Success Story', 'Success Story'),
+    ('Sports', 'Sports'),
+    ('Celebrations', 'Celebrations'),
+]
+    # CATEGORY_CHOICES = [
+    #     ('General', 'General'),
+    #     ('Help Needed', 'Help Needed'),
+    #     ('Blood Request', 'Blood Request'),
+    #     ('Job Opportunity', 'Job Opportunity'),
+    #     ('Event', 'Event'),
+    # ]
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField()
