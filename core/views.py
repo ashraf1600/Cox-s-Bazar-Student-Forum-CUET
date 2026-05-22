@@ -9,6 +9,11 @@ from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 from .models import User, Department, CommitteeMember, Announcement, Post, Comment, Like
 from .forms import RegistrationForm, LoginForm, ProfileUpdateForm, PostForm, CommentForm
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Message
+from .forms import MessageForm
 
 def is_admin(user):
     return user.is_authenticated and (user.role == 'admin' or user.is_superuser)
@@ -257,6 +262,45 @@ def delete_post(request, post_id):
         post.delete()
         return JsonResponse({'success': True})
     return JsonResponse({'success': False}, status=405)
+
+
+
+
+@login_required
+def inbox(request):
+    received_messages = request.user.received_messages.all()
+    unread_count = received_messages.filter(is_read=False).count()
+    return render(request, 'core/inbox.html', {
+        'messages': received_messages,
+        'unread_count': unread_count,
+    })
+
+@login_required
+def view_message(request, message_id):
+    message = get_object_or_404(Message, id=message_id, recipient=request.user)
+    if not message.is_read:
+        message.is_read = True
+        message.save()
+    return render(request, 'core/message_detail.html', {'message': message})
+
+@login_required
+def send_message(request, user_id):
+    recipient = get_object_or_404(User, id=user_id, status='active')
+    if request.method == 'POST':
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            msg = form.save(commit=False)
+            msg.sender = request.user
+            msg.recipient = recipient
+            msg.save()
+            messages.success(request, f'Your message to {recipient.full_name} has been sent.')
+            return redirect('core:member_profile', user_id=recipient.id)
+    else:
+        form = MessageForm()
+    return render(request, 'core/send_message_modal.html', {
+        'form': form,
+        'recipient': recipient,
+    })
 
 
 

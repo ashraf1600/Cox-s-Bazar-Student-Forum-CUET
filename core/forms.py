@@ -1,5 +1,5 @@
 from django import forms
-from .models import User, Department, Post, Comment
+from .models import User, Department, Post, Comment , Message
 from django.contrib.auth.forms import AuthenticationForm
 
 class RegistrationForm(forms.ModelForm):
@@ -128,4 +128,13 @@ class CommentForm(forms.ModelForm):
         }
 
 
+
+class MessageForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = ['subject', 'body']
+        widgets = {
+            'subject': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Subject'}),
+            'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Your message...'}),
+        }
         
