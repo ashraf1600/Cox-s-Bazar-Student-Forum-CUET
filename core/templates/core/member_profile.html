@@ -5,12 +5,15 @@
 {% block content %}
 <div class="container">
     <div class="row">
+        <!-- Left Column: Profile Card -->
         <div class="col-md-4">
-            <div class="card text-center">
+            <div class="card text-center shadow-sm border-0 rounded-4">
                 {% if member.profile_photo %}
                     <img src="{{ member.profile_photo.url }}" class="card-img-top rounded-circle mx-auto mt-3" style="width:150px;height:150px;object-fit:cover;">
                 {% else %}
-                    <div class="bg-secondary rounded-circle mx-auto mt-3" style="width:150px;height:150px;"></div>
+                    <div class="bg-secondary bg-opacity-25 rounded-circle mx-auto mt-3 d-flex align-items-center justify-content-center" style="width:150px;height:150px;">
+                        <i class="fas fa-user fa-3x text-secondary"></i>
+                    </div>
                 {% endif %}
                 <div class="card-body">
                     <h4>{{ member.full_name }}</h4>
@@ -24,14 +27,19 @@
                 </div>
             </div>
         </div>
+
+        <!-- Right Column: Details -->
         <div class="col-md-8">
             {% if user.is_authenticated and user.id == member.id %}
             <div class="mb-3 text-end">
-                <a href="{% url 'core:update_profile' %}" class="btn btn-primary">Edit Profile</a>
+                <a href="{% url 'core:update_profile' %}" class="btn btn-primary rounded-pill">
+                    <i class="fas fa-edit me-1"></i> Edit Profile
+                </a>
             </div>
             {% endif %}
-            <div class="card mb-3">
-                <div class="card-header bg-primary text-white">Academic Information</div>
+
+            <div class="card mb-3 shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white rounded-top-4">Academic Information</div>
                 <div class="card-body">
                     <p><strong>Batch:</strong> {{ member.batch|default:"None" }}</p>
                     <p><strong>Department:</strong> {{ member.department.name|default:"Not specified" }}</p>
@@ -39,8 +47,8 @@
                 </div>
             </div>
 
-            <div class="card mb-3">
-                <div class="card-header bg-primary text-white">Contact & Social</div>
+            <div class="card mb-3 shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white rounded-top-4">Contact & Social</div>
                 <div class="card-body">
                     <p><i class="fab fa-linkedin"></i> LinkedIn: {{ member.linkedin|default:"Not provided" }}</p>
                     <p><i class="fab fa-facebook"></i> Facebook: {{ member.facebook|default:"Not provided" }}</p>
@@ -49,8 +57,8 @@
                 </div>
             </div>
 
-            <div class="card mb-3">
-                <div class="card-header bg-primary text-white">Professional Info</div>
+            <div class="card mb-3 shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white rounded-top-4">Professional Info</div>
                 <div class="card-body">
                     <p><strong>Company:</strong> {{ member.company|default:"Not employed yet" }}</p>
                     <p><strong>Designation:</strong> {{ member.designation|default:"—" }}</p>
@@ -59,8 +67,39 @@
             </div>
 
             {% if user.is_authenticated and user.id != member.id %}
-                <a href="#" class="btn btn-success"><i class="fas fa-envelope"></i> Send Message</a>
+                <button class="btn btn-success rounded-pill" data-bs-toggle="modal" data-bs-target="#sendMessageModal">
+                    <i class="fas fa-envelope me-1"></i> Send Message
+                </button>
             {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Send Message -->
+<div class="modal fade" id="sendMessageModal" tabindex="-1" aria-labelledby="sendMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="sendMessageModalLabel">Send Message to {{ member.full_name }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'core:send_message' member.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="messageSubject" class="form-label">Subject</label>
+                        <input type="text" name="subject" id="messageSubject" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="messageBody" class="form-label">Message</label>
+                        <textarea name="body" id="messageBody" rows="5" class="form-control" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

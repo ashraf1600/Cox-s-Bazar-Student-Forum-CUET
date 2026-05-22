@@ -303,4 +303,22 @@ def send_message(request, user_id):
     })
 
 
+@login_required
+def reply_message(request, message_id):
+    original = get_object_or_404(Message, id=message_id, recipient=request.user)
+    if request.method == 'POST':
+        subject = request.POST.get('subject')
+        body = request.POST.get('body')
+        Message.objects.create(
+            sender=request.user,
+            recipient=original.sender,
+            subject=subject,
+            body=body
+        )
+        messages.success(request, 'Your reply has been sent.')
+        return redirect('core:inbox')
+    # If not POST, redirect to inbox (should not happen)
+    return redirect('core:inbox')
+
+
 

@@ -22,6 +22,10 @@ urlpatterns = [
     path('profile/', views.view_profile, name='view_profile'),
     path('post/<int:post_id>/edit/', views.edit_post, name='edit_post'),
     path('post/<int:post_id>/delete/', views.delete_post, name='delete_post'),
+    path('inbox/', views.inbox, name='inbox'),
+    path('inbox/message/<int:message_id>/', views.view_message, name='view_message'),
+    path('send-message/<int:user_id>/', views.send_message, name='send_message'),
+    path('message/<int:message_id>/reply/', views.reply_message, name='reply_message'),
 ]
 
 

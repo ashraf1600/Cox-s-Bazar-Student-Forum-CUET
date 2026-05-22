@@ -45,6 +45,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'csf_cuet.settings.unread_count',  # Custom context processor for unread message count
             ],
         },
     },
@@ -168,3 +169,10 @@ JAZZMIN_SETTINGS = {
     # List of apps to base side menu ordering off of
     "order_with_respect_to": ["auth", "core"],
 }
+
+
+def unread_count(request):
+    if request.user.is_authenticated:
+        from core.models import Message
+        return {'unread_count': Message.objects.filter(recipient=request.user, is_read=False).count()}
+    return {'unread_count': 0}
