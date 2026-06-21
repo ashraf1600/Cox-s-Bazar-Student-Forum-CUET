@@ -142,35 +142,35 @@ JAZZMIN_SETTINGS = {
     "search_model": ["core.User", "core.Post"],
 }
 
-# settings.py
+# # settings.py
 
-JAZZMIN_SETTINGS = {
-    # Title of the window (Will default to current_admin_site.site_title)
-    "site_title": "CSF-CUET Admin",
-    # Title on the login screen
-    "site_header": "Cox's Bazar Student Forum, CUET ",
-    # Title on the brand (19 chars max)
-    "site_brand": "CSF-CUET Admin Portal",
-    # Logo to use for your site, must be present in static files
-    "site_logo": "admin/image/logo.png", # You'll need to add this logo file
-    "site_logo_classes": "img-circle",
-    # Welcome text on the login screen
-    "welcome_sign": "Welcome to the CSF-CUET Admin Panel",
-    # Copyright on the footer
-    "copyright": "Cox's Bazar Student Forum, CUET",
-    # Icons for side menu apps/models (using Font Awesome icons)
-    "icons": {
-        "auth": "fas fa-users-cog",
-        "auth.user": "fas fa-user",
-        "core.User": "fas fa-user-circle",
-    },
-    # Whether to aut expand the menu
-    "navigation_expanded": True,
-    # Hide these apps when generating side menu e.g (auth)
-    "hide_apps": [],
-    # List of apps to base side menu ordering off of
-    "order_with_respect_to": ["auth", "core"],
-}
+# JAZZMIN_SETTINGS = {
+#     # Title of the window (Will default to current_admin_site.site_title)
+#     "site_title": "CSF-CUET Admin",
+#     # Title on the login screen
+#     "site_header": "Cox's Bazar Student Forum, CUET ",
+#     # Title on the brand (19 chars max)
+#     "site_brand": "CSF-CUET Admin Portal",
+#     # Logo to use for your site, must be present in static files
+#     "site_logo": "admin/image/logo.png", # You'll need to add this logo file
+#     "site_logo_classes": "img-circle",
+#     # Welcome text on the login screen
+#     "welcome_sign": "Welcome to the CSF-CUET Admin Panel",
+#     # Copyright on the footer
+#     "copyright": "Cox's Bazar Student Forum, CUET",
+#     # Icons for side menu apps/models (using Font Awesome icons)
+#     "icons": {
+#         "auth": "fas fa-users-cog",
+#         "auth.user": "fas fa-user",
+#         "core.User": "fas fa-user-circle",
+#     },
+#     # Whether to aut expand the menu
+#     "navigation_expanded": True,
+#     # Hide these apps when generating side menu e.g (auth)
+#     "hide_apps": [],
+#     # List of apps to base side menu ordering off of
+#     "order_with_respect_to": ["auth", "core"],
+# }
 
 
 def unread_count(request):
