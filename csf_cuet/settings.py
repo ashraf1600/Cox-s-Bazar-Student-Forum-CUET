@@ -7,7 +7,7 @@ SECRET_KEY = 'django-insecure-cbsf-cuet-secret-key-change-in-production'
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     'jazzmin', # Must be before 'django.contrib.admin'
@@ -23,6 +23,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -74,11 +76,11 @@ TIME_ZONE = 'Asia/Dhaka'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-MEDIA_URL = '/media/'
+MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 LOGIN_URL = 'core:login'
@@ -176,3 +178,12 @@ def unread_count(request):
         from core.models import Message
         return {'unread_count': Message.objects.filter(recipient=request.user, is_read=False).count()}
     return {'unread_count': 0}
+
+
+
+STORAGES = {
+    "staticfiles": {
+        "BACKEND":
+        "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
