@@ -32,7 +32,7 @@ def active_member_required(view_func):
 def homepage(request):
     announcements = Announcement.objects.all()[:3]
     total_members = User.objects.filter(status='active').count()
-    committees = CommitteeMember.objects.filter(is_current=True)[:4]
+    committees = CommitteeMember.objects.filter(is_current=True)
     context = {
         'announcements': announcements,
         'total_members': total_members,

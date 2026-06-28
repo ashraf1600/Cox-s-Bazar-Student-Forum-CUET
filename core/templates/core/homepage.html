@@ -166,10 +166,10 @@
         {% endfor %}
     </div>
 </section>
-
 <!-- ── Committee Section ── -->
-<section class="container mt-5 mb-5 pb-3">
-    <div class="d-flex justify-content-between align-items-end mb-5 flex-column flex-md-row gap-3">
+<!-- ── Committee Section ── -->
+<section class="container mt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4 flex-column flex-md-row gap-3">
         <div>
             <span class="section-eyebrow">Leadership</span>
             <h2 class="section-title mb-0">Current Committee</h2>
@@ -178,24 +178,82 @@
             Full Committee <i class="fas fa-arrow-right ms-1"></i>
         </a>
     </div>
-    <div class="row gy-4">
-        {% for member in committees %}
-        <div class="col-6 col-sm-4 col-lg-3">
-            <article class="card committee-card h-100">
-                {% if member.user.profile_photo %}
-                    <img src="{{ member.user.profile_photo.url }}" loading="lazy" alt="{{ member.user.full_name }}" class="committee-avatar">
-                {% else %}
-                    <div class="committee-avatar placeholder">
-                        <i class="fas fa-user"></i>
+
+    {% if committees %}
+
+    <!-- DEBUG: list all designations -->
+
+        <!-- President & General Secretary (static, same card style) -->
+        <div class="row justify-content-center g-4 mb-5">
+            {% for member in committees %}
+                {% if member.designation|lower == "president" or member.designation|lower == "general secretary" %}
+                    <div class="col-lg-5 col-md-6 d-flex justify-content-center">
+                        <div class="card committee-card h-100 text-center shadow-sm border-0">
+                            {% if member.user.profile_photo %}
+                                <img src="{{ member.user.profile_photo.url }}" loading="lazy" alt="{{ member.user.full_name }}" class="committee-avatar">
+                            {% else %}
+                                <div class="committee-avatar placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="committee-name">{{ member.user.full_name }}</h5>
+                                <p class="committee-designation mb-0">{{ member.designation }}</p>
+                            </div>
+                        </div>
                     </div>
                 {% endif %}
-                <div class="card-body pt-2 pb-4">
-                    <h6 class="committee-name">{{ member.user.full_name }}</h6>
-                    <p class="text-muted mb-0 committee-designation">{{ member.designation }}</p>
-                </div>
-            </article>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
+
+        <!-- Slider: other members (same card style) -->
+        <div class="committee-slider-wrapper">
+            <div class="committee-slider-track">
+                {% for member in committees %}
+                    {% if member.designation|lower != "president" and member.designation|lower != "general secretary" %}
+                        <div class="committee-slide-item">
+                            <div class="card committee-card h-100 text-center shadow-sm border-0">
+                                {% if member.user.profile_photo %}
+                                    <img src="{{ member.user.profile_photo.url }}" loading="lazy" alt="{{ member.user.full_name }}" class="committee-avatar">
+                                {% else %}
+                                    <div class="committee-avatar placeholder">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="committee-name">{{ member.user.full_name }}</h5>
+                                    <p class="committee-designation mb-0">{{ member.designation }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                <!-- Duplicate for seamless loop -->
+                {% for member in committees %}
+                    {% if member.designation|lower != "president" and member.designation|lower != "general secretary" %}
+                        <div class="committee-slide-item">
+                            <div class="card committee-card h-100 text-center shadow-sm border-0">
+                                {% if member.user.profile_photo %}
+                                    <img src="{{ member.user.profile_photo.url }}" loading="lazy" alt="{{ member.user.full_name }}" class="committee-avatar">
+                                {% else %}
+                                    <div class="committee-avatar placeholder">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="committee-name">{{ member.user.full_name }}</h5>
+                                    <p class="committee-designation mb-0">{{ member.designation }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <p class="text-center text-muted">No committee members yet.</p>
+    {% endif %}
 </section>
+
+
 {% endblock %}
