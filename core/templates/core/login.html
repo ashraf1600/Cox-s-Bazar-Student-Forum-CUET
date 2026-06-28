@@ -1,35 +1,41 @@
 ﻿{% extends 'core/base.html' %}
+{% load static %}
 {% load crispy_forms_tags %}
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center align-items-center min-vh-75">
     <div class="col-xl-10">
-        <div class="card auth-card shadow-sm overflow-hidden">
+        <div class="card auth-card border-0 shadow-lg overflow-hidden" style="border-radius: 1.5rem;">
             <div class="row g-0">
-                <div class="col-md-5 d-none d-md-flex auth-panel flex-column justify-content-center">
-                    <div class="p-4 text-white">
-                        <h4 class="mb-3">Welcome Back!</h4>
-                        <p class="mb-4">Sign in to your CSF-CUET account and join discussions, events, and alumni networking built for Cox's Bazar talent.</p>
-                        <div class="d-flex flex-column gap-2">
-                            <span class="badge bg-white text-primary rounded-pill px-3 py-2">Secure access</span>
-                            <span class="badge bg-white text-primary rounded-pill px-3 py-2">Member community</span>
-                            <span class="badge bg-white text-primary rounded-pill px-3 py-2">Quick event updates</span>
+                <!-- Left Panel: Light blue gradient with logo -->
+                <div class="col-md-5 d-none d-md-flex flex-column justify-content-center align-items-center text-dark p-5" style="background: linear-gradient(145deg, #f0f7ff, #e6f0ff);">
+                    <div class="text-center">
+                        <img src="{% static 'images/logo.png' %}" alt="CSF-CUET Logo" class="img-fluid mb-4" style="max-height: 160px; width: auto; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.06));">
+                        <h3 class="fw-bold" style="color: #004d99;">Welcome Back!</h3>
+                        <p class="text-muted mb-4">Sign in to your CSF-CUET account and join discussions, events, and alumni networking built for Cox's Bazar talent.</p>
+                        <div class="d-flex flex-column gap-2 w-100">
+                            <span class="badge bg-white text-primary rounded-pill px-3 py-2 fs-6 shadow-sm">🔐 Secure access</span>
+                            <span class="badge bg-white text-primary rounded-pill px-3 py-2 fs-6 shadow-sm">👥 Member community</span>
+                            <span class="badge bg-white text-primary rounded-pill px-3 py-2 fs-6 shadow-sm">📅 Quick event updates</span>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-7">
+                <!-- Right Panel: White form -->
+                <div class="col-md-7" style="background: #ffffff;">
                     <div class="card-body p-5">
-                        <h4 class="mb-4">Login to Your Account</h4>
+                        <h4 class="mb-4 fw-bold" style="color: #004d99;">Login to Your Account</h4>
                         <form method="POST" class="row g-3">
                             {% csrf_token %}
                             <div class="col-12">{{ form|crispy }}</div>
                             <div class="col-12 d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg">Login</button>
+                                <button type="submit" class="btn btn-primary btn-lg rounded-pill">Login</button>
                             </div>
                         </form>
                         <div class="text-center mt-4">
-                            <a href="#" class="text-decoration-none">Forgot Password?</a> &nbsp;|&nbsp; <a href="{% url 'core:register' %}" class="text-decoration-none">Create New Account</a>
+                            <a href="#" class="text-decoration-none text-muted">Forgot Password?</a>
+                            <span class="text-muted">|</span>
+                            <a href="{% url 'core:register' %}" class="text-decoration-none text-primary">Create New Account</a>
                         </div>
                     </div>
                 </div>

@@ -1,3 +1,5 @@
+import re
+
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
@@ -82,15 +84,46 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.full_name} ({self.serial_no or 'Pending'})"
 
     def save(self, *args, **kwargs):
-        if self.status == 'active' and not self.serial_no:
-            last_user = User.objects.filter(serial_no__isnull=False).order_by('-id').first()
-            if last_user and last_user.serial_no:
-                last_num = int(last_user.serial_no.replace('CSF', ''))
-                new_num = last_num + 1
-            else:
-                new_num = 1
-            self.serial_no = f"CSF{new_num:05d}"
-        super().save(*args, **kwargs)
+                
+                if self.status == 'active':
+                    # CASE 1: Student email
+                    if self.email and '@student.cuet.ac.bd' in self.email:
+                        local_part = self.email.split('@')[0]
+                        # local_part example: u2104096
+                        if len(local_part) >= 2:
+                            # Extract from index 1 to end (2nd to 8th character)
+                            student_id = local_part[1:]  # "2104096"
+                            # Keep only digits (just in case)
+                            student_id = re.sub(r'\D', '', student_id)
+                            if student_id:
+                                expected_serial = f"CSF{student_id}"
+                                # Assign only if not already set correctly
+                                if self.serial_no != expected_serial:
+                                    self.serial_no = expected_serial
+
+                    # CASE 2: Non-student or extraction failed – auto-increment
+                    if not self.serial_no:
+                        last_user = User.objects.filter(serial_no__isnull=False).order_by('-id').first()
+                        if last_user and last_user.serial_no:
+                            # Extract numeric part after "CSF" or "CBSF"
+                            # Handle both prefixes
+                            num_part = last_user.serial_no
+                            if num_part.startswith('CSF'):
+                                num_part = num_part[3:]
+                            elif num_part.startswith('CBSF'):
+                                num_part = num_part[4:]
+                            else:
+                                num_part = ''
+                            if num_part.isdigit():
+                                last_num = int(num_part)
+                            else:
+                                last_num = 0
+                            new_num = last_num + 1
+                        else:
+                            new_num = 1
+                        self.serial_no = f"CSF{new_num:05d}"
+
+                super().save(*args, **kwargs)
 
 # CommitteeMember
 class CommitteeMember(models.Model):
