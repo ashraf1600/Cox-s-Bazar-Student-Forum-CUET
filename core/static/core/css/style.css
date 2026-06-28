@@ -46,12 +46,14 @@ a {
     transition: var(--transition);
 }
 
-/* ==================== NAVBAR (Consistent Dark + Glass) ==================== */
+/* ==================== NAVBAR (Sticky, Dark, Glass) ==================== */
 .navbar {
     background: var(--dark-bg) !important;
     padding: 0.75rem 0;
     transition: var(--transition);
     border-bottom: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
+    z-index: 1050; /* ensures it stays above content */
 }
 
 .navbar-glass {
@@ -147,7 +149,16 @@ a {
     background: var(--primary-light);
 }
 
-/* ==================== HERO SECTION (fixed – no negative margins) ==================== */
+/* Prevent overflow issues */
+.navbar, .navbar .container, .navbar-collapse {
+    overflow: visible !important;
+}
+
+.navbar-toggler-icon {
+    filter: invert(1) brightness(1.2);
+}
+
+/* ==================== HERO SECTION ==================== */
 .hero-section {
     position: relative;
     overflow: hidden;
@@ -621,7 +632,7 @@ a {
     min-width: 180px;
 }
 
-..post-card {
+.post-card {
     border-radius: 1.5rem;
     border: 1px solid rgba(0, 0, 0, 0.08);
     background: #ffffff;
@@ -805,13 +816,4 @@ a {
 
 .text-white-75 {
     color: rgba(255,255,255,0.75);
-}
-
-/* ==================== EXTRA FIXES ==================== */
-.navbar, .navbar .container, .navbar-collapse {
-    overflow: visible !important;
-}
-
-.navbar-toggler-icon {
-    filter: invert(1) brightness(1.2);
 }
