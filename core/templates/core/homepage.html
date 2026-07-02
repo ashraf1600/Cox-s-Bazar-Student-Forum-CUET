@@ -14,7 +14,7 @@
                 <h1 class="hero-title">
                     Cox's Bazar<br>
                     <em>Students Forum</em><br>
-                     CUET
+                    at CUET
                 </h1>
                 <p class="hero-lead">
                     A trusted community network for students and alumni from Cox's Bazar at CUET —
@@ -250,5 +250,79 @@
     {% else %}
         <p class="text-center text-muted">No committee members yet.</p>
     {% endif %}
+</section>
+
+<!-- ── Advisory Panel Teaser ── -->
+<section class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4 flex-column flex-md-row gap-3">
+        <div>
+            <span class="section-eyebrow">Mentorship</span>
+            <h2 class="section-title mb-0">Advisory Panel</h2>
+            <p class="text-muted mt-1">Guided by esteemed faculty members of CUET</p>
+        </div>
+        <a href="{% url 'core:advisory_panel' %}" class="btn btn-outline-primary rounded-pill">
+            Meet All Advisors <i class="fas fa-arrow-right ms-1"></i>
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Chief Advisor -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm border-0 text-center">
+                <div class="card-body">
+                    <div class="bg-secondary bg-opacity-10 rounded-circle mb-3 d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; margin: 0 auto;">
+                        <i class="fas fa-user-tie fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold">Shyamal Acharya</h5>
+                    <p class="text-primary fw-semibold">Assistant Professor (CE) <br> <span class="badge bg-gold text-dark">Chief Advisor</span></p>
+                    <p class="small text-muted">PhD in Water Resources Engineering (2026), CUET</p>
+                    <p class="small text-muted mb-1"><i class="fas fa-envelope me-1"></i> acharya_shyamal@cuet.ac.bd</p>
+                    <p class="small text-muted"><i class="fas fa-phone me-1"></i> +8801716963388</p>
+                    <a href="{% url 'core:advisory_panel' %}" class="btn btn-sm btn-outline-primary rounded-pill mt-2">View Profile</a>
+                </div>
+            </div>
+        </div>
+        <!-- Other Advisors (compact) -->
+        <div class="col-md-6">
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="card h-100 shadow-sm border-0 text-center">
+                        <div class="card-body">
+                            <div class="bg-secondary bg-opacity-10 rounded-circle mb-2 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; margin: 0 auto;">
+                                <i class="fas fa-user fa-2x text-secondary"></i>
+                            </div>
+                            <h6 class="fw-bold">Sanjoy Das</h6>
+                            <p class="small text-muted">Assistant Professor (CE)</p>
+                            <span class="badge bg-light text-dark">Advisor</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card h-100 shadow-sm border-0 text-center">
+                        <div class="card-body">
+                            <div class="bg-secondary bg-opacity-10 rounded-circle mb-2 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; margin: 0 auto;">
+                                <i class="fas fa-user fa-2x text-secondary"></i>
+                            </div>
+                            <h6 class="fw-bold">Dr. Nursadul Mamun</h6>
+                            <p class="small text-muted">Assistant Professor (ETE)</p>
+                            <span class="badge bg-light text-dark">Advisor</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="card h-100 shadow-sm border-0 text-center">
+                        <div class="card-body">
+                            <div class="bg-secondary bg-opacity-10 rounded-circle mb-2 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; margin: 0 auto;">
+                                <i class="fas fa-user fa-2x text-secondary"></i>
+                            </div>
+                            <h6 class="fw-bold">Dr. Homayun Kabir</h6>
+                            <p class="small text-muted">Associate Professor (MIE)</p>
+                            <span class="badge bg-light text-dark">Advisor</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 {% endblock %}

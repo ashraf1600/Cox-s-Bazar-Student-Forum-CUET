@@ -322,3 +322,49 @@ def reply_message(request, message_id):
 
 
 
+def advisory_panel(request):
+    # Hard-coded advisory panel data
+    advisors = [
+        {
+            'name': 'Shyamal Acharya',
+            'designation': 'Assistant Professor (CE)',
+            'role': 'Chief Advisor',
+            'email': 'acharya_shyamal@cuet.ac.bd',
+            'phone': '+8801716963388',
+            'education': 'PhD in Water Resources Engineering (2026), CUET',
+            'image': 'images/shyamal.png'  # placeholder – you can add actual images later
+        },
+        {
+            'name': 'Sanjoy Das',
+            'designation': 'Assistant Professor (CE)',
+            'role': 'Advisor',
+            'email': 'sanjoyO7@cuet.ac.bd',
+            'phone': '+8801811302245',
+            'room': 'R/N: 1310',
+            'linkedin': 'https://linkedin.com/in/sanjoydas',
+            'education': 'M.Sc. Engineering in Civil Engineering',
+            'image': 'images/sanjoy.png'
+        },
+        {
+            'name': 'Dr. Nursadul Mamun',
+            'designation': 'Assistant Professor (ETE)',
+            'role': 'Advisor',
+            'email': 'nursad.mamun@cuet.ac.bd',
+            'phone': '+8801813977506',
+            'education': '',
+            'image': 'images/nursadul.png'
+        },
+        {
+            'name': 'Dr. Homayun Kabir',
+            'designation': 'Associate Professor (MIE)',
+            'role': 'Advisor',
+            'email': 'homayun@cuet.ac.bd',
+            'phone': '+8801814330170',
+            'education': '',
+            'image': 'images/homayun.png'
+        },
+    ]
+    return render(request, 'core/advisory_panel.html', {'advisors': advisors})
+
+
+

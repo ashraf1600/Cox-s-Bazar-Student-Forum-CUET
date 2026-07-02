@@ -1250,6 +1250,34 @@ a {
     max-width: 220px;          /* same as slider cards */
 }
 
+/* Gold badge – used for Chief Advisor and other highlights */
+.bg-gold {
+    background: #FFD966;
+    color: #1e2a3a;
+}
+
+/* Advisory Panel teaser – ensure consistent spacing */
+.advisory-card .card {
+    transition: transform 0.2s;
+}
+.advisory-card .card:hover {
+    transform: translateY(-4px);
+}
+.advisory-card .icon-circle-sm {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #e6f0ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+}
+.advisory-card .icon-circle-sm i {
+    font-size: 2rem;
+    color: #0066cc;
+}
+
 /* .featured-member{
     border-radius:24px;
     overflow:hidden;

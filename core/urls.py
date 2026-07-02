@@ -26,6 +26,7 @@ urlpatterns = [
     path('inbox/message/<int:message_id>/', views.view_message, name='view_message'),
     path('send-message/<int:user_id>/', views.send_message, name='send_message'),
     path('message/<int:message_id>/reply/', views.reply_message, name='reply_message'),
+    path('advisory-panel/', views.advisory_panel, name='advisory_panel'),
 ]
 
 

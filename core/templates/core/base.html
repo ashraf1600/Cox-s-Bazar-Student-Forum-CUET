@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
     <style>
-      
+        /* Additional inline styles can go here if needed */
     </style>
 </head>
 <body>
@@ -38,9 +38,9 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'core:member_directory' %}">Members</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'core:announcements' %}">Announcements</a></li>
                     
-                    <!-- Advisory Panel – regular link, no button -->
+                    <!-- Advisory Panel – fixed URL -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{'#'}" target="_blank">
+                        <a class="nav-link" href="{% url 'core:advisory_panel' %}">
                             <i class="fas fa-user-tie me-1"></i> Advisory Panel
                         </a>
                     </li>
