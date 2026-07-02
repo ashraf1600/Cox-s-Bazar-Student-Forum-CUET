@@ -15,13 +15,26 @@
         <div class="col-md-6 col-lg-4">
             <div class="card h-100 shadow-sm border-0 text-center">
                 <div class="card-body">
-                    {% if advisor.image %}
-                        <img src="{% static advisor.image %}" alt="{{ advisor.name }}" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid var(--primary-light);">
-                    {% else %}
-                        <div class="bg-secondary bg-opacity-10 rounded-circle mb-3 d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; margin: 0 auto;">
-                            <i class="fas fa-user fa-3x text-secondary"></i>
-                        </div>
-                    {% endif %}
+                    <!-- Profile Image with fallback -->
+                    <div style="position: relative; width: 120px; height: 120px; margin: 0 auto;">
+                        {% if advisor.image %}
+                            <img src="{% static advisor.image %}" 
+                                 alt="{{ advisor.name }}" 
+                                 class="rounded-circle mb-3" 
+                                 style="width: 120px; height: 120px; object-fit: cover; border: 3px solid var(--primary-light);"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="bg-secondary bg-opacity-10 rounded-circle mb-3 d-flex align-items-center justify-content-center" 
+                                 style="width: 120px; height: 120px; display: none; border: 3px solid var(--primary-light);">
+                                <i class="fas fa-user fa-3x text-secondary"></i>
+                            </div>
+                        {% else %}
+                            <div class="bg-secondary bg-opacity-10 rounded-circle mb-3 d-flex align-items-center justify-content-center" 
+                                 style="width: 120px; height: 120px; border: 3px solid var(--primary-light);">
+                                <i class="fas fa-user fa-3x text-secondary"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+
                     <h5 class="fw-bold">{{ advisor.name }}</h5>
                     <p class="text-primary fw-semibold">{{ advisor.designation }}</p>
                     {% if advisor.role %}
@@ -29,7 +42,9 @@
                     {% endif %}
                     <ul class="list-unstyled small text-start mt-3">
                         <li><i class="fas fa-envelope me-2 text-primary"></i> {{ advisor.email }}</li>
-                        <li><i class="fas fa-phone me-2 text-primary"></i> {{ advisor.phone }}</li>
+                        {% if advisor.phone %}
+                            <li><i class="fas fa-phone me-2 text-primary"></i> {{ advisor.phone }}</li>
+                        {% endif %}
                         {% if advisor.room %}
                             <li><i class="fas fa-door-open me-2 text-primary"></i> {{ advisor.room }}</li>
                         {% endif %}

@@ -323,48 +323,61 @@ def reply_message(request, message_id):
 
 
 def advisory_panel(request):
-    # Hard-coded advisory panel data
     advisors = [
         {
             'name': 'Shyamal Acharya',
-            'designation': 'Assistant Professor (CE)',
+            'designation': 'Assistant Professor, Dept of CE, CUET',
             'role': 'Chief Advisor',
             'email': 'acharya_shyamal@cuet.ac.bd',
             'phone': '+8801716963388',
             'education': 'PhD in Water Resources Engineering (2026), CUET',
-            'image': 'images/shyamal.png'  # placeholder – you can add actual images later
+            'image': 'advisors/shyamal.jpg'
         },
         {
-            'name': 'Sanjoy Das',
-            'designation': 'Assistant Professor (CE)',
+            'name': 'Kamrul Hasan Chowdhary',
+            'designation': 'Assistant Professor, Dept of Mathematics, CUET',
             'role': 'Advisor',
-            'email': 'sanjoyO7@cuet.ac.bd',
+            'email': 'kamrul@cuet.ac.bd',
+            'phone': '',
+            'education': '',
+            'image': 'advisors/kamrul.jpg'
+        },
+        {
+            'name': 'Humayun Kabir',
+            'designation': 'Professor, Dept of MIE, CUET',
+            'role': 'Advisor',
+            'email': 'humayun@cuet.ac.bd',
+            'phone': '+8801814330170',
+            'education': '',
+            'image': 'advisors/humayun.jpg'
+        },
+        {
+            'name': 'Sanjay Das',
+            'designation': 'Assistant Professor, Dept of CE, CUET',
+            'role': 'Advisor',
+            'email': 'sanjay@cuet.ac.bd',
             'phone': '+8801811302245',
-            'room': 'R/N: 1310',
-            'linkedin': 'https://linkedin.com/in/sanjoydas',
             'education': 'M.Sc. Engineering in Civil Engineering',
-            'image': 'images/sanjoy.png'
+            'linkedin': 'https://linkedin.com/in/sanjaydas',
+            'image': 'advisors/sanjay.jpg'
         },
         {
             'name': 'Dr. Nursadul Mamun',
-            'designation': 'Assistant Professor (ETE)',
+            'designation': 'Assistant Professor, Dept of ETE, CUET',
             'role': 'Advisor',
             'email': 'nursad.mamun@cuet.ac.bd',
             'phone': '+8801813977506',
             'education': '',
-            'image': 'images/nursadul.png'
+            'image': 'advisors/nursadul.jpg'
         },
         {
-            'name': 'Dr. Homayun Kabir',
-            'designation': 'Associate Professor (MIE)',
+            'name': 'Fahim Mahmud',
+            'designation': 'Assistant Professor, Dept of EEE, CUET',
             'role': 'Advisor',
-            'email': 'homayun@cuet.ac.bd',
-            'phone': '+8801814330170',
+            'email': 'fahim@cuet.ac.bd',
+            'phone': '',
             'education': '',
-            'image': 'images/homayun.png'
+            'image': 'advisors/fahim.jpg'
         },
     ]
     return render(request, 'core/advisory_panel.html', {'advisors': advisors})
-
-
-
