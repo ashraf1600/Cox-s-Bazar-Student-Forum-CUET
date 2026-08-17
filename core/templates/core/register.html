@@ -1,4 +1,4 @@
-﻿{% extends 'core/base.html' %}
+{% extends 'core/base.html' %}
 {% load static %}
 {% load crispy_forms_tags %}
 {% block title %}Sign Up{% endblock %}
@@ -30,14 +30,17 @@
                             {% csrf_token %}
                             <div class="col-12">{{ form|crispy }}</div>
                             <div class="col-12">
-                                <div class="alert alert-info rounded-pill">Your CUET email must end with <strong>@student.cuet.ac.bd</strong> for current students. Alumni should use their registered email.</div>
+                                <div class="alert alert-info rounded-3 mb-0" id="role_info_box">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <span id="role_info_text">Running students must use their <strong>@student.cuet.ac.bd</strong> institutional email address.</span>
+                                </div>
                             </div>
                             <div class="col-12 d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg rounded-pill">Register</button>
+                                <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-semibold" style="background-color: #0066cc;">Register Account</button>
                             </div>
                         </form>
                         <div class="text-center mt-4">
-                            Already have an account? <a href="{% url 'core:login' %}" class="text-decoration-none text-primary">Login</a>
+                            Already have an account? <a href="{% url 'core:login' %}" class="text-decoration-none fw-semibold" style="color: #0066cc;">Login Here</a>
                         </div>
                     </div>
                 </div>
@@ -45,4 +48,28 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const memberTypeSelect = document.getElementById('id_member_type');
+        const roleInfoText = document.getElementById('role_info_text');
+        
+        function updateRoleHelper() {
+            if (!memberTypeSelect) return;
+            const val = memberTypeSelect.value;
+            if (val === 'running_student') {
+                roleInfoText.innerHTML = 'Running students must use their <strong>@student.cuet.ac.bd</strong> email address, Batch, and Department.';
+            } else if (val === 'alumni') {
+                roleInfoText.innerHTML = 'Alumni can use any valid email. <strong>Batch, Department, and Graduation Year</strong> are required.';
+            } else if (val === 'advisory') {
+                roleInfoText.innerHTML = 'Advisory Panel members must specify their <strong>Faculty Designation</strong>.';
+            }
+        }
+        
+        if (memberTypeSelect) {
+            memberTypeSelect.addEventListener('change', updateRoleHelper);
+            updateRoleHelper();
+        }
+    });
+</script>
 {% endblock %}

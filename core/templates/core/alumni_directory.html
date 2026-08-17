@@ -1,0 +1,194 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Alumni Directory{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Banner -->
+    <div class="card border-0 shadow-sm rounded-4 text-white mb-4" style="background: linear-gradient(135deg, #0052cc 0%, #0066cc 60%, #0033aa 100%);">
+        <div class="card-body p-4 p-md-5">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="fw-bold mb-2"><i class="fas fa-user-graduate text-warning me-2"></i>Alumni Network Directory</h1>
+                    <p class="lead mb-0 text-light opacity-90">Connecting CUET graduates from Cox's Bazar. Find and network with seniors across batches and industries.</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <span class="badge bg-warning text-dark px-3 py-2 fs-6 rounded-pill fw-semibold shadow-sm">
+                        <i class="fas fa-graduation-cap me-1"></i> {{ page_obj.paginator.count }} Alumni Listed
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <form method="GET" action="{% url 'core:alumni_directory' %}" class="row g-3">
+                <!-- Search Keyword -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold text-secondary small">Search Alumni</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" name="search" class="form-control bg-light border-start-0 ps-0" placeholder="Name, company, designation..." value="{{ search_query }}">
+                    </div>
+                </div>
+
+                <!-- Batch Filter -->
+                <div class="col-md-2 col-6">
+                    <label class="form-label fw-semibold text-secondary small">Batch</label>
+                    <select name="batch" class="form-select bg-light">
+                        <option value="">All Batches</option>
+                        {% for b in batches %}
+                            <option value="{{ b }}" {% if selected_batch == b|stringformat:"s" %}selected{% endif %}>Batch {{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Department Filter -->
+                <div class="col-md-3 col-6">
+                    <label class="form-label fw-semibold text-secondary small">Department</label>
+                    <select name="department" class="form-select bg-light">
+                        <option value="">All Departments</option>
+                        {% for dept in departments %}
+                            <option value="{{ dept.id }}" {% if selected_department == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Graduation Year Filter -->
+                <div class="col-md-2 col-6">
+                    <label class="form-label fw-semibold text-secondary small">Graduation Year</label>
+                    <select name="graduation_year" class="form-select bg-light">
+                        <option value="">All Years</option>
+                        {% for gy in grad_years %}
+                            <option value="{{ gy }}" {% if selected_grad_year == gy|stringformat:"s" %}selected{% endif %}>{{ gy }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Filter Actions -->
+                <div class="col-md-1 col-6 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100 fw-semibold" style="background-color: #0066cc; border-color: #0066cc;">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alumni Cards Grid -->
+    {% if page_obj %}
+        <div class="row g-4 mb-4">
+            {% for alumni in page_obj %}
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden hover-card transition-all" style="border-left: 4px solid #0066cc !important;">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-start gap-3">
+                                <!-- Photo / Avatar -->
+                                <div class="position-relative">
+                                    {% if alumni.profile_photo %}
+                                        <img src="{{ alumni.profile_photo.url }}" alt="{{ alumni.full_name }}" class="rounded-circle object-fit-cover shadow-sm" width="80" height="80">
+                                    {% else %}
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 80px; height: 80px; background: linear-gradient(135deg, #0066cc, #0044aa); font-size: 1.6rem;">
+                                            {{ alumni.full_name|slice:":1" }}
+                                        </div>
+                                    {% endif %}
+                                    <span class="position-absolute bottom-0 end-0 bg-warning border border-2 border-white rounded-circle p-1" title="Alumni Member">
+                                        <i class="fas fa-graduation-cap text-dark" style="font-size: 0.75rem;"></i>
+                                    </span>
+                                </div>
+
+                                <!-- Alumni Information -->
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h5 class="fw-bold mb-1 text-dark">{{ alumni.full_name }}</h5>
+                                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                                <span class="badge bg-primary-subtle text-primary fw-medium px-2.5 py-1 rounded-2">
+                                                    <i class="fas fa-layer-group me-1"></i>Batch {{ alumni.batch|default:"N/A" }}
+                                                </span>
+                                                {% if alumni.graduation_year %}
+                                                    <span class="badge bg-warning-subtle text-dark fw-medium px-2.5 py-1 rounded-2">
+                                                        <i class="fas fa-award me-1"></i>Graduated {{ alumni.graduation_year }}
+                                                    </span>
+                                                {% endif %}
+                                                {% if alumni.department %}
+                                                    <span class="badge bg-secondary-subtle text-secondary fw-medium px-2.5 py-1 rounded-2">
+                                                        {{ alumni.department.name }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Company & Designation -->
+                                    <div class="mt-2 text-secondary small">
+                                        {% if alumni.company or alumni.designation %}
+                                            <p class="mb-1 fw-semibold text-dark">
+                                                <i class="fas fa-briefcase text-primary me-2"></i>
+                                                {{ alumni.designation|default:"Alumni Member" }}
+                                                {% if alumni.company %} at <strong>{{ alumni.company }}</strong>{% endif %}
+                                            </p>
+                                        {% endif %}
+                                        {% if alumni.upazila %}
+                                            <p class="mb-0 text-muted">
+                                                <i class="fas fa-map-marker-alt text-danger me-2"></i>{{ alumni.upazila }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Footer Links -->
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                                <span class="small text-muted">Serial: <strong>{{ alumni.serial_no|default:"Approved" }}</strong></span>
+                                <a href="{% url 'core:member_profile' alumni.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+                                    View Profile <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if page_obj.has_other_pages %}
+            <nav aria-label="Alumni Directory Pagination" class="d-flex justify-content-center mt-4">
+                <ul class="pagination pagination-rounded shadow-sm">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&batch={{ selected_batch }}&department={{ selected_department }}&graduation_year={{ selected_grad_year }}">&laquo; Previous</a>
+                        </li>
+                    {% endif %}
+
+                    {% for i in page_obj.paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item active"><span class="page-link" style="background-color: #0066cc; border-color: #0066cc;">{{ i }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}&search={{ search_query }}&batch={{ selected_batch }}&department={{ selected_department }}&graduation_year={{ selected_grad_year }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&batch={{ selected_batch }}&department={{ selected_department }}&graduation_year={{ selected_grad_year }}">Next &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-5">
+            <i class="fas fa-user-slash text-muted mb-3" style="font-size: 3rem;"></i>
+            <h4 class="fw-bold text-dark">No Alumni Found</h4>
+            <p class="text-secondary">Try adjusting your filters or search terms.</p>
+            <div>
+                <a href="{% url 'core:alumni_directory' %}" class="btn btn-outline-primary rounded-pill px-4">Reset Filters</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

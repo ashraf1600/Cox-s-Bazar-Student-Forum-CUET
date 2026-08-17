@@ -1,0 +1,49 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Switch to Alumni Status{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 600px;">
+    <div class="card border-0 shadow rounded-4 overflow-hidden">
+        <div class="card-header text-white p-4 text-center border-0" style="background: linear-gradient(135deg, #0052cc 0%, #0066cc 100%);">
+            <div class="bg-warning text-dark rounded-circle d-inline-flex align-items-center justify-content-center mb-2 shadow-sm" style="width: 60px; height: 60px;">
+                <i class="fas fa-user-graduate fa-2x"></i>
+            </div>
+            <h3 class="fw-bold mb-1">Graduation Update</h3>
+            <p class="mb-0 text-light opacity-90 small">Switch your account status from Running Student to Alumni</p>
+        </div>
+        <div class="card-body p-4 p-md-5">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-secondary small">Graduation Year *</label>
+                    {{ form.graduation_year }}
+                    {% if form.graduation_year.errors %}
+                        <div class="text-danger small mt-1">{{ form.graduation_year.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-secondary small">Current Company / Organization</label>
+                    {{ form.company }}
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold text-secondary small">Current Job Designation</label>
+                    {{ form.designation }}
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-warning text-dark fw-bold py-2.5 rounded-pill shadow-sm">
+                        <i class="fas fa-check-circle me-1"></i> Update to Alumni Status
+                    </button>
+                    <a href="{% url 'core:view_profile' %}" class="btn btn-outline-secondary rounded-pill py-2">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

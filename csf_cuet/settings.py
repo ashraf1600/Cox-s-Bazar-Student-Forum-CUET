@@ -17,6 +17,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'drf_yasg',
     'crispy_forms',
     'crispy_bootstrap5',
     'core',
@@ -25,7 +29,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -33,6 +37,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 
 ROOT_URLCONF = 'csf_cuet.urls'
 
@@ -142,35 +147,6 @@ JAZZMIN_SETTINGS = {
     "search_model": ["core.User", "core.Post"],
 }
 
-# # settings.py
-
-# JAZZMIN_SETTINGS = {
-#     # Title of the window (Will default to current_admin_site.site_title)
-#     "site_title": "CSF-CUET Admin",
-#     # Title on the login screen
-#     "site_header": "Cox's Bazar Student Forum, CUET ",
-#     # Title on the brand (19 chars max)
-#     "site_brand": "CSF-CUET Admin Portal",
-#     # Logo to use for your site, must be present in static files
-#     "site_logo": "admin/image/logo.png", # You'll need to add this logo file
-#     "site_logo_classes": "img-circle",
-#     # Welcome text on the login screen
-#     "welcome_sign": "Welcome to the CSF-CUET Admin Panel",
-#     # Copyright on the footer
-#     "copyright": "Cox's Bazar Student Forum, CUET",
-#     # Icons for side menu apps/models (using Font Awesome icons)
-#     "icons": {
-#         "auth": "fas fa-users-cog",
-#         "auth.user": "fas fa-user",
-#         "core.User": "fas fa-user-circle",
-#     },
-#     # Whether to aut expand the menu
-#     "navigation_expanded": True,
-#     # Hide these apps when generating side menu e.g (auth)
-#     "hide_apps": [],
-#     # List of apps to base side menu ordering off of
-#     "order_with_respect_to": ["auth", "core"],
-# }
 
 
 def unread_count(request):
@@ -188,4 +164,27 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
+}
+
+# CORS Settings
+CORS_ALLOW_ALL_ORIGINS = True
+
+# Django REST Framework Settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ),
+}
+
+# Simple JWT Settings
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }

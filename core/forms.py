@@ -1,5 +1,5 @@
 from django import forms
-from .models import User, Department, Post, Comment , Message
+from .models import User, Department, Post, Comment, Message, PhotoGallery
 from django.contrib.auth.forms import AuthenticationForm
 
 class RegistrationForm(forms.ModelForm):
@@ -14,48 +14,73 @@ class RegistrationForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['full_name', 'email', 'batch', 'department', 'blood_group', 
-                  'gender', 'phone', 'address', 'dob', 'upazila', 'profile_photo']
+        fields = ['full_name', 'email', 'member_type', 'batch', 'graduation_year', 'department', 'blood_group', 
+                  'gender', 'phone', 'address', 'dob', 'upazila', 'designation', 'profile_photo']
         widgets = {
-            'full_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'batch': forms.NumberInput(attrs={'class': 'form-control'}),
+            'full_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Name'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email Address'}),
+            'member_type': forms.Select(attrs={'class': 'form-control', 'id': 'id_member_type'}),
+            'batch': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Batch (e.g. 17)'}),
+            'graduation_year': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Graduation Year (e.g. 2022)'}),
             'department': forms.Select(attrs={'class': 'form-control'}),
             'blood_group': forms.Select(attrs={'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'dob': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'upazila': forms.TextInput(attrs={'class': 'form-control'}),
+            'designation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Faculty Designation (for Advisory Panel)'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.field_order = [
-            'full_name', 'email', 'batch', 'department', 'blood_group', 
-            'gender', 'phone', 'address', 'dob', 'upazila', 'profile_photo',
+            'full_name', 'email', 'member_type', 'batch', 'graduation_year', 'department', 'blood_group', 
+            'gender', 'phone', 'address', 'dob', 'upazila', 'designation', 'profile_photo',
             'password', 'confirm_password'
         ]
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        # We accept both students and alumni. Alumni may use their personal/current email domains.
-        # Pending accounts are manually verified and approved by the admin committee.
         if User.objects.filter(email=email).exists():
-            raise forms.ValidationError('Email already registered')
+            raise forms.ValidationError('Email is already registered.')
         return email
 
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get('password')
         confirm_password = cleaned_data.get('confirm_password')
+        member_type = cleaned_data.get('member_type')
+        email = cleaned_data.get('email')
+        batch = cleaned_data.get('batch')
+        department = cleaned_data.get('department')
+        graduation_year = cleaned_data.get('graduation_year')
+
         if password and confirm_password and password != confirm_password:
-            raise forms.ValidationError('Passwords do not match')
+            raise forms.ValidationError('Passwords do not match.')
+
+        if member_type == 'running_student':
+            if email and '@student.cuet.ac.bd' not in email.lower():
+                self.add_error('email', 'Running students must register with their @student.cuet.ac.bd email address.')
+            if not batch:
+                self.add_error('batch', 'Batch is required for running students.')
+            if not department:
+                self.add_error('department', 'Department is required for running students.')
+
+        elif member_type == 'alumni':
+            if not batch:
+                self.add_error('batch', 'Batch is required for alumni.')
+            if not department:
+                self.add_error('department', 'Department is required for alumni.')
+            if not graduation_year:
+                self.add_error('graduation_year', 'Graduation Year is required for alumni.')
+
+        elif member_type == 'advisory':
+            designation = cleaned_data.get('designation')
+            if not designation:
+                self.add_error('designation', 'Faculty designation is required for Advisory Panel members.')
+
         return cleaned_data
 
-# LoginForm, PostForm, CommentForm remain unchanged# forms.py
-from django import forms
-from .models import User
 
 class ProfileUpdateForm(forms.ModelForm):
     # upazila already has choices from the model; we only need to add a blank option.
@@ -137,4 +162,34 @@ class MessageForm(forms.ModelForm):
             'subject': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Subject'}),
             'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Your message...'}),
         }
-        
+
+
+class PhotoGalleryForm(forms.ModelForm):
+    class Meta:
+        model = PhotoGallery
+        fields = ['title', 'description', 'image', 'category', 'is_featured']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Photo Title'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Optional photo description...'}),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'is_featured': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class SwitchToAlumniForm(forms.Form):
+    graduation_year = forms.IntegerField(
+        required=True,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 2024'}),
+        label='Graduation Year'
+    )
+    company = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Current Company / Organization'}),
+        label='Current Company'
+    )
+    designation = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Designation / Job Title'}),
+        label='Designation'
+    )

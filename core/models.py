@@ -35,6 +35,11 @@ class Department(models.Model):
 class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = [('member', 'Member'), ('admin', 'Admin')]
     STATUS_CHOICES = [('pending', 'Pending Approval'), ('active', 'Active'), ('inactive', 'Inactive')]
+    MEMBER_TYPE_CHOICES = [
+        ('running_student', 'Running Student'),
+        ('alumni', 'Alumni'),
+        ('advisory', 'Advisory Panel'),
+    ]
     BLOOD_GROUPS = [('A+','A+'),('A-','A-'),('B+','B+'),('B-','B-'),('AB+','AB+'),('AB-','AB-'),('O+','O+'),('O-','O-')]
     GENDER_CHOICES = [('Male','Male'),('Female','Female'),('Other','Other')]
     UPAZILA_CHOICES = [
@@ -55,6 +60,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     full_name = models.CharField(max_length=200)
     email = models.EmailField(unique=True)
     batch = models.IntegerField(null=True, blank=True)
+    graduation_year = models.IntegerField(null=True, blank=True)
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True)
     blood_group = models.CharField(max_length=3, choices=BLOOD_GROUPS)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
@@ -72,6 +78,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     work_address = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='member')
+    member_type = models.CharField(max_length=20, choices=MEMBER_TYPE_CHOICES, default='running_student')
+    is_alumni = models.BooleanField(default=False)
+    is_alumni_verified = models.BooleanField(default=False, help_text="Admin-verified alumni status")
     date_joined = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -229,7 +238,29 @@ class Message(models.Model):
         ordering = ['is_read', '-created_at']
 
     def __str__(self):
-        return f"{self.sender} → {self.recipient}: {self.subject[:30]}"    
+        return f"{self.sender} → {self.recipient}: {self.subject[:30]}"
 
 
-        
+class PhotoGallery(models.Model):
+    CATEGORY_CHOICES = [
+        ('Event', 'Event'),
+        ('Workshop', 'Workshop'),
+        ('Social', 'Social'),
+        ('Sports', 'Sports'),
+        ('Academic', 'Academic'),
+        ('Other', 'Other'),
+    ]
+    id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    image = models.ImageField(upload_to='gallery/')
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='Event')
+    uploaded_date = models.DateTimeField(auto_now_add=True)
+    is_featured = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-uploaded_date']
+
+    def __str__(self):
+        return self.title

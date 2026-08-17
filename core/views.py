@@ -4,16 +4,12 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Q, Exists, OuterRef
+from django.db.models import Q, Exists, OuterRef, Count
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
-from .models import User, Department, CommitteeMember, Announcement, Post, Comment, Like
-from .forms import RegistrationForm, LoginForm, ProfileUpdateForm, PostForm, CommentForm
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from .models import Message
-from .forms import MessageForm
+from django.utils import timezone
+from .models import User, Department, CommitteeMember, Announcement, Post, Comment, Like, Event, Message, PhotoGallery
+from .forms import RegistrationForm, LoginForm, ProfileUpdateForm, PostForm, CommentForm, MessageForm, PhotoGalleryForm, SwitchToAlumniForm
 
 def is_admin(user):
     return user.is_authenticated and (user.role == 'admin' or user.is_superuser)
@@ -51,10 +47,34 @@ def committee_page(request):
         'past_committees': past_committees,
     })
 
+def register(request):
+    if request.user.is_authenticated:
+        return redirect('core:dashboard')
+    
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST, request.FILES)
+        if form.is_valid():
+            user = form.save(commit=False)
+            password = form.cleaned_data.get('password')
+            user.set_password(password)
+            user.status = 'pending'
+            
+            # Set is_alumni if member_type is alumni
+            if user.member_type == 'alumni':
+                user.is_alumni = True
+            
+            user.save()
+            messages.success(request, 'Registration successful! Please wait for admin approval.')
+            return redirect('core:login')
+    else:
+        form = RegistrationForm()
+    
+    return render(request, 'core/register.html', {'form': form})
+
+    
 @active_member_required
 def member_directory(request):
     members = User.objects.filter(status='active')
-    
     search_query = request.GET.get('search', '')
     department_id = request.GET.get('department', '')
     batch = request.GET.get('batch', '')
@@ -87,23 +107,90 @@ def member_profile(request, user_id):
     member = get_object_or_404(User, id=user_id, status='active')
     return render(request, 'core/member_profile.html', {'member': member})
 
-def register(request):
-    if request.user.is_authenticated:
-        return redirect('core:dashboard')
+def alumni_directory(request):
+    """Public alumni directory – shows only admin-verified alumni.
+    Backwards-compatible: legacy users with is_alumni=True who were verified
+    before the is_alumni_verified field existed are still listed.
+    """
+    alumni_list = User.objects.filter(
+        status='active'
+    ).filter(
+        Q(is_alumni_verified=True) | Q(is_alumni=True, member_type='alumni')
+    )
+
+    search_query = request.GET.get('search', '').strip()
+    department_id = request.GET.get('department', '').strip()
+    batch = request.GET.get('batch', '').strip()
+    grad_year = request.GET.get('graduation_year', '').strip()
+
+    if search_query:
+        alumni_list = alumni_list.filter(
+            Q(full_name__icontains=search_query) |
+            Q(company__icontains=search_query) |
+            Q(designation__icontains=search_query)
+        )
+    if department_id:
+        alumni_list = alumni_list.filter(department_id=department_id)
+    if batch:
+        alumni_list = alumni_list.filter(batch=batch)
+    if grad_year:
+        alumni_list = alumni_list.filter(graduation_year=grad_year)
+
+    alumni_list = alumni_list.order_by('-graduation_year', '-batch', 'full_name')
+
+    paginator = Paginator(alumni_list, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    departments = Department.objects.all()
+    base_alumni = User.objects.filter(status='active').filter(
+        Q(is_alumni_verified=True) | Q(is_alumni=True, member_type='alumni')
+    )
+    batches = base_alumni.filter(batch__isnull=False).values_list('batch', flat=True).distinct().order_by('-batch')
+    grad_years = base_alumni.filter(graduation_year__isnull=False).values_list('graduation_year', flat=True).distinct().order_by('-graduation_year')
+
+    return render(request, 'core/alumni_directory.html', {
+        'page_obj': page_obj,
+        'departments': departments,
+        'batches': batches,
+        'grad_years': grad_years,
+        'search_query': search_query,
+        'selected_department': department_id,
+        'selected_batch': batch,
+        'selected_grad_year': grad_year,
+    })
+
+def committee_directory(request):
+    committee_members = CommitteeMember.objects.filter(is_current=True)
     
-    if request.method == 'POST':
-        form = RegistrationForm(request.POST, request.FILES)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])
-            user.status = 'pending'
-            user.save()
-            messages.success(request, 'Registration successful! Please wait for admin approval.')
-            return redirect('core:login')
-    else:
-        form = RegistrationForm()
-    
-    return render(request, 'core/register.html', {'form': form})
+    search_query = request.GET.get('search', '').strip()
+    designation = request.GET.get('designation', '').strip()
+    session_year = request.GET.get('session_year', '').strip()
+
+    if search_query:
+        committee_members = committee_members.filter(
+            Q(user__full_name__icontains=search_query) |
+            Q(designation__icontains=search_query)
+        )
+    if designation:
+        committee_members = committee_members.filter(designation__icontains=designation)
+    if session_year:
+        committee_members = committee_members.filter(session_year=session_year)
+
+    committee_members = committee_members.order_by('order', 'designation')
+
+    designations = CommitteeMember.objects.filter(is_current=True).values_list('designation', flat=True).distinct()
+    session_years = CommitteeMember.objects.values_list('session_year', flat=True).distinct().order_by('-session_year')
+
+    return render(request, 'core/committee_directory.html', {
+        'committee_members': committee_members,
+        'designations': designations,
+        'session_years': session_years,
+        'search_query': search_query,
+        'selected_designation': designation,
+        'selected_session_year': session_year,
+    })
+
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -165,13 +252,25 @@ def dashboard(request):
     # --- Recent announcements (latest 5) ---
     recent_announcements = Announcement.objects.all().order_by('-is_pinned', '-created_at')[:5]
 
+    # --- Alumni Statistics Widget Data ---
+    alumni_qs = User.objects.filter(status='active').filter(
+        Q(is_alumni_verified=True) | Q(is_alumni=True, member_type='alumni')
+    )
+    total_alumni = alumni_qs.count()
+    alumni_by_batch = list(alumni_qs.filter(batch__isnull=False).values('batch').annotate(count=Count('id')).order_by('-batch'))
+    alumni_by_dept = list(alumni_qs.filter(department__isnull=False).values('department__name').annotate(count=Count('id')).order_by('department__name'))
+
     context = {
         'form': form,
         'page_obj': page_obj,
         'upcoming_events': upcoming_events,
         'recent_announcements': recent_announcements,
+        'total_alumni': total_alumni,
+        'alumni_by_batch': alumni_by_batch,
+        'alumni_by_dept': alumni_by_dept,
     }
     return render(request, 'core/dashboard.html', context)
+
 
 @active_member_required
 def like_post(request, post_id):
@@ -381,3 +480,74 @@ def advisory_panel(request):
         },
     ]
     return render(request, 'core/advisory_panel.html', {'advisors': advisors})
+
+
+def gallery_view(request):
+    category = request.GET.get('category', '').strip()
+    photos = PhotoGallery.objects.all()
+    if category:
+        photos = photos.filter(category=category)
+    
+    paginator = Paginator(photos, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    categories = PhotoGallery.CATEGORY_CHOICES
+    return render(request, 'core/gallery.html', {
+        'page_obj': page_obj,
+        'categories': categories,
+        'selected_category': category,
+    })
+
+@login_required
+@user_passes_test(is_admin)
+def admin_gallery_view(request):
+    if request.method == 'POST':
+        form = PhotoGalleryForm(request.POST, request.FILES)
+        if form.is_valid():
+            photo = form.save(commit=False)
+            photo.uploaded_by = request.user
+            photo.save()
+            messages.success(request, 'Photo uploaded successfully to gallery!')
+            return redirect('core:admin_gallery')
+    else:
+        form = PhotoGalleryForm()
+    
+    photos = PhotoGallery.objects.all()
+    return render(request, 'core/admin_gallery.html', {
+        'form': form,
+        'photos': photos,
+    })
+
+@login_required
+def delete_gallery_photo(request, photo_id):
+    if not is_admin(request.user):
+        messages.error(request, 'Unauthorized access.')
+        return redirect('core:gallery')
+    photo = get_object_or_404(PhotoGallery, id=photo_id)
+    photo.delete()
+    messages.success(request, 'Photo deleted successfully.')
+    return redirect('core:admin_gallery')
+
+@login_required
+def switch_to_alumni(request):
+    if request.method == 'POST':
+        form = SwitchToAlumniForm(request.POST)
+        if form.is_valid():
+            user = request.user
+            user.member_type = 'alumni'
+            user.is_alumni = True
+            user.graduation_year = form.cleaned_data['graduation_year']
+            if form.cleaned_data.get('company'):
+                user.company = form.cleaned_data['company']
+            if form.cleaned_data.get('designation'):
+                user.designation = form.cleaned_data['designation']
+            user.save()
+            messages.success(request, 'Congratulations! Your status has been updated to Alumni.')
+            return redirect('core:view_profile')
+    else:
+        form = SwitchToAlumniForm(initial={
+            'company': request.user.company,
+            'designation': request.user.designation
+        })
+    return render(request, 'core/switch_to_alumni.html', {'form': form})

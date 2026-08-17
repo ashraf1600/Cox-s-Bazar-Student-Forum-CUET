@@ -1,0 +1,123 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Photo Gallery{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Showcase -->
+    <div class="card border-0 shadow-sm rounded-4 text-white mb-4" style="background: linear-gradient(135deg, #0033aa 0%, #0066cc 60%, #0099ff 100%);">
+        <div class="card-body p-4 p-md-5">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="fw-bold mb-2"><i class="fas fa-camera-retro text-warning me-2"></i>CSF Activity Gallery</h1>
+                    <p class="lead mb-0 text-light opacity-90">Capturing memorable moments, events, seminars, and sports activities of Cox's Bazar Student Forum, CUET.</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    {% if user.is_authenticated and user.role == 'admin' or user.is_staff %}
+                        <a href="{% url 'core:admin_gallery' %}" class="btn btn-warning fw-semibold px-4 py-2 rounded-pill shadow-sm">
+                            <i class="fas fa-plus me-1"></i> Manage Gallery
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Filter Tabs -->
+    <div class="d-flex flex-wrap gap-2 mb-4 justify-content-center">
+        <a href="{% url 'core:gallery' %}" class="btn btn-sm {% if not selected_category %}btn-primary fw-bold{% else %}btn-outline-primary{% endif %} rounded-pill px-3 py-2">
+            All Photos
+        </a>
+        {% for cat_val, cat_label in categories %}
+            <a href="?category={{ cat_val }}" class="btn btn-sm {% if selected_category == cat_val %}btn-primary fw-bold{% else %}btn-outline-primary{% endif %} rounded-pill px-3 py-2">
+                {{ cat_label }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <!-- Gallery Grid -->
+    {% if page_obj %}
+        <div class="row g-4 mb-4">
+            {% for photo in page_obj %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 hover-card">
+                        <div class="position-relative overflow-hidden" style="height: 240px;">
+                            <img src="{{ photo.image.url }}" alt="{{ photo.title }}" class="w-100 h-100 object-fit-cover transition-transform" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#lightboxModal{{ photo.id }}">
+                            <span class="position-absolute top-0 end-0 bg-primary text-white badge m-3 px-3 py-1 rounded-pill">
+                                {{ photo.category }}
+                            </span>
+                            {% if photo.is_featured %}
+                                <span class="position-absolute top-0 start-0 bg-warning text-dark badge m-3 px-2 py-1 rounded-pill">
+                                    <i class="fas fa-star me-1"></i> Featured
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body p-3">
+                            <h5 class="fw-bold mb-1 text-dark" style="font-size: 1.1rem;">{{ photo.title }}</h5>
+                            {% if photo.description %}
+                                <p class="text-secondary small mb-2 text-truncate">{{ photo.description }}</p>
+                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-center text-muted small pt-2 border-top">
+                                <span><i class="far fa-calendar-alt me-1"></i> {{ photo.uploaded_date|date:"M d, Y" }}</span>
+                                <button class="btn btn-sm btn-link text-primary p-0 fw-semibold text-decoration-none" data-bs-toggle="modal" data-bs-target="#lightboxModal{{ photo.id }}">
+                                    View Full Screen <i class="fas fa-expand ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lightbox Modal -->
+                <div class="modal fade" id="lightboxModal{{ photo.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content border-0 rounded-4 overflow-hidden bg-dark text-white">
+                            <div class="modal-header border-0 position-absolute w-100" style="z-index: 10; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);">
+                                <h5 class="modal-title fw-bold text-white">{{ photo.title }}</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body p-0 text-center bg-black">
+                                <img src="{{ photo.image.url }}" alt="{{ photo.title }}" class="img-fluid" style="max-height: 80vh;">
+                            </div>
+                            {% if photo.description %}
+                                <div class="modal-footer border-0 bg-dark text-start justify-content-start">
+                                    <p class="mb-0 text-light">{{ photo.description }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if page_obj.has_other_pages %}
+            <nav class="d-flex justify-content-center mt-4">
+                <ul class="pagination pagination-rounded shadow-sm">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&category={{ selected_category }}">&laquo; Previous</a></li>
+                    {% endif %}
+
+                    {% for i in page_obj.paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item active"><span class="page-link" style="background-color: #0066cc; border-color: #0066cc;">{{ i }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}&category={{ selected_category }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&category={{ selected_category }}">Next &raquo;</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-5">
+            <i class="fas fa-images text-muted mb-3" style="font-size: 3rem;"></i>
+            <h4 class="fw-bold text-dark">No Photos Available</h4>
+            <p class="text-secondary">Check back soon for new gallery updates!</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

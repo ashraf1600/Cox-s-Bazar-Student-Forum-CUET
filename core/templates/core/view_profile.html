@@ -1,4 +1,4 @@
-﻿{% extends 'core/base.html' %}
+{% extends 'core/base.html' %}
 {% block title %}My Profile{% endblock %}
 
 {% block content %}
@@ -14,6 +14,11 @@
                             <div class="bg-secondary rounded-circle mx-auto mb-3" style="width:150px;height:150px;"></div>
                         {% endif %}
                         <h4>{{ profile_user.full_name }}</h4>
+                        <div class="mb-2">
+                            <span class="badge {% if profile_user.member_type == 'alumni' or profile_user.is_alumni %}bg-warning text-dark{% elif profile_user.member_type == 'advisory' %}bg-info text-white{% else %}bg-primary{% endif %} px-3 py-1 rounded-pill">
+                                {{ profile_user.get_member_type_display|default:"Running Student" }}
+                            </span>
+                        </div>
                         <p class="text-muted">{{ profile_user.serial_no|default:"No serial assigned" }}</p>
                         <div class="text-start mt-4">
                             <p><i class="fas fa-envelope me-2"></i>{{ profile_user.email }}</p>
@@ -22,6 +27,9 @@
                             <p><i class="fas fa-birthday-cake me-2"></i>DOB: {{ profile_user.dob|date:"F j, Y"|default:"Not set" }}</p>
                         </div>
                         <a href="{% url 'core:update_profile' %}" class="btn btn-primary w-100 mt-3"><i class="fas fa-edit me-2"></i> Edit Profile</a>
+                        {% if profile_user.member_type == 'running_student' and not profile_user.is_alumni %}
+                            <a href="{% url 'core:switch_to_alumni' %}" class="btn btn-outline-warning text-dark w-100 mt-2 fw-bold"><i class="fas fa-graduation-cap me-2"></i> Switch to Alumni Status</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -31,8 +39,12 @@
                     <div class="card-body">
                         <p><strong>Batch:</strong> {{ profile_user.batch|default:"Not set" }}</p>
                         <p><strong>Department:</strong> {{ profile_user.department.name|default:"Not set" }}</p>
+                        {% if profile_user.graduation_year %}
+                            <p><strong>Graduation Year:</strong> <span class="badge bg-warning text-dark fs-6">{{ profile_user.graduation_year }}</span></p>
+                        {% endif %}
                     </div>
                 </div>
+
                 <div class="card mb-4 shadow-sm">
                     <div class="card-header bg-primary text-white">Professional Information</div>
                     <div class="card-body">
