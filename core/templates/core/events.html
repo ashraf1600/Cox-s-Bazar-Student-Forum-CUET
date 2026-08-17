@@ -4,12 +4,37 @@
 {% block content %}
 <div class="section bg-white">
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-column flex-md-row gap-3">
-            <div>
-                <h2 class="section-title mb-1">Upcoming & Past Events</h2>
-                <p class="section-description">Browse all forum events, whether you want to attend, sponsor, or volunteer.</p>
+        <!-- Page hero -->
+        <div class="dashboard-welcome">
+            <div class="welcome-card flex-column flex-md-row text-center text-md-start">
+                <div class="welcome-left">
+                    <div class="welcome-avatar"><i class="fas fa-calendar-alt"></i></div>
+                    <div>
+                        <div class="welcome-eyebrow">Events</div>
+                        <h1 class="welcome-name">Upcoming &amp; Past Events</h1>
+                        <p class="welcome-meta justify-content-center justify-content-md-start">
+                            <span><i class="fas fa-sparkles me-1"></i> Browse all forum events</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="welcome-stats">
+                    <div class="welcome-stat">
+                        <span class="welcome-stat-num">{{ page_obj.paginator.count|default:0 }}</span>
+                        <span class="welcome-stat-label">Total</span>
+                    </div>
+                    <div class="welcome-divider"></div>
+                    <div class="welcome-stat">
+                        <span class="welcome-stat-num">{{ page_obj|length }}</span>
+                        <span class="welcome-stat-label">This page</span>
+                    </div>
+                </div>
             </div>
-            <a href="{% url 'core:homepage' %}" class="btn btn-outline-primary">Back to home</a>
+        </div>
+
+        <div class="d-flex justify-content-end mb-4">
+            <a href="{% url 'core:homepage' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-1"></i> Back to home
+            </a>
         </div>
         <div class="row g-4">
             {% for event in page_obj %}
@@ -30,7 +55,13 @@
                 </div>
             </div>
             {% empty %}
-            <div class="col-12"><div class="alert alert-info">No events found.</div></div>
+            <div class="col-12">
+                <div class="card empty-state-card text-center p-5">
+                    <div class="empty-icon"><i class="far fa-calendar-alt"></i></div>
+                    <h5 class="mb-1">No events yet</h5>
+                    <p class="text-muted mb-0">Check back soon — new events are announced regularly.</p>
+                </div>
+            </div>
             {% endfor %}
         </div>
 

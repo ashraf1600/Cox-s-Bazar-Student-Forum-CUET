@@ -18,41 +18,50 @@
 </head>
 <body>
 
-    <!-- Sticky Navbar – Advisory Panel as regular link -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-glass shadow-sm sticky-top" style="z-index: 1050;">
+    <!-- Premium Sticky Navbar (Glass + Gold Accent) -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-glass sticky-top" style="z-index: 1050;">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center fw-bold" href="{% url 'core:homepage' %}">
-                <img src="{% static 'images/logo.png' %}" alt="CSF,CUET Logo" height="36" class="me-2 rounded" 
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'core:homepage' %}">
+                <img src="{% static 'images/logo.png' %}" alt="CSF-CUET Logo" height="36" class="me-2 rounded"
                      onerror="this.style.display='none'" loading="lazy">
-                <span>CSF,CUET</span>
+                <span>CSF<span class="gold">-</span>CUET</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                     aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'core:homepage' %}">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'core:about' %}">About Us</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'core:committee' %}">Committee</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'core:member_directory' %}">Members</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'core:announcements' %}">Announcements</a></li>
-                    
-                    <!-- Advisory Panel – fixed URL -->
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'core:advisory_panel' %}">
-                            <i class="fas fa-user-tie me-1"></i> Advisory Panel
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'homepage' %}active{% endif %}" href="{% url 'core:homepage' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}" href="{% url 'core:about' %}">About</a></li>
+
+                    <!-- Community Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if request.resolver_match.url_name in 'committee,alumni_directory,committee_directory,advisory_panel' %}active{% endif %}"
+                           href="#" id="navbarCommunityDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-users me-1"></i> Community
                         </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarCommunityDropdown">
+                            <li><a class="dropdown-item" href="{% url 'core:committee' %}"><i class="fas fa-user-tie me-2"></i> Committee</a></li>
+                            <li><a class="dropdown-item" href="{% url 'core:alumni_directory' %}"><i class="fas fa-graduation-cap me-2"></i> Alumni</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'core:advisory_panel' %}"><i class="fas fa-user-graduate me-2"></i> Advisory Panel</a></li>
+                        </ul>
                     </li>
-                    
+
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'events' or request.resolver_match.url_name == 'event_detail' %}active{% endif %}" href="{% url 'core:events' %}"><i class="fas fa-calendar-alt me-1"></i> Events</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'gallery' %}active{% endif %}" href="{% url 'core:gallery' %}"><i class="fas fa-images me-1"></i> Gallery</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'announcements' %}active{% endif %}" href="{% url 'core:announcements' %}"><i class="fas fa-bullhorn me-1"></i> Announcements</a></li>
+
                     {% if user.is_authenticated and user.status == 'active' %}
-                        <li class="nav-item ms-lg-3">
-                            <a class="nav-link" href="{% url 'core:dashboard' %}">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}">
                                 <i class="fas fa-tachometer-alt me-1"></i> Dashboard
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'core:inbox' %}">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'inbox' or request.resolver_match.url_name == 'message_detail' %}active{% endif %}" href="{% url 'core:inbox' %}">
                                 <i class="fas fa-inbox me-1"></i> Inbox
                                 {% if unread_count > 0 %}
                                     <span class="badge bg-danger rounded-pill ms-1">{{ unread_count }}</span>
@@ -60,11 +69,12 @@
                             </a>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarProfileDropdown" role="button" 
+                            <a class="nav-link dropdown-toggle {% if request.resolver_match.url_name in 'view_profile,update_profile,edit_profile' %}active{% endif %}"
+                               href="#" id="navbarProfileDropdown" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-user-circle me-1"></i> {{ user.full_name|truncatechars:18 }}
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="navbarProfileDropdown">
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarProfileDropdown">
                                 <li><a class="dropdown-item" href="{% url 'core:view_profile' %}"><i class="fas fa-id-card me-2"></i> My Profile</a></li>
                                 <li><a class="dropdown-item" href="{% url 'core:update_profile' %}"><i class="fas fa-edit me-2"></i> Edit Profile</a></li>
                                 <li><hr class="dropdown-divider"></li>

@@ -5,12 +5,37 @@
 {% block content %}
 <div class="section bg-white">
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-column flex-md-row gap-3">
-            <div>
-                <h2 class="section-title mb-1">News & Announcements</h2>
-                <p class="section-description">Stay updated on the latest news and important forum announcements.</p>
+        <!-- Page hero -->
+        <div class="dashboard-welcome">
+            <div class="welcome-card flex-column flex-md-row text-center text-md-start">
+                <div class="welcome-left">
+                    <div class="welcome-avatar"><i class="fas fa-bullhorn"></i></div>
+                    <div>
+                        <div class="welcome-eyebrow">Forum News</div>
+                        <h1 class="welcome-name">News &amp; Announcements</h1>
+                        <p class="welcome-meta justify-content-center justify-content-md-start">
+                            <span><i class="fas fa-sparkles me-1"></i> Official updates from CSF-CUET</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="welcome-stats">
+                    <div class="welcome-stat">
+                        <span class="welcome-stat-num">{{ page_obj.paginator.count|default:0 }}</span>
+                        <span class="welcome-stat-label">Total</span>
+                    </div>
+                    <div class="welcome-divider"></div>
+                    <div class="welcome-stat">
+                        <span class="welcome-stat-num">{{ page_obj|length }}</span>
+                        <span class="welcome-stat-label">This page</span>
+                    </div>
+                </div>
             </div>
-            <a href="{% url 'core:homepage' %}" class="btn btn-outline-primary">Back to home</a>
+        </div>
+
+        <div class="d-flex justify-content-end mb-4">
+            <a href="{% url 'core:homepage' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-1"></i> Back to home
+            </a>
         </div>
         <div class="row g-4">
             {% for announcement in page_obj %}
@@ -30,7 +55,13 @@
                 </div>
             </div>
             {% empty %}
-            <div class="col-12"><div class="alert alert-info">No announcements found.</div></div>
+            <div class="col-12">
+                <div class="card empty-state-card text-center p-5">
+                    <div class="empty-icon"><i class="fas fa-bullhorn"></i></div>
+                    <h5 class="mb-1">No announcements yet</h5>
+                    <p class="text-muted mb-0">Check back soon — official updates are posted regularly.</p>
+                </div>
+            </div>
             {% endfor %}
         </div>
 
