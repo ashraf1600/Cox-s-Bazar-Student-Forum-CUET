@@ -1,15 +1,26 @@
 import re
 
-from django.db import models
+from django.db import models, transaction, IntegrityError
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
 
+STUDENT_EMAIL_DOMAIN = '@student.cuet.ac.bd'
+
+
+def is_student_email(email):
+    return bool(email) and email.strip().lower().endswith(STUDENT_EMAIL_DOMAIN)
+
+
 # User Manager
 class UserManager(BaseUserManager):
+    def get_by_natural_key(self, username):
+        # Case-insensitive login: "Foo@x.com" and "foo@x.com" are the same account.
+        return self.get(**{f'{self.model.USERNAME_FIELD}__iexact': username})
+
     def create_user(self, email, full_name, password=None, **extra_fields):
         if not email:
             raise ValueError('Email is required')
-        email = self.normalize_email(email)
+        email = self.normalize_email(email).lower()
         user = self.model(email=email, full_name=full_name, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -92,47 +103,57 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.full_name} ({self.serial_no or 'Pending'})"
 
+    @property
+    def is_site_admin(self):
+        return self.is_authenticated and (self.role == 'admin' or self.is_superuser)
+
+    @property
+    def is_active_member(self):
+        return self.status == 'active'
+
+    # Non-student serials are always CSF + exactly 5 digits (CBSF is the legacy prefix).
+    # Student serials are CSF + the 7-digit student ID, so the two ranges never overlap.
+    NON_STUDENT_SERIAL_RE = r'^(CSF|CBSF)[0-9]{5}$'
+
+    def _student_serial(self):
+        if not is_student_email(self.email):
+            return None
+        local_part = self.email.split('@')[0]          # e.g. u2104096
+        student_id = re.sub(r'\D', '', local_part[1:])  # "2104096"
+        return f"CSF{student_id}" if student_id else None
+
+    @classmethod
+    def _next_non_student_serial(cls):
+        serials = cls.objects.filter(serial_no__regex=cls.NON_STUDENT_SERIAL_RE).values_list('serial_no', flat=True)
+        last_num = max((int(re.sub(r'\D', '', s)) for s in serials), default=0)
+        return f"CSF{last_num + 1:05d}"
+
     def save(self, *args, **kwargs):
-                
-                if self.status == 'active':
-                    # CASE 1: Student email
-                    if self.email and '@student.cuet.ac.bd' in self.email:
-                        local_part = self.email.split('@')[0]
-                        # local_part example: u2104096
-                        if len(local_part) >= 2:
-                            # Extract from index 1 to end (2nd to 8th character)
-                            student_id = local_part[1:]  # "2104096"
-                            # Keep only digits (just in case)
-                            student_id = re.sub(r'\D', '', student_id)
-                            if student_id:
-                                expected_serial = f"CSF{student_id}"
-                                # Assign only if not already set correctly
-                                if self.serial_no != expected_serial:
-                                    self.serial_no = expected_serial
+        if self.email:
+            self.email = self.email.strip().lower()
 
-                    # CASE 2: Non-student or extraction failed – auto-increment
-                    if not self.serial_no:
-                        last_user = User.objects.filter(serial_no__isnull=False).order_by('-id').first()
-                        if last_user and last_user.serial_no:
-                            # Extract numeric part after "CSF" or "CBSF"
-                            # Handle both prefixes
-                            num_part = last_user.serial_no
-                            if num_part.startswith('CSF'):
-                                num_part = num_part[3:]
-                            elif num_part.startswith('CBSF'):
-                                num_part = num_part[4:]
-                            else:
-                                num_part = ''
-                            if num_part.isdigit():
-                                last_num = int(num_part)
-                            else:
-                                last_num = 0
-                            new_num = last_num + 1
-                        else:
-                            new_num = 1
-                        self.serial_no = f"CSF{new_num:05d}"
+        generated = False
+        if self.status == 'active':
+            student_serial = self._student_serial()
+            if student_serial:
+                self.serial_no = student_serial
+            elif not self.serial_no:
+                self.serial_no = self._next_non_student_serial()
+                generated = True
 
-                super().save(*args, **kwargs)
+        if not generated:
+            return super().save(*args, **kwargs)
+
+        # Two approvals at the same moment can pick the same number; retry with the next one.
+        for attempt in range(5):
+            try:
+                with transaction.atomic():
+                    return super().save(*args, **kwargs)
+            except IntegrityError:
+                clash = User.objects.filter(serial_no=self.serial_no).exclude(pk=self.pk).exists()
+                if not clash or attempt == 4:
+                    raise
+                self.serial_no = self._next_non_student_serial()
 
 # CommitteeMember
 class CommitteeMember(models.Model):
@@ -217,6 +238,33 @@ class Event(models.Model):
     status = models.CharField(max_length=10, choices=[('draft','Draft'),('published','Published')], default='draft')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['-date']
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def seats_left(self):
+        """None means unlimited capacity (capacity = 0)."""
+        if not self.capacity:
+            return None
+        return max(self.capacity - self.registrations.count(), 0)
+
+
+class EventRegistration(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='registrations')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='event_registrations')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['event', 'user']
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.user.full_name} → {self.event.title}"
+
+
 class Announcement(models.Model):
     admin = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='announcements')
     title = models.CharField(max_length=200)
@@ -225,20 +273,62 @@ class Announcement(models.Model):
     is_pinned = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['-is_pinned', '-created_at']
+
+    def __str__(self):
+        return self.title
+
+
+class MessageQuerySet(models.QuerySet):
+    def between(self, user_a, user_b):
+        """All messages exchanged between two members, in either direction."""
+        return self.filter(
+            models.Q(sender=user_a, recipient=user_b) | models.Q(sender=user_b, recipient=user_a)
+        )
+
 
 class Message(models.Model):
+    MAX_BODY_LENGTH = 2000
+
     sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='sent_messages')
     recipient = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='received_messages')
-    subject = models.CharField(max_length=200)
-    body = models.TextField()
+    # Chat messages have no subject; older email-style messages keep theirs.
+    subject = models.CharField(max_length=200, blank=True, default='')
+    body = models.TextField(max_length=MAX_BODY_LENGTH)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    objects = MessageQuerySet.as_manager()
+
     class Meta:
         ordering = ['is_read', '-created_at']
+        indexes = [
+            models.Index(fields=['sender', 'recipient', 'created_at']),
+            models.Index(fields=['recipient', 'is_read']),
+        ]
 
     def __str__(self):
-        return f"{self.sender} → {self.recipient}: {self.subject[:30]}"
+        return f"{self.sender} → {self.recipient}: {(self.subject or self.body)[:30]}"
+
+
+class Block(models.Model):
+    """`blocker` no longer receives messages from `blocked` (and can't message them either)."""
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocks_made')
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocks_received')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['blocker', 'blocked']
+
+    def __str__(self):
+        return f"{self.blocker} blocked {self.blocked}"
+
+    @classmethod
+    def exists_between(cls, user_a, user_b):
+        return cls.objects.filter(
+            models.Q(blocker=user_a, blocked=user_b) | models.Q(blocker=user_b, blocked=user_a)
+        ).exists()
 
 
 class PhotoGallery(models.Model):

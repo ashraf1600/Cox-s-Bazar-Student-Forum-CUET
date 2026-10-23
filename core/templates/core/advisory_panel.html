@@ -1,64 +1,36 @@
 {% extends 'core/base.html' %}
-{% load static %}
-{% block title %}Advisory Panel — CSF-CUET{% endblock %}
+{% load ui %}
+{% block title %}Advisory panel{% endblock %}
 
 {% block content %}
-<section class="container py-5">
-    <div class="text-center mb-5">
-        <span class="section-eyebrow">Our Mentors</span>
-        <h1 class="section-title">Advisory Panel</h1>
-        <p class="text-muted mt-2">Guiding our community with wisdom and experience</p>
-    </div>
+<div class="page">
+    {% include 'core/partials/page_head.html' with title='Advisory panel' sub="CUET faculty who guide the forum. Reach out for academic advice or support with forum programs." %}
 
-    <div class="row g-4 justify-content-center">
+    <div class="people-grid">
         {% for advisor in advisors %}
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <!-- Profile Image with fallback -->
-                    <div style="position: relative; width: 120px; height: 120px; margin: 0 auto;">
-                        {% if advisor.image %}
-                            <img src="{% static advisor.image %}" 
-                                 alt="{{ advisor.name }}" 
-                                 class="rounded-circle mb-3" 
-                                 style="width: 120px; height: 120px; object-fit: cover; border: 3px solid var(--primary-light);"
-                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div class="bg-secondary bg-opacity-10 rounded-circle mb-3 d-flex align-items-center justify-content-center" 
-                                 style="width: 120px; height: 120px; display: none; border: 3px solid var(--primary-light);">
-                                <i class="fas fa-user fa-3x text-secondary"></i>
-                            </div>
-                        {% else %}
-                            <div class="bg-secondary bg-opacity-10 rounded-circle mb-3 d-flex align-items-center justify-content-center" 
-                                 style="width: 120px; height: 120px; border: 3px solid var(--primary-light);">
-                                <i class="fas fa-user fa-3x text-secondary"></i>
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <h5 class="fw-bold">{{ advisor.name }}</h5>
-                    <p class="text-primary fw-semibold">{{ advisor.designation }}</p>
-                    {% if advisor.role %}
-                        <span class="badge bg-gold text-dark mb-2">{{ advisor.role }}</span>
+            <article class="person-card is-centered{% if advisor.role == 'Chief Advisor' %} is-lead{% endif %}">
+                <div class="person-top">
+                    {% if advisor.image_url %}
+                        <img src="{{ advisor.image_url }}" alt="" class="avatar" style="--avatar-size: 96px;" loading="lazy">
+                    {% else %}
+                        <span class="avatar avatar-initials avatar-hue-{{ forloop.counter0|divisibleby:2|yesno:'0,1' }}" style="--avatar-size: 96px;" aria-hidden="true">{{ advisor.name|initials }}</span>
                     {% endif %}
-                    <ul class="list-unstyled small text-start mt-3">
-                        <li><i class="fas fa-envelope me-2 text-primary"></i> {{ advisor.email }}</li>
-                        {% if advisor.phone %}
-                            <li><i class="fas fa-phone me-2 text-primary"></i> {{ advisor.phone }}</li>
-                        {% endif %}
-                        {% if advisor.room %}
-                            <li><i class="fas fa-door-open me-2 text-primary"></i> {{ advisor.room }}</li>
-                        {% endif %}
-                        {% if advisor.education %}
-                            <li><i class="fas fa-graduation-cap me-2 text-primary"></i> {{ advisor.education }}</li>
-                        {% endif %}
-                        {% if advisor.linkedin %}
-                            <li><i class="fab fa-linkedin me-2 text-primary"></i> <a href="{{ advisor.linkedin }}" target="_blank" class="text-decoration-none">LinkedIn</a></li>
-                        {% endif %}
-                    </ul>
+                    <div>
+                        <h2 class="person-name">{{ advisor.name }}</h2>
+                        <span class="role-label">{% if advisor.role == 'Chief Advisor' %}Chief advisor{% else %}Advisor{% endif %}</span>
+                        <p class="person-sub">{{ advisor.designation }}</p>
+                        {% if advisor.education %}<p class="person-sub mt-1">{{ advisor.education }}</p>{% endif %}
+                    </div>
                 </div>
-            </div>
-        </div>
+                <div class="person-foot">
+                    <div class="actions">
+                        <a href="mailto:{{ advisor.email }}" class="social-btn" aria-label="Email {{ advisor.name }}" title="{{ advisor.email }}"><i class="fas fa-envelope"></i></a>
+                        {% if advisor.phone %}<a href="tel:{{ advisor.phone }}" class="social-btn" aria-label="Call {{ advisor.name }}" title="{{ advisor.phone }}"><i class="fas fa-phone"></i></a>{% endif %}
+                        {% if advisor.linkedin %}<a href="{{ advisor.linkedin }}" target="_blank" rel="noopener noreferrer" class="social-btn" aria-label="{{ advisor.name }} on LinkedIn"><i class="fab fa-linkedin-in"></i></a>{% endif %}
+                    </div>
+                </div>
+            </article>
         {% endfor %}
     </div>
-</section>
+</div>
 {% endblock %}

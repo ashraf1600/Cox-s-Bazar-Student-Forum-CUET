@@ -1,156 +1,68 @@
-﻿{% extends 'core/base.html' %}
-{% load static %}
-{% block title %}About Us — Cox's Bazar Student Forum, CUET{% endblock %}
+{% extends 'core/base.html' %}
+{% block title %}About{% endblock %}
 
 {% block content %}
-<!-- Hero Section (full‑width with overlay) -->
-<section class="about-hero mb-5">
-    <div class="container py-5">
-        <div class="row align-items-center">
-            <div class="col-lg-7 text-white" data-aos="fade-right">
-                <span class="section-eyebrow text-white-75">About Us</span>
-                <h1 class="display-5 fw-bold mb-3">Cox's Bazar Student Forum at CUET</h1>
-                <p class="lead text-white-75 mb-4">Empowering students and alumni from Cox's Bazar at CUET through connection, leadership, and community impact.</p>
-                <div class="d-flex flex-wrap gap-2 mb-4">
-                    <span class="badge about-badge px-3 py-2">Innovation</span>
-                    <span class="badge about-badge px-3 py-2">Excellence</span>
-                    <span class="badge about-badge px-3 py-2">Leadership</span>
-                    <span class="badge about-badge px-3 py-2">Community</span>
-                </div>
-                <div class="about-hero-stats d-flex flex-wrap gap-4 align-items-center">
-                    <div>
-                        <p class="mb-1 text-white-75">Members Connected</p>
-                        <h2 class="mb-0 text-white fw-bold">500+</h2>
-                    </div>
-                    <div>
-                        <p class="mb-1 text-white-75">Annual Events</p>
-                        <h2 class="mb-0 text-white fw-bold">20+</h2>
-                    </div>
-                    <div>
-                        <p class="mb-1 text-white-75">Scholarships Awarded</p>
-                        <h2 class="mb-0 text-white fw-bold">100+</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-5 mt-5 mt-lg-0" data-aos="fade-left">
-                <div class="hero-stats-card p-4 rounded-4 shadow-lg">
-                    <h4 class="mb-3 text-white">A stronger community begins here.</h4>
-                    <p class="text-white-75 mb-4">We are dedicated to building a network of motivated learners and supporters who uplift each other.</p>
-                    <div class="d-flex gap-3">
-                        <div class="text-center flex-fill">
-                            <span class="d-block fs-4 fw-bold text-gold">05</span>
-                            <small class="text-white-50">Years Active</small>
-                        </div>
-                        <div class="text-center flex-fill">
-                            <span class="d-block fs-4 fw-bold text-gold">15</span>
-                            <small class="text-white-50">Partner Groups</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+<div class="page">
+    {% include 'core/partials/page_head.html' with title="About the forum" sub="Cox's Bazar Students' Forum brings together everyone from Cox's Bazar district who studies, studied or teaches at CUET." %}
 
-<div class="container">
-    <!-- Mission & Vision Cards -->
-    <div class="row g-4 mb-5">
-        <div class="col-md-6" data-aos="fade-up">
-            <div class="card feature-card h-100 border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <div class="icon-feature mb-3"><i class="fas fa-bullseye fa-2x text-primary"></i></div>
-                    <h3 class="h4 fw-bold">Our Mission</h3>
-                    <p class="mb-0 text-muted">To unite students and alumni from Cox's Bazar studying at CUET, foster academic excellence, provide career support, and contribute to the development of our home district.</p>
-                </div>
-            </div>
+    <div class="about-intro">
+        <div class="prose">
+            <p>Leaving Cox's Bazar for an engineering campus in Raozan is a big step. The forum makes sure nobody takes it alone: seniors help juniors with courses, halls and admissions, alumni share jobs and referrals, and everyone turns up when someone back home needs blood.</p>
+            <p>Our mission is to unite students and alumni from Cox's Bazar at CUET, support academic excellence and careers, and give back to our home district. We want a connected, resourceful community of Cox's Bazar talent that lifts each other up.</p>
         </div>
-        <div class="col-md-6" data-aos="fade-up" data-aos-delay="100">
-            <div class="card feature-card h-100 border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <div class="icon-feature mb-3"><i class="fas fa-eye fa-2x text-primary"></i></div>
-                    <h3 class="h4 fw-bold">Our Vision</h3>
-                    <p class="mb-0 text-muted">Build a strong, connected, and resourceful community of Cox's Bazar talent that uplifts each other and gives back to society.</p>
-                </div>
-            </div>
-        </div>
+        <section class="surface surface-pad">
+            <h2 class="h5 mb-3">The forum today</h2>
+            <ul class="facts">
+                <li><strong>{{ stats.members }}</strong><span>approved members</span></li>
+                <li><strong>{{ stats.alumni }}</strong><span>verified alumni</span></li>
+                <li><strong>{{ stats.batches }}</strong><span>batches</span></li>
+                <li><strong>{{ stats.events_held }}</strong><span>events held</span></li>
+            </ul>
+            <p class="small text-muted mt-3 mb-0">Live counts from the member database.</p>
+        </section>
     </div>
 
-    <!-- What We Do + Callout -->
-    <div class="row align-items-start g-4 mb-5">
-        <div class="col-lg-8">
-            <h3 class="section-title mb-4">What We Do</h3>
-            <div class="row g-4">
-                <div class="col-md-4" data-aos="zoom-in">
-                    <div class="card text-center h-100 border-0 shadow-sm">
-                        <div class="card-body p-4">
-                            <div class="icon-circle mx-auto mb-3"><i class="fas fa-chalkboard-user"></i></div>
-                            <h5 class="fw-bold">Academic Events</h5>
-                            <p class="text-muted small">Workshops, seminars, and study circles designed to grow knowledge and skills.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4" data-aos="zoom-in" data-aos-delay="100">
-                    <div class="card text-center h-100 border-0 shadow-sm">
-                        <div class="card-body p-4">
-                            <div class="icon-circle mx-auto mb-3"><i class="fas fa-hand-holding-dollar"></i></div>
-                            <h5 class="fw-bold">Scholarships</h5>
-                            <p class="text-muted small">Financial aid and support for meritorious students from our community.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4" data-aos="zoom-in" data-aos-delay="200">
-                    <div class="card text-center h-100 border-0 shadow-sm">
-                        <div class="card-body p-4">
-                            <div class="icon-circle mx-auto mb-3"><i class="fas fa-network-wired"></i></div>
-                            <h5 class="fw-bold">Networking</h5>
-                            <p class="text-muted small">Connect with alumni, professionals, and peers who can help build your future.</p>
-                        </div>
-                    </div>
-                </div>
+    <section class="section">
+        <div class="section-head"><h2>What we do</h2></div>
+        <div class="pillars">
+            <div class="pillar">
+                <i class="fas fa-chalkboard-user"></i>
+                <h3>Academic support</h3>
+                <p>Workshops, seminars and study circles, plus a board where juniors can ask seniors anything.</p>
+            </div>
+            <div class="pillar">
+                <i class="fas fa-hand-holding-heart"></i>
+                <h3>Scholarships and welfare</h3>
+                <p>Financial support for meritorious students from our district, and blood donors on call.</p>
+            </div>
+            <div class="pillar">
+                <i class="fas fa-people-arrows"></i>
+                <h3>Alumni network</h3>
+                <p>Graduates in industry and academia who share jobs, internships and career advice.</p>
             </div>
         </div>
-        <div class="col-lg-4" data-aos="fade-left">
-            <div class="callout-card p-4 rounded-4 bg-primary text-white h-100 shadow-sm">
-                <span class="section-eyebrow text-white-75">Why Join Us</span>
-                <h4 class="fw-bold mt-2">Grow with like‑minded leaders.</h4>
-                <p class="mt-3">From mentorship to career guidance, our forum helps you learn, contribute, and inspire your peers.</p>
-                <ul class="list-unstyled mt-4 mb-0">
-                    <li class="mb-3"><i class="fas fa-check-circle me-2 text-gold"></i> <strong>Hands‑on opportunities</strong> with real events and projects.</li>
-                    <li class="mb-3"><i class="fas fa-check-circle me-2 text-gold"></i> <strong>Peer support</strong> from an active academic community.</li>
-                    <li><i class="fas fa-check-circle me-2 text-gold"></i> <strong>Career growth</strong> through alumni connections and workshops.</li>
-                </ul>
-            </div>
-        </div>
-    </div>
+    </section>
 
-    <!-- History Timeline -->
-    <div class="bg-white p-4 rounded-4 shadow-sm mb-5" data-aos="fade-up">
-        <h3 class="section-title mb-4">Our Story</h3>
-        <div class="timeline">
-            <div class="timeline-item d-flex gap-3 mb-3">
-                <div class="timeline-year fw-bold text-primary">2015</div>
-                <div>Forum established with 20 founding members.</div>
-            </div>
-            <div class="timeline-item d-flex gap-3 mb-3">
-                <div class="timeline-year fw-bold text-primary">2018</div>
-                <div>First annual reunion and cultural program.</div>
-            </div>
-            <div class="timeline-item d-flex gap-3 mb-3">
-                <div class="timeline-year fw-bold text-primary">2022</div>
-                <div>Launched scholarship program for underprivileged students.</div>
-            </div>
-            <div class="timeline-item d-flex gap-3">
-                <div class="timeline-year fw-bold text-primary">2026</div>
-                <div>Digital platform launched to connect 500+ members.</div>
-            </div>
+    <section class="section">
+        <div class="section-head"><h2>Our story</h2></div>
+        <div class="surface surface-pad">
+            <ol class="timeline">
+                <li><strong>2015</strong><span>The forum is founded by 20 students from Cox's Bazar at CUET.</span></li>
+                <li><strong>2018</strong><span>First annual reunion and cultural program for students and alumni.</span></li>
+                <li><strong>2022</strong><span>Scholarship program for students from underprivileged families in Cox's Bazar.</span></li>
+                <li><strong>2026</strong><span>This online forum launches, connecting members across every batch.</span></li>
+            </ol>
         </div>
-    </div>
+    </section>
+
+    {% if not user.is_authenticated %}
+    <section class="join-band">
+        <div>
+            <h2>Part of the Cox's Bazar family at CUET?</h2>
+            <p>Create an account. The committee approves every new member.</p>
+        </div>
+        <a href="{% url 'core:register' %}" class="btn btn-primary btn-lg">Join the forum</a>
+    </section>
+    {% endif %}
 </div>
-
-<!-- AOS animations (optional – adds scroll reveals) -->
-<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script>
-    AOS.init({ duration: 600, once: true });
-</script>
 {% endblock %}

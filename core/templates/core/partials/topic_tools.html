@@ -1,0 +1,101 @@
+{# Edit modal + like/edit/delete behaviour for topics. Context: categories, csrf_token. Optional: after_delete_url #}
+<div class="modal fade" id="editPostModal" tabindex="-1" aria-labelledby="editPostModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="editPostModalLabel">Edit topic</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editPostForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="edit_content" class="form-label">Topic</label>
+                        <textarea name="content" id="edit_content" class="form-control" rows="6" required></textarea>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-5">
+                            <label for="edit_category" class="form-label">Board</label>
+                            <select name="category" id="edit_category" class="form-select">
+                                {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <label for="edit_image" class="form-label">Replace photo <span class="text-muted fw-normal">(optional)</span></label>
+                            <input type="file" name="image" id="edit_image" class="form-control" accept="image/*">
+                        </div>
+                    </div>
+                    <div id="currentImagePreview" class="mt-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const csrf = '{{ csrf_token }}';
+
+    document.querySelectorAll('.like-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            fetch(btn.dataset.url, { method: 'POST', headers: { 'X-CSRFToken': csrf } })
+                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function (data) {
+                    btn.querySelector('.likes-count').textContent = data.likes_count || '';
+                    btn.querySelector('.like-word').textContent = data.likes_count ? '' : 'Like';
+                    btn.classList.toggle('liked', data.liked);
+                    btn.setAttribute('aria-pressed', data.liked);
+                    const icon = btn.querySelector('.fa-heart');
+                    icon.classList.toggle('fas', data.liked);
+                    icon.classList.toggle('far', !data.liked);
+                })
+                .catch(function () {});
+        });
+    });
+
+    const modal = document.getElementById('editPostModal');
+    modal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const postId = button.getAttribute('data-post-id');
+        document.getElementById('editPostForm').action = '/post/' + postId + '/edit/';
+        document.getElementById('edit_content').value = button.getAttribute('data-content');
+        document.getElementById('edit_category').value = button.getAttribute('data-category');
+        const preview = document.getElementById('currentImagePreview');
+        preview.replaceChildren();
+        const imageUrl = button.getAttribute('data-image-url');
+        if (imageUrl) {
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.style.cssText = 'max-height:120px;border-radius:6px;border:1px solid var(--line)';
+            const label = document.createElement('div');
+            label.className = 'form-text';
+            label.textContent = 'Current photo. It stays unless you choose a new one.';
+            preview.append(img, label);
+        }
+    });
+
+    document.querySelectorAll('.delete-post-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (!confirm('Delete this topic and all its replies? This cannot be undone.')) return;
+            fetch('/post/' + btn.dataset.postId + '/delete/', { method: 'POST', headers: { 'X-CSRFToken': csrf } })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (!data.success) throw new Error(data.error);
+                    {% if after_delete_url %}
+                    location.href = '{{ after_delete_url }}';
+                    {% else %}
+                    const topic = btn.closest('.topic');
+                    topic.style.transition = 'opacity .2s';
+                    topic.style.opacity = '0';
+                    setTimeout(function () { topic.remove(); }, 220);
+                    {% endif %}
+                })
+                .catch(function () { alert('The topic could not be deleted. Refresh the page and try again.'); });
+        });
+    });
+});
+</script>

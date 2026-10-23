@@ -1,0 +1,7 @@
+<li>
+    <span class="info-icon"><i class="fas {{ icon }}"></i></span>
+    <div>
+        <span class="info-label">{{ label }}</span>
+        {% if value %}<span class="info-value">{{ value }}</span>{% else %}<span class="info-value is-empty">{{ empty|default:"Not added" }}</span>{% endif %}
+    </div>
+</li>

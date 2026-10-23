@@ -1,328 +1,152 @@
-﻿{% extends 'core/base.html' %}
-{% load static %}
-{% block title %}Home — Cox's Bazar Student Forum, CUET{% endblock %}
+{% extends 'core/base.html' %}
+{% load ui static %}
+{% block title %}Cox's Bazar Students' Forum at CUET{% endblock %}
 
 {% block content %}
-<!-- ── Hero Section ── -->
-<section class="hero-section"
-         style="background: linear-gradient(135deg, rgba(11,31,75,0.88) 0%, rgba(19,41,102,0.80) 50%, rgba(11,31,75,0.92) 100%),
-                url('{% static 'images/image.png' %}') center/cover no-repeat fixed;">
-    <div class="container py-5">
-        <div class="row align-items-center min-vh-75">
-            <div class="col-lg-7">
-                <div class="hero-eyebrow">Est. 2009 · CUET Campus</div>
-                <h1 class="hero-title">
-                    Cox's Bazar<br>
-                    <span class="highlight-gold">Student Forum</span><br>
-                    at CUET
-                </h1>
-                <p class="hero-lead">
-                    A trusted community network for students and alumni from Cox's Bazar at CUET —
-                    built for connection, academic growth, and collective opportunity.
-                </p>
-                <div class="hero-actions">
-                    <a href="{% url 'core:register' %}" class="btn btn-gold btn-lg">
-                        <i class="fas fa-user-plus"></i> Join the Forum
-                    </a>
-                    <a href="{% url 'core:about' %}" class="btn btn-outline-light btn-lg">
-                        Learn More <i class="fas fa-arrow-right ms-1"></i>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Stats Side Panel -->
-            <div class="col-lg-4 offset-lg-1 d-none d-lg-block">
-                <div class="hero-stats-card">
-                    <div class="hero-stat">
-                        <span class="hero-stat-num">{{ total_members }}+</span>
-                        <span class="hero-stat-label">Active Members</span>
-                    </div>
-                    <div class="hero-stat">
-                        <span class="hero-stat-num">15+</span>
-                        <span class="hero-stat-label">Events Held</span>
-                    </div>
-                    <div class="hero-stat">
-                        <span class="hero-stat-num">10+</span>
-                        <span class="hero-stat-label">Batches</span>
-                    </div>
-                    <div class="hero-stat" style="border-bottom:none;">
-                        <span class="hero-stat-num">50+</span>
-                        <span class="hero-stat-label">Alumni Network</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="hero-wave">
-        <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 40C240 80 480 0 720 40C960 80 1200 0 1440 40V80H0V40Z" fill="#FAFAF7"/>
-        </svg>
-    </div>
-</section>
-
-<!-- ── Value Props ── -->
-<section class="container mt-5 pt-3">
-    <div class="text-center mb-5">
-        <span class="section-eyebrow">Why Join Us</span>
-        <h2 class="section-title mx-auto" style="max-width:400px;">Everything your community needs</h2>
-    </div>
-    <div class="row g-4">
-        <div class="col-sm-6 col-lg-3">
-            <article class="card value-card h-100 text-center border-0 shadow-sm">
-                <div class="card-body py-5">
-                    <div class="icon-circle"><i class="fas fa-users"></i></div>
-                    <h5 class="value-title">Connect</h5>
-                    <p class="text-muted">Network with peers from Cox's Bazar across all batches and departments.</p>
-                </div>
-            </article>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <article class="card value-card h-100 text-center border-0 shadow-sm">
-                <div class="card-body py-5">
-                    <div class="icon-circle"><i class="fas fa-calendar-alt"></i></div>
-                    <h5 class="value-title">Participate</h5>
-                    <p class="text-muted">Discover academic, cultural, and social events throughout the year.</p>
-                </div>
-            </article>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <article class="card value-card h-100 text-center border-0 shadow-sm">
-                <div class="card-body py-5">
-                    <div class="icon-circle"><i class="fas fa-graduation-cap"></i></div>
-                    <h5 class="value-title">Scholarships</h5>
-                    <p class="text-muted">Support and access financial aid for talented students from Cox's Bazar.</p>
-                </div>
-            </article>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <article class="card value-card h-100 text-center border-0 shadow-sm">
-                <div class="card-body py-5">
-                    <div class="icon-circle"><i class="fas fa-briefcase"></i></div>
-                    <h5 class="value-title">Grow</h5>
-                    <p class="text-muted">Share jobs, internships, and professional leads with your network.</p>
-                </div>
-            </article>
-        </div>
-    </div>
-</section>
-
-<!-- ── Stats Bar ── -->
-<section class="container mt-4">
-    <div class="stats-grid">
-        <div class="stat-block text-center">
-            <span class="stat-counter" data-count="{{ total_members }}">{{ total_members }}</span>
-            <p>Total Members</p>
-        </div>
-        <div class="stat-block text-center">
-            <span class="stat-counter">15+</span>
-            <p>Events Held</p>
-        </div>
-        <div class="stat-block text-center">
-            <span class="stat-counter">10+</span>
-            <p>Batches</p>
-        </div>
-        <div class="stat-block text-center">
-            <span class="stat-counter">50+</span>
-            <p>Active Alumni</p>
-        </div>
-    </div>
-</section>
-
-<!-- ── Latest Announcements ── -->
-<section class="container mt-4 pt-2">
-    <div class="d-flex justify-content-between align-items-end mb-4 flex-column flex-md-row gap-3">
+{% with is_member=user.is_authenticated %}
+<section class="home-hero">
+    <div class="home-hero-inner">
         <div>
-            <span class="section-eyebrow">Latest News</span>
-            <h2 class="section-title mb-0">Announcements</h2>
+            {% include 'core/partials/horizon.html' %}
+            <h1>Cox's Bazar, together at CUET.</h1>
+            <p class="lead">The forum for students and alumni from Cox's Bazar at Chittagong University of Engineering &amp; Technology. Ask a senior, find a blood donor, share a job or tuition, and plan the next get-together.</p>
+            <div class="home-hero-actions">
+                {% if user.is_authenticated and user.status == 'active' %}
+                    <a href="{% url 'core:dashboard' %}" class="btn btn-bronze btn-lg">Open the forum</a>
+                    <a href="{% url 'core:dashboard' %}#composer" class="btn btn-on-dark btn-lg">Start a topic</a>
+                {% elif user.is_authenticated %}
+                    <span class="btn btn-on-dark btn-lg disabled"><i class="fas fa-hourglass-half"></i> Your account is waiting for approval</span>
+                {% else %}
+                    <a href="{% url 'core:register' %}" class="btn btn-bronze btn-lg">Join the forum</a>
+                    <a href="{% url 'core:login' %}" class="btn btn-on-dark btn-lg">Log in</a>
+                {% endif %}
+            </div>
+            <ul class="facts">
+                <li><strong>{{ stats.members }}</strong><span>members</span></li>
+                <li><strong>{{ stats.alumni }}</strong><span>verified alumni</span></li>
+                <li><strong>{{ stats.batches }}</strong><span>batches</span></li>
+                <li><strong>{{ stats.topics }}</strong><span>topics</span></li>
+            </ul>
         </div>
-        <a href="{% url 'core:announcements' %}" class="btn btn-outline-primary rounded-pill">
-            All Announcements <i class="fas fa-arrow-right ms-1"></i>
-        </a>
+        <figure class="arch-photo">
+            <img src="{% static 'images/campus.webp' %}" alt="Members of the Cox's Bazar Students' Forum together at CUET" width="720" height="960">
+            <figcaption>Members of the forum at CUET</figcaption>
+        </figure>
     </div>
-    <div class="row gy-4">
-        {% for announcement in announcements %}
-        <div class="col-md-4">
-            <article class="card announcement-card h-100 shadow-sm border-0">
-                <div class="card-body">
-                    {% if announcement.is_pinned %}
-                        <span class="badge bg-danger mb-2">
-                            <i class="fas fa-thumbtack me-1"></i> PINNED
+</section>
+
+<div class="page">
+    <section>
+        <div class="section-head">
+            <div>
+                <h2>Boards</h2>
+                <p>Every topic lives on a board, so the right people see it.{% if not user.is_authenticated %} Reading and posting is for approved members.{% endif %}</p>
+            </div>
+            {% if user.is_authenticated and user.status == 'active' %}<a href="{% url 'core:dashboard' %}">All topics</a>{% endif %}
+        </div>
+        <div class="boards-grid">
+            {% for b in boards %}
+                <a href="{% url 'core:dashboard' %}?category={{ b.name|urlencode }}" class="board-card b-{{ b.slug }}">
+                    <span class="swatch"><i class="fas {{ b.icon }}"></i></span>
+                    <span class="min-w-0">
+                        <h3>{{ b.name }}</h3>
+                        <p>{{ b.blurb }}</p>
+                        <span class="board-card-meta">
+                            <span><strong>{{ b.topics }}</strong> topic{{ b.topics|pluralize }}</span>
+                            {% if b.last %}<span>last post {{ b.last|ago }}</span>{% endif %}
                         </span>
-                    {% endif %}
-                    <h5 class="card-title">{{ announcement.title }}</h5>
-                    <p class="card-text text-muted">{{ announcement.content|truncatewords:22 }}</p>
-                </div>
-                <div class="card-footer bg-transparent border-0">
-                    <small class="text-muted">
-                        <i class="far fa-calendar-alt me-1"></i> {{ announcement.created_at|date:"F j, Y" }}
-                    </small>
-                </div>
-            </article>
+                    </span>
+                </a>
+            {% endfor %}
         </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="alert alert-info"><i class="fas fa-info-circle me-2"></i>No announcements yet. Check back soon.</div>
-        </div>
-        {% endfor %}
-    </div>
-</section>
+    </section>
 
-<!-- ── Committee Section ── -->
-<section class="container mt-4 mb-5">
-    <div class="d-flex justify-content-between align-items-end mb-4 flex-column flex-md-row gap-3">
-        <div>
-            <span class="section-eyebrow">Leadership</span>
-            <h2 class="section-title mb-0">Current Committee</h2>
-        </div>
-        <a href="{% url 'core:committee' %}" class="btn btn-outline-primary rounded-pill">
-            Full Committee <i class="fas fa-arrow-right ms-1"></i>
-        </a>
+    <div class="home-cols section">
+        <section>
+            <div class="section-head">
+                <h2>Notices</h2>
+                <a href="{% url 'core:announcements' %}">All notices</a>
+            </div>
+            <div class="surface">
+                {% for a in announcements %}
+                    <a href="{% url 'core:announcements' %}#notice-{{ a.id }}" class="notice-item">
+                        <h3>{% if a.is_pinned %}<i class="fas fa-thumbtack pin" title="Pinned"></i>{% endif %}{{ a.title }}</h3>
+                        <p>{{ a.content|truncatewords:28 }}</p>
+                        <time datetime="{{ a.created_at|date:'c' }}">{{ a.created_at|date:"F j, Y" }}</time>
+                    </a>
+                {% empty %}
+                    {% include 'core/partials/empty_state.html' with icon='fa-bullhorn' title='No notices yet' text='Official updates from the committee will appear here.' %}
+                {% endfor %}
+            </div>
+        </section>
+        <section>
+            <div class="section-head">
+                <h2>Coming up</h2>
+                <a href="{% url 'core:events' %}">All events</a>
+            </div>
+            <div class="surface">
+                {% for event in upcoming_events %}
+                    <a href="{% url 'core:event_detail' event.id %}" class="event-row">
+                        <span class="date-block"><span>{{ event.date|date:"M" }}</span><strong>{{ event.date|date:"j" }}</strong></span>
+                        <span class="min-w-0"><h3>{{ event.title }}</h3><p>{{ event.date|date:"l, g:i A" }}, {{ event.venue }}</p></span>
+                    </a>
+                {% empty %}
+                    {% url 'core:events' as events_url %}
+                    {% include 'core/partials/empty_state.html' with icon='fa-calendar-days' title='Nothing scheduled right now' text='Past programs and photos are on the events page.' action_url=events_url action_label='See past events' %}
+                {% endfor %}
+            </div>
+        </section>
     </div>
 
     {% if committees %}
-        <!-- President & General Secretary (static) -->
-        <div class="row justify-content-center g-4 mb-5">
-            {% for member in committees %}
-                {% if member.designation|lower == "president" or member.designation|lower == "general secretary" %}
-                    <div class="col-lg-5 col-md-6 d-flex justify-content-center">
-                        <div class="card committee-card h-100 text-center shadow-sm border-0" style="max-width: 280px;">
-                            {% if member.user.profile_photo %}
-                                <img src="{{ member.user.profile_photo.url }}" loading="lazy" alt="{{ member.user.full_name }}" class="committee-avatar" style="width: 140px; height: 140px; object-fit: cover; border-radius: 50%; margin: 1.5rem auto 0.5rem; border: 4px solid var(--primary-light);">
-                            {% else %}
-                                <div class="committee-avatar placeholder" style="width: 140px; height: 140px; border-radius: 50%; margin: 1.5rem auto 0.5rem; background: #e9ecef; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-user fa-3x text-muted"></i>
-                                </div>
-                            {% endif %}
-                            <div class="card-body">
-                                <h5 class="committee-name">{{ member.user.full_name }}</h5>
-                                <p class="committee-designation mb-0 text-primary">{{ member.designation }}</p>
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
+    <section class="section">
+        <div class="section-head">
+            <div>
+                <h2>Committee</h2>
+                <p>The students running the forum this term.</p>
+            </div>
+            <a href="{% url 'core:committee' %}">Full committee</a>
+        </div>
+        <div class="people-strip">
+            {% for m in committees %}
+                <div class="mini-person{% if m.designation|lower == 'president' or m.designation|lower == 'general secretary' %} is-lead{% endif %}">
+                    {% avatar m.user 64 %}
+                    <strong>{{ m.user.full_name }}</strong>
+                    <span>{{ m.designation }}</span>
+                </div>
             {% endfor %}
         </div>
-
-        <!-- Slider: other members -->
-        <div class="committee-slider-wrapper">
-            <div class="committee-slider-track">
-                {% for member in committees %}
-                    {% if member.designation|lower != "president" and member.designation|lower != "general secretary" %}
-                        <div class="committee-slide-item">
-                            <div class="card committee-card h-100 text-center shadow-sm border-0" style="max-width: 220px;">
-                                {% if member.user.profile_photo %}
-                                    <img src="{{ member.user.profile_photo.url }}" loading="lazy" alt="{{ member.user.full_name }}" class="committee-avatar" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; margin: 1rem auto 0.5rem; border: 3px solid var(--primary-light);">
-                                {% else %}
-                                    <div class="committee-avatar placeholder" style="width: 120px; height: 120px; border-radius: 50%; margin: 1rem auto 0.5rem; background: #e9ecef; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fas fa-user fa-2x text-muted"></i>
-                                    </div>
-                                {% endif %}
-                                <div class="card-body">
-                                    <h6 class="committee-name">{{ member.user.full_name }}</h6>
-                                    <p class="committee-designation mb-0 text-muted small">{{ member.designation }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-                <!-- Duplicate for seamless loop -->
-                {% for member in committees %}
-                    {% if member.designation|lower != "president" and member.designation|lower != "general secretary" %}
-                        <div class="committee-slide-item">
-                            <div class="card committee-card h-100 text-center shadow-sm border-0" style="max-width: 220px;">
-                                {% if member.user.profile_photo %}
-                                    <img src="{{ member.user.profile_photo.url }}" loading="lazy" alt="{{ member.user.full_name }}" class="committee-avatar" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; margin: 1rem auto 0.5rem; border: 3px solid var(--primary-light);">
-                                {% else %}
-                                    <div class="committee-avatar placeholder" style="width: 120px; height: 120px; border-radius: 50%; margin: 1rem auto 0.5rem; background: #e9ecef; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fas fa-user fa-2x text-muted"></i>
-                                    </div>
-                                {% endif %}
-                                <div class="card-body">
-                                    <h6 class="committee-name">{{ member.user.full_name }}</h6>
-                                    <p class="committee-designation mb-0 text-muted small">{{ member.designation }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-    {% else %}
-        <p class="text-center text-muted">No committee members yet.</p>
+    </section>
     {% endif %}
-</section>
 
-<!-- ── Advisory Panel Teaser ── -->
-<section class="container mt-4 mb-5">
-    <div class="d-flex justify-content-between align-items-end mb-4 flex-column flex-md-row gap-3">
+    <section class="section">
+        <div class="section-head">
+            <div>
+                <h2>Advisory panel</h2>
+                <p>CUET faculty who guide the forum.</p>
+            </div>
+            <a href="{% url 'core:advisory_panel' %}">Meet the advisors</a>
+        </div>
+        <div class="people-strip">
+            {% for a in advisors %}
+                <div class="mini-person{% if a.role == 'Chief Advisor' %} is-lead{% endif %}">
+                    {% if a.image_url %}<img src="{{ a.image_url }}" alt="" class="avatar" style="--avatar-size:64px" loading="lazy">{% else %}<span class="avatar avatar-initials avatar-hue-{{ forloop.counter0|divisibleby:2|yesno:'0,1' }}" style="--avatar-size:64px" aria-hidden="true">{{ a.name|initials }}</span>{% endif %}
+                    <strong>{{ a.name }}</strong>
+                    <span>{% if a.role == 'Chief Advisor' %}Chief advisor{% else %}{{ a.designation|cut:", CUET" }}{% endif %}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% if not user.is_authenticated %}
+    <section class="join-band">
         <div>
-            <span class="section-eyebrow">Mentorship</span>
-            <h2 class="section-title mb-0">Advisory Panel</h2>
-            <p class="text-muted mt-1">Guided by esteemed faculty members of CUET</p>
+            <h2>From Cox's Bazar and at CUET?</h2>
+            <p>Running students sign up with their @student.cuet.ac.bd email. Alumni and faculty can use any email. The committee approves every account.</p>
         </div>
-        <a href="{% url 'core:advisory_panel' %}" class="btn btn-outline-primary rounded-pill">
-            Meet All Advisors <i class="fas fa-arrow-right ms-1"></i>
-        </a>
-    </div>
-
-    <div class="row g-4">
-        <!-- Chief Advisor -->
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <div class="bg-secondary bg-opacity-10 rounded-circle mb-3 d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; margin: 0 auto;">
-                        <i class="fas fa-user-tie fa-3x text-primary"></i>
-                    </div>
-                    <h5 class="fw-bold">Shyamal Acharya</h5>
-                    <p class="text-primary fw-semibold">Assistant Professor (CE) <br> <span class="badge bg-gold text-dark">Chief Advisor</span></p>
-                    <p class="small text-muted">PhD in Water Resources Engineering (2026), CUET</p>
-                    <p class="small text-muted mb-1"><i class="fas fa-envelope me-1"></i> acharya_shyamal@cuet.ac.bd</p>
-                    <p class="small text-muted"><i class="fas fa-phone me-1"></i> +8801716963388</p>
-                    <a href="{% url 'core:advisory_panel' %}" class="btn btn-sm btn-outline-primary rounded-pill mt-2">View Profile</a>
-                </div>
-            </div>
-        </div>
-        <!-- Other Advisors (compact) -->
-        <div class="col-md-6">
-            <div class="row g-3">
-                <div class="col-6">
-                    <div class="card h-100 shadow-sm border-0 text-center">
-                        <div class="card-body">
-                            <div class="bg-secondary bg-opacity-10 rounded-circle mb-2 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; margin: 0 auto;">
-                                <i class="fas fa-user fa-2x text-secondary"></i>
-                            </div>
-                            <h6 class="fw-bold">Sanjoy Das</h6>
-                            <p class="small text-muted">Assistant Professor (CE)</p>
-                            <span class="badge bg-light text-dark">Advisor</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="card h-100 shadow-sm border-0 text-center">
-                        <div class="card-body">
-                            <div class="bg-secondary bg-opacity-10 rounded-circle mb-2 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; margin: 0 auto;">
-                                <i class="fas fa-user fa-2x text-secondary"></i>
-                            </div>
-                            <h6 class="fw-bold">Dr. Nursadul Mamun</h6>
-                            <p class="small text-muted">Assistant Professor (ETE)</p>
-                            <span class="badge bg-light text-dark">Advisor</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="card h-100 shadow-sm border-0 text-center">
-                        <div class="card-body">
-                            <div class="bg-secondary bg-opacity-10 rounded-circle mb-2 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; margin: 0 auto;">
-                                <i class="fas fa-user fa-2x text-secondary"></i>
-                            </div>
-                            <h6 class="fw-bold">Dr. Homayun Kabir</h6>
-                            <p class="small text-muted">Associate Professor (MIE)</p>
-                            <span class="badge bg-light text-dark">Advisor</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+        <a href="{% url 'core:register' %}" class="btn btn-primary btn-lg">Create your account</a>
+    </section>
+    {% endif %}
+</div>
+{% endwith %}
 {% endblock %}

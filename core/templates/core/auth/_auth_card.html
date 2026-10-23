@@ -1,0 +1,11 @@
+{% extends 'core/base.html' %}
+{# Small centred card used by the password-reset pages. Child templates fill auth_icon / auth_title / auth_body. #}
+{% block content %}
+<div class="page">
+    <div class="surface auth-card text-center">
+        <div class="auth-card-icon">{% block auth_icon %}<i class="fas fa-key"></i>{% endblock %}</div>
+        <h1 class="h3 mb-2">{% block auth_title %}{% endblock %}</h1>
+        <div class="text-start">{% block auth_body %}{% endblock %}</div>
+    </div>
+</div>
+{% endblock %}

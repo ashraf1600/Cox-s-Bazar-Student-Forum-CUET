@@ -1,49 +1,28 @@
 {% extends 'core/base.html' %}
-{% load static %}
-
-{% block title %}Switch to Alumni Status{% endblock %}
+{% block title %}Switch to alumni{% endblock %}
 
 {% block content %}
-<div class="container py-5" style="max-width: 600px;">
-    <div class="card border-0 shadow rounded-4 overflow-hidden">
-        <div class="card-header text-white p-4 text-center border-0" style="background: linear-gradient(135deg, #0052cc 0%, #0066cc 100%);">
-            <div class="bg-warning text-dark rounded-circle d-inline-flex align-items-center justify-content-center mb-2 shadow-sm" style="width: 60px; height: 60px;">
-                <i class="fas fa-user-graduate fa-2x"></i>
-            </div>
-            <h3 class="fw-bold mb-1">Graduation Update</h3>
-            <p class="mb-0 text-light opacity-90 small">Switch your account status from Running Student to Alumni</p>
+<div class="page page-xnarrow">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="{% url 'core:view_profile' %}">My profile</a><i class="fas fa-chevron-right"></i><span>Graduated</span></nav>
+    {% include 'core/partials/page_head.html' with title='Congratulations, graduate' sub="Switch your profile to alumni so juniors can find you for advice and referrals." %}
+
+    <form method="POST" class="surface surface-pad p-md-5" novalidate>
+        {% csrf_token %}
+        <div class="notice notice-info mb-4">
+            <i class="fas fa-shield-halved"></i>
+            <div>The committee verifies your graduation before you appear in the alumni directory. You keep full access in the meantime.</div>
         </div>
-        <div class="card-body p-4 p-md-5">
-            <form method="POST">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label class="form-label fw-semibold text-secondary small">Graduation Year *</label>
-                    {{ form.graduation_year }}
-                    {% if form.graduation_year.errors %}
-                        <div class="text-danger small mt-1">{{ form.graduation_year.errors.0 }}</div>
-                    {% endif %}
-                </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-semibold text-secondary small">Current Company / Organization</label>
-                    {{ form.company }}
-                </div>
-
-                <div class="mb-4">
-                    <label class="form-label fw-semibold text-secondary small">Current Job Designation</label>
-                    {{ form.designation }}
-                </div>
-
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-warning text-dark fw-bold py-2.5 rounded-pill shadow-sm">
-                        <i class="fas fa-check-circle me-1"></i> Update to Alumni Status
-                    </button>
-                    <a href="{% url 'core:view_profile' %}" class="btn btn-outline-secondary rounded-pill py-2">
-                        Cancel
-                    </a>
-                </div>
-            </form>
+        <div class="row g-3">
+            {% include 'core/partials/field.html' with field=form.graduation_year col='col-12' %}
+            {% include 'core/partials/field.html' with field=form.designation %}
+            {% include 'core/partials/field.html' with field=form.company %}
         </div>
-    </div>
+
+        <div class="form-actions">
+            <a href="{% url 'core:view_profile' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+            <button type="submit" class="btn btn-primary px-4">Switch to alumni</button>
+        </div>
+    </form>
 </div>
 {% endblock %}

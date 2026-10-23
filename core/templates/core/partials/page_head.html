@@ -1,0 +1,8 @@
+{# Page header. Context: title, sub (optional). #}
+<header class="page-head">
+    <div class="page-head-main">
+        {% include 'core/partials/horizon.html' %}
+        <h1 class="page-title">{{ title }}</h1>
+        {% if sub %}<p class="page-sub">{{ sub }}</p>{% endif %}
+    </div>
+</header>
