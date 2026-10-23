@@ -9,7 +9,7 @@ from datetime import timedelta
 from django.contrib import messages
 from django.db.models import Q, Count, OuterRef, Subquery, IntegerField, Max
 from django.db.models.functions import Coalesce
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
@@ -112,6 +112,9 @@ def conversation(request, user_id):
     partner = get_object_or_404(User.objects.select_related('department'), id=user_id)
     if partner.id == me.id:
         return redirect('core:inbox')
+    # Only approved members can be looked up; others only if you already have a conversation.
+    if partner.status != 'active' and not Message.objects.between(me, partner).exists():
+        raise Http404('No such member.')
 
     # Opening the conversation marks everything they sent you as read.
     Message.objects.filter(sender=partner, recipient=me, is_read=False).update(is_read=True)

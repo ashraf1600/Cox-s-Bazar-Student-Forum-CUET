@@ -398,3 +398,80 @@ class ForumTests(BaseTestCase):
         stats = self.client.get(reverse('core:homepage')).context['stats']
         self.assertEqual(stats['members'], User.objects.filter(status='active').count())
         self.assertEqual(stats['topics'], 2)
+
+
+class AccessControlTests(BaseTestCase):
+    """Who can open what. See the access-control notes at the top of views.py."""
+
+    PUBLIC = ['homepage', 'about', 'events', 'announcements', 'gallery', 'committee',
+              'committee_directory', 'advisory_panel', 'alumni_directory', 'login', 'register']
+    MEMBERS_ONLY = ['dashboard', 'member_directory', 'inbox', 'switch_to_alumni']
+
+    def test_public_pages_open_to_everyone(self):
+        for name in self.PUBLIC:
+            self.assertEqual(self.client.get(reverse(f'core:{name}')).status_code, 200, name)
+
+    def test_member_pages_send_visitors_to_login_and_back(self):
+        for name in self.MEMBERS_ONLY + ['view_profile', 'update_profile']:
+            response = self.client.get(reverse(f'core:{name}'))
+            self.assertEqual(response.status_code, 302, name)
+            self.assertTrue(response['Location'].startswith(reverse('core:login')), name)
+        post = Post.objects.create(user=self.member, content='x')
+        self.assertEqual(self.client.get(reverse('core:post_detail', args=[post.id])).status_code, 302)
+        self.assertEqual(self.client.get(reverse('core:member_profile', args=[self.member.id])).status_code, 302)
+
+    def test_login_redirect_keeps_the_query_string(self):
+        response = self.client.get(reverse('core:dashboard') + '?category=Blood+Request')
+        self.assertIn('next=%2Fdashboard%2F%3Fcategory%3DBlood%2BRequest', response['Location'])
+
+    def test_pending_member_can_finish_profile_but_not_enter_forum(self):
+        self.client.force_login(self.pending)
+        self.assertEqual(self.client.get(reverse('core:view_profile')).status_code, 200)
+        self.assertEqual(self.client.get(reverse('core:update_profile')).status_code, 200)
+        for name in self.MEMBERS_ONLY:
+            response = self.client.get(reverse(f'core:{name}'))
+            self.assertRedirects(response, reverse('core:view_profile'), msg_prefix=name)
+
+    def test_pending_member_lands_on_profile_after_login(self):
+        self.pending.set_password('pass12345!x')
+        self.pending.save()
+        response = self.client.post(reverse('core:login'), {'username': self.pending.email, 'password': 'pass12345!x'})
+        self.assertRedirects(response, reverse('core:view_profile'))
+
+    def test_deactivated_account_cannot_log_in(self):
+        self.member.status = 'inactive'
+        self.member.set_password('pass12345!x')
+        self.member.save()
+        response = self.client.post(reverse('core:login'), {'username': self.member.email, 'password': 'pass12345!x'})
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_deactivated_session_is_ended(self):
+        self.client.force_login(self.member)
+        User.objects.filter(pk=self.member.pk).update(status='inactive')
+        self.assertRedirects(self.client.get(reverse('core:view_profile')), reverse('core:login'))
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_logout_requires_post(self):
+        self.client.force_login(self.member)
+        self.assertEqual(self.client.get(reverse('core:logout')).status_code, 405)
+        self.assertIn('_auth_user_id', self.client.session)
+        self.client.post(reverse('core:logout'))
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_admin_pages_are_admin_only(self):
+        self.client.force_login(self.member)
+        self.assertEqual(self.client.get(reverse('core:admin_gallery')).status_code, 302)
+        self.client.force_login(self.admin)
+        self.assertEqual(self.client.get(reverse('core:admin_gallery')).status_code, 200)
+
+    def test_advisor_phone_numbers_are_members_only(self):
+        phone = '+8801716963388'  # chief advisor, see views.ADVISORS
+        self.assertNotContains(self.client.get(reverse('core:advisory_panel')), phone)
+        self.client.force_login(self.member)
+        self.assertContains(self.client.get(reverse('core:advisory_panel')), phone)
+
+    def test_cannot_open_chat_with_unapproved_member_by_url(self):
+        self.client.force_login(self.member)
+        self.assertEqual(self.client.get(reverse('core:conversation', args=[self.pending.id])).status_code, 404)
+        self.assertEqual(self.client.get(reverse('core:conversation', args=[self.other.id])).status_code, 200)

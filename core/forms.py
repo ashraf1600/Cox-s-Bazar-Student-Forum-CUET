@@ -178,6 +178,15 @@ class LoginForm(AuthenticationForm):
     username = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
+    def confirm_login_allowed(self, user):
+        super().confirm_login_allowed(user)
+        # Pending accounts may sign in (to finish their profile); deactivated ones may not.
+        if user.status == 'inactive':
+            raise forms.ValidationError(
+                'This account has been deactivated. Contact the committee if you think this is a mistake.',
+                code='inactive',
+            )
+
 
 class PostForm(forms.ModelForm):
     class Meta:
