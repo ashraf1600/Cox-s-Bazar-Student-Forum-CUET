@@ -10,7 +10,7 @@ from django.http import JsonResponse, HttpResponseRedirect
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from .models import User, Department, CommitteeMember, Announcement, Post, Comment, Like, Event, EventRegistration, PhotoGallery
@@ -45,14 +45,50 @@ def redirect_back(request, fallback):
     return redirect(fallback)
 
 
-def active_member_required(view_func):
+# ── Access control ────────────────────────────────────────────────────────
+# Public:            home, about, events, notices, gallery, committee, advisory panel,
+#                    alumni directory, login/register/password reset.
+# Signed in (any):   your own profile, view and edit (pending members can finish it
+#                    while they wait for approval), logout.
+# Approved members:  forum, threads, posting, member directory and profiles,
+#                    messaging, event registration, switching to alumni.
+# Admins:            gallery management (Django admin has its own staff check).
+
+def redirect_to_login(request):
+    """Send an anonymous visitor to login, coming back to the exact page (query string included)."""
+    return redirect(f"{reverse('core:login')}?{urlencode({'next': request.get_full_path()})}")
+
+
+def end_deactivated_session(request):
+    """An admin deactivated this account while it was logged in: sign it out."""
+    logout(request)
+    messages.error(request, 'Your account has been deactivated. Contact the committee if you think this is a mistake.')
+    return redirect('core:login')
+
+
+def signed_in_required(view_func):
+    """Any signed-in account that hasn't been deactivated, including ones awaiting approval."""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect(f"{reverse('core:login')}?next={request.path}")
+            return redirect_to_login(request)
+        if request.user.status == 'inactive':
+            return end_deactivated_session(request)
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
+def active_member_required(view_func):
+    """Approved members only. Pending accounts go to their profile, where they can finish it."""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request)
+        if request.user.status == 'inactive':
+            return end_deactivated_session(request)
         if request.user.status != 'active':
-            messages.warning(request, 'Your account is pending approval.')
-            return redirect('core:homepage')
+            messages.info(request, 'That page opens once the committee approves your account. Meanwhile, finish your profile.')
+            return redirect('core:view_profile')
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
@@ -61,7 +97,7 @@ def admin_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect(f"{reverse('core:login')}?next={request.path}")
+            return redirect_to_login(request)
         if not is_admin(request.user):
             messages.error(request, 'Only admins can access that page.')
             return redirect('core:homepage')
@@ -107,7 +143,7 @@ def committee_page(request):
 
 def register(request):
     if request.user.is_authenticated:
-        return redirect('core:dashboard')
+        return redirect('core:dashboard' if request.user.status == 'active' else 'core:view_profile')
 
     if request.method == 'POST':
         form = RegistrationForm(request.POST, request.FILES)
@@ -242,7 +278,7 @@ def committee_directory(request):
 @ensure_csrf_cookie
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('core:dashboard')
+        return redirect('core:dashboard' if request.user.status == 'active' else 'core:view_profile')
 
     next_url = request.POST.get('next') or request.GET.get('next', '')
     if request.method == 'POST':
@@ -254,14 +290,16 @@ def login_view(request):
             messages.success(request, f'Welcome back, {user.full_name}!')
             if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
                 return HttpResponseRedirect(next_url)
-            return redirect('core:dashboard')
+            return redirect('core:dashboard' if user.status == 'active' else 'core:view_profile')
     else:
         form = LoginForm()
 
     return render(request, 'core/login.html', {'form': form, 'next': next_url})
 
 
+@require_POST
 def logout_view(request):
+    """POST only, so another site can't log members out with a hidden link or image."""
     logout(request)
     messages.info(request, 'You have been logged out.')
     return redirect('core:homepage')
@@ -464,12 +502,12 @@ def event_rsvp(request, event_id):
     return redirect('core:event_detail', event_id=event.id)
 
 
-@active_member_required
+@signed_in_required
 def view_profile(request):
     """Display the logged-in user's profile."""
     return render(request, 'core/view_profile.html', {'profile_user': request.user})
 
-@active_member_required
+@signed_in_required
 def update_profile(request):
     """Allow the user to update their profile information."""
     if request.method == 'POST':
@@ -569,8 +607,13 @@ ADVISORS = [
 
 
 def advisor_cards():
-    """ADVISORS with a resolved image URL; shared by the homepage teaser and the advisory page."""
-    return [{**advisor, 'image_url': static(advisor['image']) if advisor['image'] else ''} for advisor in ADVISORS]
+    """ADVISORS with a resolved image URL; shared by the homepage teaser and the advisory page.
+    Official @cuet.ac.bd emails may be shown publicly; phone numbers are for approved members only."""
+    return [{
+        **advisor,
+        'image_url': static(advisor['image']) if advisor['image'] else '',
+        'email_is_official': advisor['email'].lower().endswith('cuet.ac.bd'),
+    } for advisor in ADVISORS]
 
 
 def advisory_panel(request):
@@ -589,8 +632,10 @@ def advisory_panel(request):
             'education': '',
             'linkedin': member.linkedin,
             'image_url': member.profile_photo.url if member.profile_photo else '',
+            'email_is_official': member.email.lower().endswith('cuet.ac.bd'),
         })
-    return render(request, 'core/advisory_panel.html', {'advisors': advisors})
+    is_member = request.user.is_authenticated and request.user.status == 'active'
+    return render(request, 'core/advisory_panel.html', {'advisors': advisors, 'is_member': is_member})
 
 
 def gallery_view(request):
