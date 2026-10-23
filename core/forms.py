@@ -1,6 +1,26 @@
 from django import forms
-from .models import User, Department, Post, Comment, Message, PhotoGallery
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import password_validation
+from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm, SetPasswordForm
+from django.utils import timezone
+
+from .models import User, Department, Post, Comment, Message, PhotoGallery, is_student_email
+
+MIN_BATCH, MAX_BATCH = 1, 99
+MIN_GRADUATION_YEAR = 1968  # CUET was founded in 1968
+
+
+def max_graduation_year():
+    return timezone.now().year + 6
+
+
+def validate_batch(form, batch):
+    if batch is not None and not (MIN_BATCH <= batch <= MAX_BATCH):
+        form.add_error('batch', f'Batch must be between {MIN_BATCH} and {MAX_BATCH} (e.g. 21).')
+
+
+def validate_graduation_year(form, year):
+    if year is not None and not (MIN_GRADUATION_YEAR <= year <= max_graduation_year()):
+        form.add_error('graduation_year', f'Graduation year must be between {MIN_GRADUATION_YEAR} and {max_graduation_year()}.')
 
 class RegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
@@ -28,20 +48,36 @@ class RegistrationForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'dob': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'designation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Faculty Designation (for Advisory Panel)'}),
+            'designation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Assistant Professor, Dept of CE'}),
+        }
+        labels = {
+            'full_name': 'Full name',
+            'member_type': 'I am a',
+            'graduation_year': 'Graduation year',
+            'blood_group': 'Blood group',
+            'phone': 'Phone number',
+            'dob': 'Date of birth',
+            'upazila': 'Home upazila',
+            'designation': 'Faculty designation',
+            'profile_photo': 'Profile photo',
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.field_order = [
-            'full_name', 'email', 'member_type', 'batch', 'graduation_year', 'department', 'blood_group', 
-            'gender', 'phone', 'address', 'dob', 'upazila', 'designation', 'profile_photo',
-            'password', 'confirm_password'
-        ]
+        self.fields['confirm_password'].label = 'Confirm password'
+        self.fields['upazila'].label = 'Home upazila'
+        self.fields['department'].empty_label = 'Select department'
+        self.fields['blood_group'].choices = [('', 'Select blood group')] + User.BLOOD_GROUPS
+        self.fields['gender'].choices = [('', 'Select gender')] + User.GENDER_CHOICES
+        self.fields['email'].widget.attrs['placeholder'] = 'u2104XXX@student.cuet.ac.bd'
+        self.fields['full_name'].widget.attrs['placeholder'] = 'Your full name'
+        self.fields['phone'].widget.attrs['placeholder'] = '01XXXXXXXXX'
+        self.fields['password'].widget.attrs['autocomplete'] = 'new-password'
+        self.fields['confirm_password'].widget.attrs['autocomplete'] = 'new-password'
 
     def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exists():
+        email = (self.cleaned_data.get('email') or '').strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError('Email is already registered.')
         return email
 
@@ -56,10 +92,19 @@ class RegistrationForm(forms.ModelForm):
         graduation_year = cleaned_data.get('graduation_year')
 
         if password and confirm_password and password != confirm_password:
-            raise forms.ValidationError('Passwords do not match.')
+            self.add_error('confirm_password', 'Passwords do not match.')
+        elif password:
+            candidate = User(email=email or '', full_name=cleaned_data.get('full_name') or '')
+            try:
+                password_validation.validate_password(password, user=candidate)
+            except forms.ValidationError as error:
+                self.add_error('password', error)
+
+        validate_batch(self, batch)
+        validate_graduation_year(self, graduation_year)
 
         if member_type == 'running_student':
-            if email and '@student.cuet.ac.bd' not in email.lower():
+            if email and not is_student_email(email):
                 self.add_error('email', 'Running students must register with their @student.cuet.ac.bd email address.')
             if not batch:
                 self.add_error('batch', 'Batch is required for running students.')
@@ -92,9 +137,7 @@ class ProfileUpdateForm(forms.ModelForm):
 
     class Meta:
         model = User
-        # Exclude fields that should not be changed after account creation
-        exclude = ['email', 'batch', 'department', 'serial_no', 'status', 'role', 
-                   'date_joined', 'is_active', 'is_staff', 'password', 'last_login']
+        # Only these fields are user-editable; email, batch, department, status, role etc. are not.
         fields = [
             'full_name', 'phone', 'address', 'dob', 'upazila', 'blood_group', 'gender',
             'profile_photo', 'linkedin', 'facebook', 'twitter', 'instagram',
@@ -134,6 +177,8 @@ class ProfileUpdateForm(forms.ModelForm):
 class LoginForm(AuthenticationForm):
     username = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+
+
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
@@ -169,7 +214,7 @@ class PhotoGalleryForm(forms.ModelForm):
         model = PhotoGallery
         fields = ['title', 'description', 'image', 'category', 'is_featured']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Photo Title'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Photo Title (Applied to all if multiple)'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Optional photo description...'}),
             'image': forms.FileInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
@@ -180,6 +225,7 @@ class PhotoGalleryForm(forms.ModelForm):
 class SwitchToAlumniForm(forms.Form):
     graduation_year = forms.IntegerField(
         required=True,
+        min_value=MIN_GRADUATION_YEAR,
         widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 2024'}),
         label='Graduation Year'
     )
@@ -192,4 +238,23 @@ class SwitchToAlumniForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Designation / Job Title'}),
         label='Designation'
-    )
+    )
+
+    def clean_graduation_year(self):
+        year = self.cleaned_data['graduation_year']
+        if year > max_graduation_year():
+            raise forms.ValidationError(f'Graduation year cannot be later than {max_graduation_year()}.')
+        return year
+
+
+class StyledPasswordResetForm(PasswordResetForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs.update({'class': 'form-control', 'placeholder': 'you@example.com', 'autofocus': True})
+
+
+class StyledSetPasswordForm(SetPasswordForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'

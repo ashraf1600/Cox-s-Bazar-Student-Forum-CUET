@@ -1,0 +1,113 @@
+{% load ui %}
+{# Shared profile layout. Context: person, is_self (bool), can_message (bool) #}
+<div class="page">
+    <section class="profile-head">
+        <div class="profile-band">{% include 'core/partials/horizon.html' %}</div>
+        <div class="profile-head-body">
+            {% avatar person 120 %}
+            <div class="profile-identity">
+                <h1 class="profile-name">{{ person.full_name }}</h1>
+                <p class="profile-tagline">
+                    {% if person.designation %}{{ person.designation }}{% if person.company %} at {{ person.company }}{% endif %}
+                    {% elif person.member_type == 'running_student' %}Student at CUET
+                    {% else %}{{ person.get_member_type_display }}{% endif %}
+                </p>
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                    {% include 'core/partials/flair.html' with person=person %}
+                    {% if person.member_type == 'alumni' and not person.is_alumni_verified and is_self %}<span class="chip"><i class="fas fa-hourglass-half"></i> Alumni verification pending</span>{% endif %}
+                    {% if person.blood_group %}<span class="chip chip-danger"><i class="fas fa-droplet"></i> {{ person.blood_group }}</span>{% endif %}
+                    {% if person.serial_no %}<span class="chip">Member {{ person.serial_no }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="profile-actions">
+                {% if is_self %}
+                    <a href="{% url 'core:update_profile' %}" class="btn btn-primary"><i class="fas fa-pen"></i> Edit profile</a>
+                    {% if person.member_type == 'running_student' %}<a href="{% url 'core:switch_to_alumni' %}" class="btn btn-outline-primary"><i class="fas fa-graduation-cap"></i> I've graduated</a>{% endif %}
+                {% elif can_message %}
+                    <a href="{% url 'core:conversation' person.id %}" class="btn btn-primary"><i class="fas fa-comment-dots"></i> Message</a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-4 d-flex flex-column gap-4">
+            <section class="surface">
+                <div class="surface-head"><h2>Contact</h2></div>
+                <div class="surface-body">
+                    <ul class="info-list">
+                        <li><span class="info-icon"><i class="fas fa-envelope"></i></span><div><span class="info-label">Email</span><a class="info-value" href="mailto:{{ person.email }}">{{ person.email }}</a></div></li>
+                        {% if person.phone %}
+                            <li><span class="info-icon"><i class="fas fa-phone"></i></span><div><span class="info-label">Phone</span><a class="info-value" href="tel:{{ person.phone }}">{{ person.phone }}</a></div></li>
+                        {% elif is_self %}
+                            {% include 'core/partials/info_row.html' with icon='fa-phone' label='Phone' value='' %}
+                        {% endif %}
+                        {% include 'core/partials/info_row.html' with icon='fa-location-dot' label="Home upazila" value=person.upazila %}
+                        {% if is_self %}
+                            {% include 'core/partials/info_row.html' with icon='fa-house' label='Address' value=person.address %}
+                            {% include 'core/partials/info_row.html' with icon='fa-cake-candles' label='Date of birth' value=person.dob|date:"F j, Y" %}
+                        {% endif %}
+                    </ul>
+                    {% if is_self %}<p class="small text-muted mt-3 mb-0"><i class="fas fa-lock me-1"></i> Only you can see your address and date of birth.</p>{% endif %}
+                    {% if person.linkedin or person.facebook or person.twitter or person.instagram %}
+                        <div class="social-row mt-3 pt-3 border-top">
+                            {% if person.linkedin %}<a class="social-btn" href="{{ person.linkedin }}" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>{% endif %}
+                            {% if person.facebook %}<a class="social-btn" href="{{ person.facebook }}" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>{% endif %}
+                            {% if person.twitter %}<a class="social-btn" href="{{ person.twitter }}" target="_blank" rel="noopener noreferrer" aria-label="X"><i class="fab fa-x-twitter"></i></a>{% endif %}
+                            {% if person.instagram %}<a class="social-btn" href="{{ person.instagram }}" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>{% endif %}
+                        </div>
+                    {% elif is_self %}
+                        <p class="small mt-3 mb-0"><a href="{% url 'core:update_profile' %}">Add your LinkedIn and other links</a></p>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="surface">
+                <div class="surface-head"><h2>At CUET</h2></div>
+                <div class="surface-body">
+                    <ul class="info-list">
+                        {% include 'core/partials/info_row.html' with icon='fa-building-columns' label='Department' value=person.department.name %}
+                        {% include 'core/partials/info_row.html' with icon='fa-layer-group' label='Batch' value=person.batch %}
+                        {% include 'core/partials/info_row.html' with icon='fa-award' label='Graduation year' value=person.graduation_year empty="Still studying" %}
+                        {% include 'core/partials/info_row.html' with icon='fa-calendar-check' label='Member since' value=person.date_joined|date:"F Y" %}
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-lg-8 d-flex flex-column gap-4">
+            <section class="surface">
+                <div class="surface-head"><h2>Work</h2></div>
+                <div class="surface-body">
+                    {% if person.company or person.designation or person.work_address %}
+                        <ul class="info-list">
+                            {% include 'core/partials/info_row.html' with icon='fa-id-badge' label='Role' value=person.designation %}
+                            {% include 'core/partials/info_row.html' with icon='fa-building' label='Company or organisation' value=person.company %}
+                            {% include 'core/partials/info_row.html' with icon='fa-map-pin' label='Work address' value=person.work_address %}
+                        </ul>
+                    {% elif is_self %}
+                        {% url 'core:update_profile' as edit_url %}
+                        {% include 'core/partials/empty_state.html' with icon='fa-briefcase' title='No work details yet' text='Add your company and role so juniors can ask you about careers.' action_url=edit_url action_label='Add work details' %}
+                    {% else %}
+                        <p class="text-muted mb-0">No work details shared yet.</p>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="surface related">
+                {% with topics=person.posts.all %}
+                <div class="surface-head"><h2>Topics</h2><span class="chip head-action">{{ topics|length }}</span></div>
+                {% for t in topics|slice:":6" %}
+                    <a href="{% url 'core:post_detail' t.id %}">
+                        {% with b=t.category|board %}<span class="board-tag b-{{ b.slug }}">{{ t.category }}</span>{% endwith %}
+                        <strong class="mt-1">{{ t.content|truncatechars:120 }}</strong>
+                        <span>{{ t.created_at|ago }}</span>
+                    </a>
+                {% empty %}
+                    <p class="side-empty pt-3">{% if is_self %}You haven't started a topic yet. <a href="{% url 'core:dashboard' %}#composer">Start one</a>{% else %}No topics yet.{% endif %}</p>
+                {% endfor %}
+                {% endwith %}
+            </section>
+        </div>
+    </div>
+</div>

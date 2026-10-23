@@ -1,0 +1,21 @@
+{% load ui %}
+{# Context: cm (CommitteeMember), user #}
+<article class="person-card is-centered{% if cm.designation|lower == 'president' or cm.designation|lower == 'general secretary' %} is-lead{% endif %}">
+    <div class="person-top">
+        {% avatar cm.user 84 %}
+        <div>
+            <h2 class="person-name">{{ cm.user.full_name }}</h2>
+            <span class="role-label">{{ cm.designation }}</span>
+            <p class="person-sub">{% if cm.user.department %}{{ cm.user.department.name }}{% if cm.user.batch %}, batch {{ cm.user.batch }}{% endif %}{% endif %}</p>
+            <p class="person-sub">Session {{ cm.session_year }}</p>
+        </div>
+    </div>
+    <div class="person-foot">
+        {% if user.is_authenticated and user.status == 'active' %}
+            <a href="{% url 'core:member_profile' cm.user.id %}" class="btn btn-sm btn-outline-primary">Profile</a>
+            {% if user.id != cm.user.id %}<a href="{% url 'core:conversation' cm.user.id %}" class="btn btn-sm btn-primary">Message</a>{% endif %}
+        {% else %}
+            <a href="{% url 'core:login' %}?next={% url 'core:member_profile' cm.user.id %}" class="btn btn-sm btn-outline-primary">Log in to contact</a>
+        {% endif %}
+    </div>
+</article>

@@ -1,0 +1,13 @@
+{% load static %}
+<aside class="auth-side">
+    <img src="{% static 'images/logo-mark.png' %}" alt="" class="crest">
+    <h1>{{ heading }}</h1>
+    <p class="mb-0">{{ text }}</p>
+    <ul>
+        <li><i class="fas fa-comments"></i><span>Ask seniors about courses, halls and careers</span></li>
+        <li><i class="fas fa-droplet"></i><span>Find a blood donor from home, fast</span></li>
+        <li><i class="fas fa-briefcase"></i><span>Jobs, internships and tuition from alumni</span></li>
+        <li><i class="fas fa-calendar-days"></i><span>Register for reunions, iftar and tournaments</span></li>
+    </ul>
+    {% include 'core/partials/horizon.html' %}
+</aside>

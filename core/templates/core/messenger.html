@@ -1,0 +1,355 @@
+{% extends 'core/base.html' %}
+{% load ui %}
+{% block title %}{% if partner %}{{ partner.full_name }}, messages{% else %}Messages{% endif %}{% endblock %}
+
+{% block body_class %}is-chat{% endblock %}
+
+{% block content %}
+<div class="page page-messenger">
+    <div class="messenger{% if partner %} has-thread{% endif %}">
+
+        {# ── Left: conversations + new chat search ── #}
+        <aside class="ms-sidebar" aria-label="Conversations">
+            <div class="ms-sidebar-head">
+                <h1 class="ms-title">Messages</h1>
+                {% if unread_count %}<span class="chip chip-primary" id="sidebarUnread">{{ unread_count }} unread</span>{% endif %}
+            </div>
+
+            <div class="ms-search" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-owns="msSearchResults">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="search" id="msSearch" class="form-control" placeholder="Search a member to message" autocomplete="off" aria-autocomplete="list" aria-controls="msSearchResults">
+                <ul class="ms-search-results" id="msSearchResults" role="listbox" hidden></ul>
+            </div>
+
+            <ul class="ms-convo-list">
+                {% for c in conversations %}
+                <li>
+                    <a href="{% url 'core:conversation' c.id %}" class="ms-convo{% if partner and partner.id == c.id %} active{% endif %}{% if c.unread %} unread{% endif %}" data-partner="{{ c.id }}">
+                        {% avatar c 48 %}
+                        <div class="ms-convo-main">
+                            <div class="ms-convo-top">
+                                <strong>{{ c.full_name }}</strong>
+                                <span class="ms-convo-time">{% if c.last_at|date:"Y-m-d" == today|date:"Y-m-d" %}{{ c.last_at|date:"g:i A" }}{% else %}{{ c.last_at|date:"M j" }}{% endif %}</span>
+                            </div>
+                            <p class="ms-convo-preview">
+                                {% if c.is_blocked %}<i class="fas fa-ban me-1"></i>Blocked
+                                {% else %}{% if c.last_sender_id == user.id %}<span class="ms-you">You:</span> {% endif %}{{ c.last_body|default:c.last_subject|truncatechars:60 }}{% endif %}
+                            </p>
+                        </div>
+                        {% if c.unread %}<span class="ms-unread-count">{{ c.unread }}</span>{% endif %}
+                    </a>
+                </li>
+                {% empty %}
+                <li class="ms-convo-empty">
+                    <i class="far fa-comments"></i>
+                    <p>No conversations yet.<br>Search above to message anyone in the forum.</p>
+                </li>
+                {% endfor %}
+            </ul>
+        </aside>
+
+        {# ── Right: the open conversation ── #}
+        <section class="ms-thread" aria-label="Conversation">
+            {% if partner %}
+                <header class="ms-thread-head">
+                    <a href="{% url 'core:inbox' %}" class="ms-back" aria-label="Back to conversations"><i class="fas fa-arrow-left"></i></a>
+                    {% avatar partner 44 %}
+                    <div class="ms-thread-who">
+                        <strong>{{ partner.full_name }}</strong>
+                        <span>{{ partner.get_member_type_display }}{% if partner.department %}, {{ partner.department.name }}{% endif %}{% if partner.batch %}, batch {{ partner.batch }}{% endif %}</span>
+                    </div>
+                    <div class="dropdown ms-thread-actions">
+                        <button class="post-menu-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Conversation options">
+                            <i class="fas fa-ellipsis-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% if partner.status == 'active' %}
+                            <li><a class="dropdown-item" href="{% url 'core:member_profile' partner.id %}"><i class="fas fa-user me-2"></i>View profile</a></li>
+                            {% endif %}
+                            <li>
+                                <form method="POST" action="{% url 'core:toggle_block' partner.id %}"
+                                      {% if not i_blocked %}onsubmit="return confirm('Block {{ partner.full_name|escapejs }}? They won\'t be able to message you.');"{% endif %}>
+                                    {% csrf_token %}
+                                    {% if i_blocked %}
+                                        <button type="submit" class="dropdown-item"><i class="fas fa-unlock me-2"></i>Unblock</button>
+                                    {% else %}
+                                        <button type="submit" class="dropdown-item text-danger"><i class="fas fa-ban me-2"></i>Block</button>
+                                    {% endif %}
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </header>
+
+                <div class="ms-messages" id="msMessages" aria-live="polite">
+                    {% for msg in thread %}
+                        {% ifchanged msg.local_date %}<div class="ms-day"><span>{{ msg.date_label }}</span></div>{% endifchanged %}
+                        <div class="ms-row {% if msg.sender_id == user.id %}mine{% else %}theirs{% endif %}" data-id="{{ msg.id }}">
+                            <div class="ms-bubble">
+                                {% if msg.subject %}<div class="ms-subject">{{ msg.subject }}</div>{% endif %}
+                                <div class="ms-text">{{ msg.body|linebreaksbr }}</div>
+                                <span class="ms-time">{{ msg.created_at|date:"g:i A" }}</span>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="ms-start" id="msStart">
+                            {% avatar partner 72 %}
+                            <h5>{{ partner.full_name }}</h5>
+                            <p>This is the start of your conversation.</p>
+                        </div>
+                    {% endfor %}
+                    <div class="ms-seen{% if last_mine_seen %} visible{% endif %}" id="msSeen"><i class="fas fa-check-double me-1"></i>Seen</div>
+                </div>
+
+                {% if can_send %}
+                    <form class="ms-composer" id="msComposer" method="POST" action="{% url 'core:send_message' partner.id %}">
+                        {% csrf_token %}
+                        <textarea name="body" id="msInput" rows="1" maxlength="{{ max_length }}" placeholder="Write a message…" aria-label="Message {{ partner.full_name }}" required></textarea>
+                        <button type="submit" class="ms-send" aria-label="Send"><i class="fas fa-paper-plane"></i></button>
+                    </form>
+                    <div class="ms-composer-hint"><kbd>Enter</kbd> to send · <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line<span id="msCounter"></span></div>
+                {% else %}
+                    <div class="ms-blocked-note">
+                        <i class="fas fa-ban"></i> {{ cannot_send_reason }}
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="ms-placeholder">
+                    <div class="empty-state-icon"><i class="fas fa-comments"></i></div>
+                    <h5>Your messages</h5>
+                    <p>Pick a conversation, or search for any member to start one.</p>
+                    <button type="button" class="btn btn-primary" onclick="document.getElementById('msSearch').focus()">New message</button>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    const csrf = '{{ csrf_token }}';
+
+    /* ── Helpers ── */
+    function el(tag, cls, text) {
+        const node = document.createElement(tag);
+        if (cls) node.className = cls;
+        if (text !== undefined) node.textContent = text;
+        return node;
+    }
+    function avatarNode(person, size) {
+        if (person.photo) {
+            const img = el('img', 'avatar');
+            img.src = person.photo; img.alt = person.name;
+            img.style.setProperty('--avatar-size', size + 'px');
+            return img;
+        }
+        const span = el('span', 'avatar avatar-initials avatar-hue-' + person.hue, person.initials);
+        span.style.setProperty('--avatar-size', size + 'px');
+        return span;
+    }
+
+    /* ── New-chat search ── */
+    const search = document.getElementById('msSearch');
+    const results = document.getElementById('msSearchResults');
+    let searchTimer, activeIndex = -1;
+
+    function closeResults() { results.hidden = true; activeIndex = -1; search.parentElement.setAttribute('aria-expanded', 'false'); }
+    function renderResults(items) {
+        results.replaceChildren();
+        if (!items.length) {
+            results.append(el('li', 'ms-search-empty', 'No members found'));
+        }
+        items.forEach(function (p, i) {
+            const li = el('li');
+            li.setAttribute('role', 'option');
+            const a = el('a', 'ms-search-item');
+            a.href = p.url;
+            const text = el('div', 'min-w-0');
+            text.append(el('strong', '', p.name), el('span', '', p.sub));
+            a.append(avatarNode(p, 36), text);
+            li.append(a);
+            results.append(li);
+        });
+        results.hidden = false;
+        search.parentElement.setAttribute('aria-expanded', 'true');
+    }
+    search.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        const q = search.value.trim();
+        if (q.length < 2) { closeResults(); return; }
+        searchTimer = setTimeout(function () {
+            fetch('{% url "core:messages_search" %}?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+                .then(r => r.json()).then(d => renderResults(d.results)).catch(closeResults);
+        }, 220);
+    });
+    search.addEventListener('keydown', function (e) {
+        const items = results.querySelectorAll('.ms-search-item');
+        if (results.hidden || !items.length) return;
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIndex = (activeIndex + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+            items.forEach((it, i) => it.classList.toggle('active', i === activeIndex));
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            location.href = items[Math.max(activeIndex, 0)].href;
+        } else if (e.key === 'Escape') {
+            closeResults();
+        }
+    });
+    document.addEventListener('click', function (e) { if (!search.parentElement.contains(e.target)) closeResults(); });
+
+    {% if partner %}
+    /* ── Conversation ── */
+    const box = document.getElementById('msMessages');
+    const seen = document.getElementById('msSeen');
+    const pollUrl = '{% url "core:conversation_poll" partner.id %}';
+    let lastId = {{ last_id }};
+    let lastMineId = {{ last_mine_id|default:0 }};
+    let lastDate = '{{ last_date }}';
+
+    function scrollToBottom(smooth) {
+        box.scrollTo({ top: box.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+    }
+    function nearBottom() { return box.scrollHeight - box.scrollTop - box.clientHeight < 120; }
+
+    function addMessage(m, pendingNode) {
+        if (box.querySelector('.ms-row[data-id="' + m.id + '"]')) return;
+        const start = document.getElementById('msStart');
+        if (start) start.remove();
+        if (m.date !== lastDate) {
+            const day = el('div', 'ms-day');
+            day.append(el('span', '', m.date_label));
+            box.insertBefore(day, seen);
+            lastDate = m.date;
+        }
+        const row = pendingNode || el('div', 'ms-row ' + (m.mine ? 'mine' : 'theirs'));
+        row.dataset.id = m.id;
+        row.classList.remove('pending', 'failed');
+        row.replaceChildren();
+        const bubble = el('div', 'ms-bubble');
+        if (m.subject) bubble.append(el('div', 'ms-subject', m.subject));
+        bubble.append(el('div', 'ms-text', m.body), el('span', 'ms-time', m.time));
+        row.append(bubble);
+        if (!pendingNode) box.insertBefore(row, seen);
+        lastId = Math.max(lastId, m.id);
+        if (m.mine) {
+            lastMineId = Math.max(lastMineId, m.id);
+            seen.classList.remove('visible');
+        }
+    }
+
+    function updateUnread(total) {
+        document.querySelectorAll('[data-unread-badge]').forEach(function (b) {
+            b.textContent = total; b.hidden = !total;
+        });
+        const chip = document.getElementById('sidebarUnread');
+        if (chip) { chip.textContent = total + ' unread'; chip.hidden = !total; }
+    }
+
+    /* Live updates: poll every 3s while visible, every 15s in a background tab */
+    let pollTimer;
+    function poll() {
+        fetch(pollUrl + '?after=' + lastId, { headers: { 'Accept': 'application/json' } })
+            .then(r => r.ok ? r.json() : Promise.reject(r.status))
+            .then(function (d) {
+                const stick = nearBottom();
+                d.messages.forEach(m => addMessage(m));
+                if (d.messages.length && stick) scrollToBottom(true);
+                if (lastMineId && d.seen_upto >= lastMineId) seen.classList.add('visible');
+                updateUnread(d.unread_total);
+                const latest = d.messages[d.messages.length - 1];
+                if (latest) updateSidebarRow(latest);
+            })
+            .catch(function () {})
+            .finally(function () { pollTimer = setTimeout(poll, document.hidden ? 15000 : 3000); });
+    }
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) { clearTimeout(pollTimer); poll(); }
+    });
+
+    function updateSidebarRow(m) {
+        const row = document.querySelector('.ms-convo[data-partner="{{ partner.id }}"]');
+        if (!row) return;
+        const preview = row.querySelector('.ms-convo-preview');
+        preview.replaceChildren();
+        if (m.mine) { preview.append(el('span', 'ms-you', 'You:'), document.createTextNode(' ')); }
+        preview.append(document.createTextNode(m.body.length > 60 ? m.body.slice(0, 59) + '…' : m.body));
+        row.querySelector('.ms-convo-time').textContent = 'Now';
+        const li = row.parentElement;
+        li.parentElement.prepend(li);
+    }
+
+    scrollToBottom(false);
+    pollTimer = setTimeout(poll, 3000);
+
+    /* ── Composer ── */
+    const form = document.getElementById('msComposer');
+    if (form) {
+        const input = document.getElementById('msInput');
+        const counter = document.getElementById('msCounter');
+        const max = {{ max_length }};
+
+        function autosize() {
+            input.style.height = 'auto';
+            input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+            const left = max - input.value.length;
+            counter.textContent = left < 200 ? ' · ' + left + ' characters left' : '';
+        }
+        input.addEventListener('input', autosize);
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+                e.preventDefault();
+                form.requestSubmit();
+            }
+        });
+        // Ready to type on desktop; on phones don't pop the keyboard up uninvited.
+        if (window.matchMedia('(min-width: 992px)').matches) input.focus({ preventScroll: true });
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const body = input.value.trim();
+            if (!body) return;
+
+            // Show the message straight away, then confirm with the server.
+            const pending = el('div', 'ms-row mine pending');
+            const bubble = el('div', 'ms-bubble');
+            bubble.append(el('div', 'ms-text', body), el('span', 'ms-time', 'Sending…'));
+            pending.append(bubble);
+            const start = document.getElementById('msStart');
+            if (start) start.remove();
+            box.insertBefore(pending, seen);
+            scrollToBottom(true);
+            input.value = '';
+            autosize();
+
+            const data = new FormData();
+            data.append('body', body);
+            fetch(form.action, {
+                method: 'POST',
+                body: data,
+                headers: { 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+            })
+            .then(r => r.json())
+            .then(function (d) {
+                if (!d.ok) throw new Error(d.error || 'Message not sent');
+                addMessage(d.message, pending);
+                updateSidebarRow(d.message);
+            })
+            .catch(function (err) {
+                pending.classList.add('failed');
+                pending.querySelector('.ms-time').textContent = '⚠ ' + err.message + ' — tap to retry';
+                pending.addEventListener('click', function retry() {
+                    pending.remove();
+                    input.value = body;
+                    autosize();
+                    input.focus();
+                }, { once: true });
+            });
+        });
+    }
+    {% endif %}
+})();
+</script>
+{% endblock %}

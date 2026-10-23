@@ -1,0 +1,18 @@
+{% load static %}
+<a href="{% url 'core:event_detail' event.id %}" class="event-card{% if past %} is-past{% endif %}">
+    <div class="event-cover">
+        {% if event.cover_image %}<img src="{{ event.cover_image.url }}" alt="" loading="lazy">{% else %}{% include 'core/partials/horizon.html' %}{% endif %}
+    </div>
+    <div class="event-card-body">
+        <span class="date-block"><span>{{ event.date|date:"M" }}</span><strong>{{ event.date|date:"j" }}</strong></span>
+        <div class="min-w-0">
+            <h3>{{ event.title }}</h3>
+            <div class="event-meta">
+                <span><i class="far fa-clock"></i>{{ event.date|date:"D, M j, Y, g:i A" }}</span>
+                <span><i class="fas fa-location-dot"></i>{{ event.venue }}</span>
+                {% if event.ticket_price > 0 %}<span><i class="fas fa-ticket"></i>Tk {{ event.ticket_price|floatformat:"-2" }}</span>{% endif %}
+            </div>
+            <p>{{ event.description|truncatewords:28 }}</p>
+        </div>
+    </div>
+</a>

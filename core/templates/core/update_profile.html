@@ -1,29 +1,77 @@
-﻿{% extends 'core/base.html' %}
-{% load crispy_forms_tags %}
-{% block title %}Edit Profile{% endblock %}
+{% extends 'core/base.html' %}
+{% load ui %}
+{% block title %}Edit profile{% endblock %}
 
 {% block content %}
-<div class="section bg-white py-5">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">Edit Your Profile</h4>
-                    </div>
-                    <div class="card-body">
-                        <form method="POST" enctype="multipart/form-data" class="row g-4">
-                            {% csrf_token %}
-                            {{ form|crispy }}
-                            <div class="col-12 d-flex gap-2 flex-column flex-md-row">
-                                <button type="submit" class="btn btn-primary">Save Changes</button>
-                                <a href="{% url 'core:view_profile' %}" class="btn btn-outline-secondary">Cancel</a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+<div class="page page-narrow">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="{% url 'core:view_profile' %}">My profile</a><i class="fas fa-chevron-right"></i><span>Edit</span></nav>
+    {% include 'core/partials/page_head.html' with title='Edit your profile' sub="Keep it current so members and juniors can find you." %}
+
+    <form method="POST" enctype="multipart/form-data" class="surface surface-pad p-md-5" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="notice notice-danger mb-4"><i class="fas fa-circle-exclamation"></i><div>{{ form.non_field_errors|join:" " }}</div></div>
+        {% endif %}
+
+        <h2 class="form-section-title">Photo</h2>
+        <div class="photo-picker mb-4">
+            <span id="photoPreview">{% avatar user 88 %}</span>
+            <div class="flex-grow-1">
+                <label class="form-label" for="{{ form.profile_photo.id_for_label }}">Profile picture</label>
+                {{ form.profile_photo }}
+                <div class="form-text">JPG or PNG, square images look best.</div>
+                {% for error in form.profile_photo.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
             </div>
         </div>
-    </div>
+
+        <h2 class="form-section-title">About you</h2>
+        <div class="row g-3 mb-4">
+            {% include 'core/partials/field.html' with field=form.full_name col='col-12' %}
+            {% include 'core/partials/field.html' with field=form.phone %}
+            {% include 'core/partials/field.html' with field=form.dob %}
+            {% include 'core/partials/field.html' with field=form.gender col='col-md-4' %}
+            {% include 'core/partials/field.html' with field=form.blood_group col='col-md-4' %}
+            {% include 'core/partials/field.html' with field=form.upazila col='col-md-4' %}
+            {% include 'core/partials/field.html' with field=form.address col='col-12' %}
+        </div>
+
+        <h2 class="form-section-title">Work</h2>
+        <p class="form-section-sub">Juniors search alumni by company and role.</p>
+        <div class="row g-3 mb-4">
+            {% include 'core/partials/field.html' with field=form.designation %}
+            {% include 'core/partials/field.html' with field=form.company %}
+            {% include 'core/partials/field.html' with field=form.work_address col='col-12' %}
+        </div>
+
+        <h2 class="form-section-title">Links</h2>
+        <div class="row g-3">
+            {% include 'core/partials/field.html' with field=form.linkedin %}
+            {% include 'core/partials/field.html' with field=form.facebook %}
+            {% include 'core/partials/field.html' with field=form.twitter %}
+            {% include 'core/partials/field.html' with field=form.instagram %}
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'core:view_profile' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+            <button type="submit" class="btn btn-primary px-4">Save changes</button>
+        </div>
+        <p class="small text-muted mt-3 mb-0 text-end">To change your email, batch or department, message a committee admin.</p>
+    </form>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Live preview of a newly chosen profile photo.
+    document.getElementById('{{ form.profile_photo.id_for_label }}').addEventListener('change', function () {
+        const file = this.files && this.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+        const img = document.createElement('img');
+        img.className = 'avatar';
+        img.style.setProperty('--avatar-size', '88px');
+        img.alt = 'New profile photo';
+        img.src = URL.createObjectURL(file);
+        document.getElementById('photoPreview').replaceChildren(img);
+    });
+</script>
 {% endblock %}

@@ -1,0 +1,127 @@
+{% extends 'core/base.html' %}
+{% load ui %}
+{% block title %}{{ post.content|truncatechars:60 }}{% endblock %}
+
+{% block content %}
+<div class="page">
+    <nav class="crumbs" aria-label="Breadcrumb">
+        <a href="{% url 'core:dashboard' %}">Forum</a><i class="fas fa-chevron-right"></i>
+        <a href="{% url 'core:dashboard' %}?category={{ post.category|urlencode }}">{{ board.name }}</a>
+    </nav>
+
+    <div class="thread">
+        <div class="min-w-0">
+            <article class="surface op" data-post-id="{{ post.id }}">
+                <div class="op-board">
+                    <span class="board-tag b-{{ board.slug }}">{{ board.name }}</span>
+                    {% if user == post.user or is_admin %}
+                    <div class="dropdown">
+                        <button class="menu-dot" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Topic options"><i class="fas fa-ellipsis"></i></button>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            {% if user == post.user %}
+                            <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}" data-content="{{ post.content }}" data-category="{{ post.category }}" data-image-url="{% if post.image %}{{ post.image.url }}{% endif %}">
+                                <i class="fas fa-pen"></i><span>Edit topic</span>
+                            </button>
+                            {% endif %}
+                            <button class="dropdown-item text-danger delete-post-btn" data-post-id="{{ post.id }}"><i class="fas fa-trash-can"></i><span>Delete topic</span></button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="op-author">
+                    <a href="{% url 'core:member_profile' post.user.id %}" tabindex="-1">{% avatar post.user 48 %}</a>
+                    <div>
+                        <strong><a href="{% url 'core:member_profile' post.user.id %}">{{ post.user.full_name }}</a></strong>
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                            {% include 'core/partials/flair.html' with person=post.user %}
+                            <time class="topic-time" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"F j, Y, g:i A" }}</time>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="op-body">{{ post.content|linebreaksbr|urlize }}</div>
+                {% if post.image %}<div class="op-image"><img src="{{ post.image.url }}" alt="Image shared by {{ post.user.full_name }}"></div>{% endif %}
+
+                <div class="topic-foot">
+                    <button type="button" class="act like-btn{% if post.user_has_liked %} liked{% endif %}" data-url="{% url 'core:like_post' post.id %}" aria-pressed="{{ post.user_has_liked|yesno:'true,false' }}" aria-label="Like">
+                        <i class="{% if post.user_has_liked %}fas{% else %}far{% endif %} fa-heart"></i>
+                        <span class="n likes-count">{% if post.likes_count %}{{ post.likes_count }}{% endif %}</span><span class="like-word">{% if not post.likes_count %}Like{% endif %}</span>
+                    </button>
+                    <a href="#reply" class="act"><i class="far fa-comment"></i> Reply</a>
+                    {% if post.user != user %}<a href="{% url 'core:conversation' post.user.id %}" class="act"><i class="far fa-paper-plane"></i> Message</a>{% endif %}
+                </div>
+            </article>
+
+            <div class="replies-head">
+                <h2>{% if replies %}{{ replies|length }} repl{{ replies|length|pluralize:"y,ies" }}{% else %}No replies yet{% endif %}</h2>
+            </div>
+
+            <section class="surface">
+                {% for reply in replies %}
+                    <article class="reply" id="reply-{{ reply.id }}">
+                        <a href="{% url 'core:member_profile' reply.user.id %}" tabindex="-1">{% avatar reply.user 36 %}</a>
+                        <div class="min-w-0 flex-grow-1">
+                            <div class="reply-head">
+                                <a href="{% url 'core:member_profile' reply.user.id %}" class="topic-author">{{ reply.user.full_name }}</a>
+                                {% include 'core/partials/flair.html' with person=reply.user %}
+                                {% if reply.user_id == post.user_id %}<span class="chip chip-primary">Author</span>{% endif %}
+                                <time class="topic-time" datetime="{{ reply.created_at|date:'c' }}" title="{{ reply.created_at|date:'F j, Y, g:i a' }}">{{ reply.created_at|ago }}</time>
+                                <a class="num" href="#reply-{{ reply.id }}" title="Link to this reply">#{{ forloop.counter }}</a>
+                            </div>
+                            <div class="reply-body">{{ reply.content|linebreaksbr|urlize }}</div>
+                        </div>
+                    </article>
+                {% endfor %}
+
+                <form method="POST" action="{% url 'core:add_comment' post.id %}" class="reply-form{% if replies %} border-top{% endif %}" id="reply">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    {% avatar user 36 %}
+                    <div class="flex-grow-1">
+                        <label for="replyText" class="visually-hidden">Your reply</label>
+                        <textarea name="content" id="replyText" class="form-control" rows="3" placeholder="{% if replies %}Add to the discussion{% else %}Be the first to reply{% endif %}" required></textarea>
+                        <div class="reply-form-actions"><button type="submit" class="btn btn-primary btn-sm px-3">Post reply</button></div>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <aside class="rail" aria-label="About this topic">
+            <section class="side-block">
+                <div class="side-block-head">
+                    <h2 class="d-flex gap-2 align-items-center"><span class="swatch b-{{ board.slug }}" style="width:28px;height:28px;font-size:.8rem"><i class="fas {{ board.icon }}"></i></span>{{ board.name }}</h2>
+                </div>
+                <p class="side-empty">{{ board.blurb }}</p>
+            </section>
+
+            <section class="side-block">
+                <div class="side-block-head"><h2>In this topic</h2></div>
+                {% for person in participants %}
+                    <div class="person-row">
+                        <a href="{% url 'core:member_profile' person.id %}" tabindex="-1">{% avatar person 32 %}</a>
+                        <a href="{% url 'core:member_profile' person.id %}" class="who">
+                            <strong>{{ person.full_name }}</strong>
+                            <span>{% if person.id == post.user_id %}Started the topic{% else %}{{ person.department.name|default:person.get_member_type_display }}{% endif %}</span>
+                        </a>
+                    </div>
+                {% endfor %}
+            </section>
+
+            {% if related %}
+            <section class="side-block related">
+                <div class="side-block-head pb-2"><h2>More in {{ board.name }}</h2></div>
+                {% for t in related %}
+                    <a href="{% url 'core:post_detail' t.id %}">
+                        <strong>{{ t.content|truncatechars:90 }}</strong>
+                        <span>{{ t.user.full_name }}, {{ t.created_at|ago }}{% if t.reply_count %}, {{ t.reply_count }} repl{{ t.reply_count|pluralize:"y,ies" }}{% endif %}</span>
+                    </a>
+                {% endfor %}
+            </section>
+            {% endif %}
+        </aside>
+    </div>
+</div>
+{% url 'core:dashboard' as forum_url %}
+{% include 'core/partials/topic_tools.html' with after_delete_url=forum_url %}
+{% endblock %}

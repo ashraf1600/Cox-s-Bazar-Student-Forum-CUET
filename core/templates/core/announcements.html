@@ -1,85 +1,30 @@
-﻿{% extends 'core/base.html' %}
-{% load static %}
-{% block title %}Announcements{% endblock %}
+{% extends 'core/base.html' %}
+{% block title %}Notices{% endblock %}
 
 {% block content %}
-<div class="section bg-white">
-    <div class="container">
-        <!-- Page hero -->
-        <div class="dashboard-welcome">
-            <div class="welcome-card flex-column flex-md-row text-center text-md-start">
-                <div class="welcome-left">
-                    <div class="welcome-avatar"><i class="fas fa-bullhorn"></i></div>
-                    <div>
-                        <div class="welcome-eyebrow">Forum News</div>
-                        <h1 class="welcome-name">News &amp; Announcements</h1>
-                        <p class="welcome-meta justify-content-center justify-content-md-start">
-                            <span><i class="fas fa-sparkles me-1"></i> Official updates from CSF-CUET</span>
-                        </p>
-                    </div>
-                </div>
-                <div class="welcome-stats">
-                    <div class="welcome-stat">
-                        <span class="welcome-stat-num">{{ page_obj.paginator.count|default:0 }}</span>
-                        <span class="welcome-stat-label">Total</span>
-                    </div>
-                    <div class="welcome-divider"></div>
-                    <div class="welcome-stat">
-                        <span class="welcome-stat-num">{{ page_obj|length }}</span>
-                        <span class="welcome-stat-label">This page</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="page page-narrow">
+    {% include 'core/partials/page_head.html' with title='Notices' sub="Official updates from the CSF committee. Pinned notices stay on top." %}
 
-        <div class="d-flex justify-content-end mb-4">
-            <a href="{% url 'core:homepage' %}" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-1"></i> Back to home
-            </a>
-        </div>
-        <div class="row g-4">
-            {% for announcement in page_obj %}
-            <div class="col-md-8 mx-auto">
-                <div class="card announcement-card shadow-sm">
-                    {% if announcement.image %}
-                        <img src="{{ announcement.image.url }}" class="card-img-top" style="max-height: 320px; object-fit: cover;" alt="{{ announcement.title }}">
-                    {% endif %}
-                    <div class="card-body">
-                        {% if announcement.is_pinned %}
-                            <span class="badge bg-danger mb-2">Pinned</span>
-                        {% endif %}
-                        <h3 class="card-title h4">{{ announcement.title }}</h3>
-                        <p class="text-muted mb-2"><i class="fas fa-user-circle me-2"></i> <strong>{{ announcement.admin.full_name|default:"CBSF-CUET Admin" }}</strong> • {{ announcement.created_at|date:"F j, Y, g:i a" }}</p>
-                        <div class="card-text">{{ announcement.content|linebreaks }}</div>
+    <div class="notice-feed">
+        {% for a in page_obj %}
+            <article class="notice-post{% if a.is_pinned %} is-pinned{% endif %}" id="notice-{{ a.id }}">
+                {% if a.image %}<img src="{{ a.image.url }}" alt="" loading="lazy">{% endif %}
+                <div class="notice-post-body">
+                    <div class="notice-post-meta">
+                        {% if a.is_pinned %}<span class="chip chip-danger"><i class="fas fa-thumbtack"></i> Pinned</span>{% endif %}
+                        <time datetime="{{ a.created_at|date:'c' }}">{{ a.created_at|date:"F j, Y" }}</time>
+                        <span>by {{ a.admin.full_name|default:"the committee" }}</span>
                     </div>
+                    <h2>{{ a.title }}</h2>
+                    <div class="prose">{{ a.content|linebreaks|urlize }}</div>
                 </div>
+            </article>
+        {% empty %}
+            <div class="surface">
+                {% include 'core/partials/empty_state.html' with icon='fa-bullhorn' title='No notices yet' text='Official updates from the committee will appear here.' %}
             </div>
-            {% empty %}
-            <div class="col-12">
-                <div class="card empty-state-card text-center p-5">
-                    <div class="empty-icon"><i class="fas fa-bullhorn"></i></div>
-                    <h5 class="mb-1">No announcements yet</h5>
-                    <p class="text-muted mb-0">Check back soon — official updates are posted regularly.</p>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-
-        {% if page_obj.has_other_pages %}
-        <nav class="mt-4">
-            <ul class="pagination justify-content-center">
-                {% if page_obj.has_previous %}
-                    <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li>
-                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
-                {% endif %}
-                <li class="page-item active"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
-                {% if page_obj.has_next %}
-                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
-                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a></li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
+        {% endfor %}
     </div>
+    {% include 'core/partials/pagination.html' %}
 </div>
 {% endblock %}

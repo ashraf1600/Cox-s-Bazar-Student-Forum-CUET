@@ -1,102 +1,106 @@
 {% extends 'core/base.html' %}
-{% load static %}
-
-{% block title %}Manage Photo Gallery{% endblock %}
+{% block title %}Manage gallery{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="fw-bold text-dark mb-1"><i class="fas fa-tasks text-primary me-2"></i>Admin Photo Gallery Management</h2>
-            <p class="text-secondary small mb-0">Upload, categorize, and maintain activity photos for the website.</p>
+<div class="page">
+    <header class="page-head">
+        <div class="page-head-main">
+            {% include 'core/partials/horizon.html' %}
+            <h1 class="page-title">Manage gallery</h1>
+            <p class="page-sub">{{ photos|length }} photo{{ photos|length|pluralize }}. Upload, feature and remove activity photos.</p>
         </div>
-        <a href="{% url 'core:gallery' %}" class="btn btn-outline-primary rounded-pill px-4">
-            <i class="fas fa-eye me-1"></i> View Public Gallery
-        </a>
-    </div>
+        <div class="page-head-actions"><a href="{% url 'core:gallery' %}" class="btn btn-outline-primary"><i class="fas fa-eye"></i> View gallery</a></div>
+    </header>
 
     <div class="row g-4">
-        <!-- Upload Form -->
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 p-4">
-                <h5 class="fw-bold text-dark mb-3"><i class="fas fa-cloud-upload-alt text-primary me-2"></i>Upload New Image</h5>
-                <form method="POST" enctype="multipart/form-data">
+            <section class="surface rsvp-card">
+                <div class="surface-head">
+                    <h2>Upload photos</h2>
+                </div>
+                <form method="POST" enctype="multipart/form-data" class="surface-body">
                     {% csrf_token %}
+                    <label class="dropzone mb-3" id="dropzone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span id="dropzoneText"><strong>Choose images</strong> or drag them here</span>
+                        <input type="file" name="image" id="id_image" accept="image/*" multiple required>
+                    </label>
+                    {% for error in form.image.errors %}<div class="field-error mb-2">{{ error }}</div>{% endfor %}
+
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Photo Title *</label>
+                        <label class="form-label" for="{{ form.title.id_for_label }}">Title <span class="text-danger">*</span></label>
                         {{ form.title }}
+                        {% for error in form.title.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Category *</label>
+                        <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
                         {{ form.category }}
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Image File *</label>
-                        {{ form.image }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small">Description (Optional)</label>
+                        <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
                         {{ form.description }}
                     </div>
                     <div class="form-check mb-4">
                         {{ form.is_featured }}
-                        <label class="form-check-label small fw-semibold" for="{{ form.is_featured.id_for_label }}">
-                            Mark as Featured Photo
-                        </label>
+                        <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">Feature on the gallery page</label>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 fw-semibold rounded-pill py-2" style="background-color: #0066cc;">
-                        <i class="fas fa-upload me-1"></i> Upload Photo
-                    </button>
+                    <button type="submit" class="btn btn-primary w-100">Upload photos</button>
+                    <p class="small text-muted mt-2 mb-0">Title, category and description apply to every photo in this upload.</p>
                 </form>
-            </div>
+            </section>
         </div>
 
-        <!-- Uploaded Images Management List -->
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 p-4">
-                <h5 class="fw-bold text-dark mb-3"><i class="fas fa-images text-primary me-2"></i>Uploaded Photos ({{ photos.count }})</h5>
-                {% if photos %}
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Image</th>
-                                    <th>Title</th>
-                                    <th>Category</th>
-                                    <th>Uploaded</th>
-                                    <th class="text-end">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for photo in photos %}
-                                    <tr>
-                                        <td>
-                                            <img src="{{ photo.image.url }}" alt="{{ photo.title }}" class="rounded object-fit-cover shadow-sm" width="50" height="50">
-                                        </td>
-                                        <td>
-                                            <strong class="text-dark d-block">{{ photo.title }}</strong>
-                                            {% if photo.is_featured %}<span class="badge bg-warning text-dark">Featured</span>{% endif %}
-                                        </td>
-                                        <td><span class="badge bg-secondary-subtle text-secondary">{{ photo.category }}</span></td>
-                                        <td class="small text-muted">{{ photo.uploaded_date|date:"M d, Y" }}</td>
-                                        <td class="text-end">
-                                            <a href="{% url 'core:delete_gallery_photo' photo.id %}" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="return confirm('Are you sure you want to delete this photo?');">
-                                                <i class="fas fa-trash me-1"></i> Delete
-                                            </a>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="text-center py-5 text-muted">
-                        <i class="fas fa-image fa-3x mb-3"></i>
-                        <p class="mb-0">No photos uploaded yet. Use the form on the left to upload.</p>
-                    </div>
-                {% endif %}
-            </div>
+            <section class="surface">
+                <div class="surface-head">
+                    <h2>Uploaded photos</h2>
+                </div>
+                <div class="surface-body">
+                    {% if photos %}
+                        <div class="admin-photo-grid">
+                            {% for photo in photos %}
+                            <figure class="admin-photo m-0">
+                                <img src="{{ photo.image.url }}" alt="{{ photo.title }}" loading="lazy">
+                                {% if photo.is_featured %}<span class="chip chip-gold featured-flag"><i class="fas fa-star"></i> Featured</span>{% endif %}
+                                <form method="POST" action="{% url 'core:delete_gallery_photo' photo.id %}" onsubmit="return confirm('Delete “{{ photo.title|escapejs }}”? This cannot be undone.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="icon-btn-danger" aria-label="Delete {{ photo.title }}"><i class="fas fa-trash-can"></i></button>
+                                </form>
+                                <figcaption class="admin-photo-body">
+                                    <p class="admin-photo-title" title="{{ photo.title }}">{{ photo.title }}</p>
+                                    <span class="admin-photo-meta">{{ photo.category }} &middot; {{ photo.uploaded_date|date:"M j, Y" }}</span>
+                                </figcaption>
+                            </figure>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {% include 'core/partials/empty_state.html' with icon='fa-image' title='No photos yet' text='Use the upload panel to add the first photos.' %}
+                    {% endif %}
+                </div>
+            </section>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    (function () {
+        const zone = document.getElementById('dropzone');
+        const input = document.getElementById('id_image');
+        const text = document.getElementById('dropzoneText');
+        function update() {
+            const n = input.files.length;
+            text.textContent = n ? n + ' image' + (n > 1 ? 's' : '') + ' selected' : 'Choose images or drag them here';
+        }
+        input.addEventListener('change', update);
+        ['dragenter', 'dragover'].forEach(function (evt) {
+            zone.addEventListener(evt, function () { zone.classList.add('is-dragover'); });
+        });
+        ['dragleave', 'drop'].forEach(function (evt) {
+            zone.addEventListener(evt, function () { zone.classList.remove('is-dragover'); });
+        });
+        input.addEventListener('drop', function () { setTimeout(update, 0); });
+    })();
+</script>
 {% endblock %}

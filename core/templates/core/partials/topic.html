@@ -1,0 +1,58 @@
+{% load ui %}
+{# One topic in the forum list. Context: post (annotated with reply_count, user_has_liked), user, is_admin #}
+{% with b=post.category|board %}
+<article class="topic" data-post-id="{{ post.id }}">
+    <a href="{% url 'core:member_profile' post.user.id %}" tabindex="-1" aria-hidden="true">{% avatar post.user 44 %}</a>
+    <div class="topic-main">
+        <div class="topic-byline">
+            <a href="{% url 'core:member_profile' post.user.id %}" class="topic-author">{{ post.user.full_name }}</a>
+            {% include 'core/partials/flair.html' with person=post.user %}
+            <a href="{% url 'core:post_detail' post.id %}" class="topic-time"><time datetime="{{ post.created_at|date:'c' }}" title="{{ post.created_at|date:'F j, Y, g:i a' }}">{{ post.created_at|ago }}</time></a>
+        </div>
+        <a href="{% url 'core:dashboard' %}?category={{ post.category|urlencode }}" class="board-tag topic-board b-{{ b.slug }}">{{ post.category }}</a>
+
+        <div class="topic-body{% if post.content|length > 420 %} is-clamped{% endif %}">{{ post.content|linebreaksbr|urlize }}</div>
+        {% if post.content|length > 420 %}<a class="topic-more" href="{% url 'core:post_detail' post.id %}">Read the full topic</a>{% endif %}
+
+        {% if post.image %}
+            <a href="{% url 'core:post_detail' post.id %}" class="topic-image"><img src="{{ post.image.url }}" loading="lazy" alt="Image shared by {{ post.user.full_name }}"></a>
+        {% endif %}
+
+        <div class="topic-foot">
+            <button type="button" class="act like-btn{% if post.user_has_liked %} liked{% endif %}" data-url="{% url 'core:like_post' post.id %}" aria-pressed="{{ post.user_has_liked|yesno:'true,false' }}" aria-label="Like">
+                <i class="{% if post.user_has_liked %}fas{% else %}far{% endif %} fa-heart"></i>
+                <span class="n likes-count">{% if post.likes_count %}{{ post.likes_count }}{% endif %}</span><span class="like-word">{% if not post.likes_count %}Like{% endif %}</span>
+            </button>
+            <a href="{% url 'core:post_detail' post.id %}#reply" class="act">
+                <i class="far fa-comment"></i>
+                {% if post.reply_count %}<span class="n">{{ post.reply_count }}</span> repl{{ post.reply_count|pluralize:"y,ies" }}{% else %}Reply{% endif %}
+            </a>
+            {% if post.user != user %}
+                <a href="{% url 'core:conversation' post.user.id %}" class="act"><i class="far fa-paper-plane"></i> Message</a>
+            {% endif %}
+            {% if post.reply_count %}
+                <span class="topic-last">
+                    <span class="avatar-stack">{% for c in post.comments.all|tail:3 %}{% avatar c.user 22 %}{% endfor %}</span>
+                    {% with last=post.comments.all|tail:1|first %}last reply {{ last.created_at|ago }}{% endwith %}
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if user == post.user or is_admin %}
+    <div class="dropdown topic-menu">
+        <button class="menu-dot" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Topic options"><i class="fas fa-ellipsis"></i></button>
+        <div class="dropdown-menu dropdown-menu-end">
+            {% if user == post.user %}
+            <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}" data-content="{{ post.content }}" data-category="{{ post.category }}" data-image-url="{% if post.image %}{{ post.image.url }}{% endif %}">
+                <i class="fas fa-pen"></i><span>Edit topic</span>
+            </button>
+            {% endif %}
+            <button class="dropdown-item text-danger delete-post-btn" data-post-id="{{ post.id }}">
+                <i class="fas fa-trash-can"></i><span>Delete topic</span>
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</article>
+{% endwith %}

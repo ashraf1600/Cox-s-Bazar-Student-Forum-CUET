@@ -1,147 +1,252 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    {% load static %}
+    {% load static ui %}
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Cox's Bazar Student Forum at CUET connects students and alumni with events, mentorship, and community opportunities.">
-    <title>CSF,CUET - {% block title %}Home{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#222c7c">
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <meta name="description" content="The forum for students and alumni from Cox's Bazar at CUET: ask seniors, find blood donors, share jobs and tuition, and join events.">
+    <title>{% block title %}Home{% endblock %} | CSF CUET</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Noto+Sans+Bengali:wdth,wght@62.5..100,100..900&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
-    <style>
-        /* Additional inline styles can go here if needed */
-    </style>
+    <link rel="stylesheet" href="{% static 'core/css/style.css' %}?v=4.1">
+    {% block extra_head %}{% endblock %}
 </head>
-<body>
+{% with url_name=request.resolver_match.url_name %}
+<body class="{% if user.is_authenticated and user.status == 'active' %}is-member{% endif %} {% block body_class %}{% endblock %}">
+<a class="skip-link" href="#main-content">Skip to content</a>
 
-    <!-- Premium Sticky Navbar (Glass + Gold Accent) -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-glass sticky-top" style="z-index: 1050;">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="{% url 'core:homepage' %}">
-                <img src="{% static 'images/logo.png' %}" alt="CSF-CUET Logo" height="36" class="me-2 rounded"
-                     onerror="this.style.display='none'" loading="lazy">
-                <span>CSF<span class="gold">-</span>CUET</span>
-            </a>
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
-                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'homepage' %}active{% endif %}" href="{% url 'core:homepage' %}">Home</a></li>
-                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}" href="{% url 'core:about' %}">About</a></li>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" href="{% if user.is_authenticated and user.status == 'active' %}{% url 'core:dashboard' %}{% else %}{% url 'core:homepage' %}{% endif %}">
+            <img src="{% static 'images/logo-mark.png' %}" alt="" class="brand-mark" width="34" height="38">
+            <span class="brand-text">
+                <strong>CSF CUET</strong>
+                <small>Cox's Bazar Students' Forum</small>
+            </span>
+        </a>
 
-                    <!-- Community Dropdown -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if request.resolver_match.url_name in 'committee,alumni_directory,committee_directory,advisory_panel' %}active{% endif %}"
-                           href="#" id="navbarCommunityDropdown" role="button"
-                           data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-users me-1"></i> Community
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarCommunityDropdown">
-                            <li><a class="dropdown-item" href="{% url 'core:committee' %}"><i class="fas fa-user-tie me-2"></i> Committee</a></li>
-                            <li><a class="dropdown-item" href="{% url 'core:alumni_directory' %}"><i class="fas fa-graduation-cap me-2"></i> Alumni</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'core:advisory_panel' %}"><i class="fas fa-user-graduate me-2"></i> Advisory Panel</a></li>
-                        </ul>
-                    </li>
-
-                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'events' or request.resolver_match.url_name == 'event_detail' %}active{% endif %}" href="{% url 'core:events' %}"><i class="fas fa-calendar-alt me-1"></i> Events</a></li>
-                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'gallery' %}active{% endif %}" href="{% url 'core:gallery' %}"><i class="fas fa-images me-1"></i> Gallery</a></li>
-                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'announcements' %}active{% endif %}" href="{% url 'core:announcements' %}"><i class="fas fa-bullhorn me-1"></i> Announcements</a></li>
-
+        <nav class="nav-main" aria-label="Main">
+            {% if user.is_authenticated and user.status == 'active' %}
+                <a href="{% url 'core:dashboard' %}" class="{% if url_name == 'dashboard' or url_name == 'post_detail' %}active{% endif %}">Forum</a>
+            {% else %}
+                <a href="{% url 'core:homepage' %}" class="{% if url_name == 'homepage' %}active{% endif %}">Home</a>
+            {% endif %}
+            <a href="{% url 'core:events' %}" class="{% if url_name == 'events' or url_name == 'event_detail' %}active{% endif %}">Events</a>
+            <a href="{% url 'core:announcements' %}" class="{% if url_name == 'announcements' %}active{% endif %}">Notices</a>
+            <div class="dropdown">
+                <button type="button" class="nav-drop {% if url_name in 'committee,alumni_directory,committee_directory,advisory_panel,member_directory,member_profile' %}active{% endif %}" data-bs-toggle="dropdown" aria-expanded="false">
+                    People <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="dropdown-menu">
                     {% if user.is_authenticated and user.status == 'active' %}
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}">
-                                <i class="fas fa-tachometer-alt me-1"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'inbox' or request.resolver_match.url_name == 'message_detail' %}active{% endif %}" href="{% url 'core:inbox' %}">
-                                <i class="fas fa-inbox me-1"></i> Inbox
-                                {% if unread_count > 0 %}
-                                    <span class="badge bg-danger rounded-pill ms-1">{{ unread_count }}</span>
-                                {% endif %}
-                            </a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {% if request.resolver_match.url_name in 'view_profile,update_profile,edit_profile' %}active{% endif %}"
-                               href="#" id="navbarProfileDropdown" role="button"
-                               data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user-circle me-1"></i> {{ user.full_name|truncatechars:18 }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarProfileDropdown">
-                                <li><a class="dropdown-item" href="{% url 'core:view_profile' %}"><i class="fas fa-id-card me-2"></i> My Profile</a></li>
-                                <li><a class="dropdown-item" href="{% url 'core:update_profile' %}"><i class="fas fa-edit me-2"></i> Edit Profile</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="{% url 'core:logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item ms-lg-2"><a class="nav-link btn btn-outline-light px-3" href="{% url 'core:register' %}">Sign Up</a></li>
-                        <li class="nav-item ms-lg-2"><a class="nav-link btn btn-light px-3" href="{% url 'core:login' %}">Login</a></li>
+                    <a class="dropdown-item" href="{% url 'core:member_directory' %}"><i class="fas fa-address-book"></i><span>Members<small>Everyone in the forum</small></span></a>
                     {% endif %}
-                </ul>
+                    <a class="dropdown-item" href="{% url 'core:alumni_directory' %}"><i class="fas fa-user-graduate"></i><span>Alumni<small>Graduates you can reach out to</small></span></a>
+                    <a class="dropdown-item" href="{% url 'core:committee' %}"><i class="fas fa-people-group"></i><span>Committee<small>Who runs the forum</small></span></a>
+                    <a class="dropdown-item" href="{% url 'core:advisory_panel' %}"><i class="fas fa-chalkboard-user"></i><span>Advisory panel<small>Faculty advisors</small></span></a>
+                </div>
             </div>
+            <a href="{% url 'core:gallery' %}" class="{% if url_name == 'gallery' %}active{% endif %}">Gallery</a>
+            <a href="{% url 'core:about' %}" class="{% if url_name == 'about' %}active{% endif %}">About</a>
+        </nav>
+
+        <div class="topbar-actions">
+            {% if user.is_authenticated and user.status == 'active' %}
+                <form class="topbar-search" action="{% url 'core:member_directory' %}" method="get" role="search">
+                    <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                    <input type="search" name="search" placeholder="Find a member" aria-label="Find a member">
+                </form>
+                <a href="{% url 'core:inbox' %}" class="icon-btn{% if url_name in 'inbox,conversation' %} active{% endif %}" aria-label="Messages" title="Messages">
+                    <i class="fas fa-comment-dots"></i>
+                    <span class="count-badge" data-unread-badge {% if not unread_count %}hidden{% endif %}>{{ unread_count }}</span>
+                </a>
+                <div class="dropdown">
+                    <button type="button" class="user-btn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Your account">
+                        {% avatar user 34 %}
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end user-menu">
+                        <div class="user-menu-head">
+                            <strong>{{ user.full_name }}</strong>
+                            <span>{{ user.email }}</span>
+                        </div>
+                        <a class="dropdown-item" href="{% url 'core:view_profile' %}"><i class="fas fa-id-card"></i><span>My profile</span></a>
+                        <a class="dropdown-item" href="{% url 'core:update_profile' %}"><i class="fas fa-pen"></i><span>Edit profile</span></a>
+                        {% if user.is_site_admin %}
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{% url 'core:admin_gallery' %}"><i class="fas fa-images"></i><span>Manage gallery</span></a>
+                            {% if user.is_staff %}<a class="dropdown-item" href="{% url 'admin:index' %}"><i class="fas fa-screwdriver-wrench"></i><span>Admin panel</span></a>{% endif %}
+                        {% endif %}
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="{% url 'core:logout' %}"><i class="fas fa-arrow-right-from-bracket"></i><span>Log out</span></a>
+                    </div>
+                </div>
+            {% elif user.is_authenticated %}
+                <span class="pending-pill"><i class="fas fa-hourglass-half"></i> Awaiting approval</span>
+                <a class="btn btn-ghost btn-sm" href="{% url 'core:logout' %}">Log out</a>
+            {% else %}
+                <a class="btn btn-ghost btn-sm" href="{% url 'core:login' %}">Log in</a>
+                <a class="btn btn-bronze btn-sm" href="{% url 'core:register' %}">Join the forum</a>
+            {% endif %}
+            <button class="menu-btn" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNav" aria-controls="mobileNav" aria-expanded="false" aria-label="Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+
+    <nav class="collapse mobile-nav" id="mobileNav" aria-label="Main (mobile)">
+        <div class="mobile-nav-inner">
+        {% if user.is_authenticated and user.status == 'active' %}
+            <a href="{% url 'core:view_profile' %}" class="mobile-me">
+                {% avatar user 44 %}
+                <span class="min-w-0"><strong>{{ user.full_name }}</strong><small>View your profile</small></span>
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            <form class="mobile-search" action="{% url 'core:member_directory' %}" method="get" role="search">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" name="search" placeholder="Find a member" aria-label="Find a member">
+            </form>
+            <div class="mobile-nav-group">
+                <a href="{% url 'core:dashboard' %}" class="{% if url_name == 'dashboard' or url_name == 'post_detail' %}active{% endif %}"><i class="fas fa-comments"></i>Forum</a>
+                <a href="{% url 'core:inbox' %}" class="{% if url_name in 'inbox,conversation' %}active{% endif %}"><i class="fas fa-comment-dots"></i>Messages<b class="count-badge" data-unread-badge {% if not unread_count %}hidden{% endif %}>{{ unread_count }}</b></a>
+                <a href="{% url 'core:events' %}" class="{% if url_name == 'events' or url_name == 'event_detail' %}active{% endif %}"><i class="fas fa-calendar-days"></i>Events</a>
+                <a href="{% url 'core:announcements' %}" class="{% if url_name == 'announcements' %}active{% endif %}"><i class="fas fa-bullhorn"></i>Notices</a>
+            </div>
+            <div class="mobile-nav-group">
+                <span class="mobile-nav-label">People</span>
+                <a href="{% url 'core:member_directory' %}" class="{% if url_name == 'member_directory' %}active{% endif %}"><i class="fas fa-address-book"></i>Members</a>
+                <a href="{% url 'core:alumni_directory' %}" class="{% if url_name == 'alumni_directory' %}active{% endif %}"><i class="fas fa-user-graduate"></i>Alumni</a>
+                <a href="{% url 'core:committee' %}" class="{% if url_name == 'committee' %}active{% endif %}"><i class="fas fa-people-group"></i>Committee</a>
+                <a href="{% url 'core:advisory_panel' %}" class="{% if url_name == 'advisory_panel' %}active{% endif %}"><i class="fas fa-chalkboard-user"></i>Advisory panel</a>
+            </div>
+            <div class="mobile-nav-group">
+                <span class="mobile-nav-label">More</span>
+                <a href="{% url 'core:gallery' %}" class="{% if url_name == 'gallery' %}active{% endif %}"><i class="fas fa-images"></i>Gallery</a>
+                <a href="{% url 'core:about' %}" class="{% if url_name == 'about' %}active{% endif %}"><i class="fas fa-circle-info"></i>About CSF</a>
+                <a href="{% url 'core:update_profile' %}" class="{% if url_name == 'update_profile' %}active{% endif %}"><i class="fas fa-pen"></i>Edit profile</a>
+                {% if user.is_site_admin %}
+                    <a href="{% url 'core:admin_gallery' %}"><i class="fas fa-images"></i>Manage gallery</a>
+                    {% if user.is_staff %}<a href="{% url 'admin:index' %}"><i class="fas fa-screwdriver-wrench"></i>Admin panel</a>{% endif %}
+                {% endif %}
+                <a href="{% url 'core:logout' %}" class="text-danger"><i class="fas fa-arrow-right-from-bracket"></i>Log out</a>
+            </div>
+        {% else %}
+            <div class="mobile-nav-group">
+                <a href="{% url 'core:homepage' %}" class="{% if url_name == 'homepage' %}active{% endif %}"><i class="fas fa-house"></i>Home</a>
+                <a href="{% url 'core:events' %}" class="{% if url_name == 'events' or url_name == 'event_detail' %}active{% endif %}"><i class="fas fa-calendar-days"></i>Events</a>
+                <a href="{% url 'core:announcements' %}" class="{% if url_name == 'announcements' %}active{% endif %}"><i class="fas fa-bullhorn"></i>Notices</a>
+                <a href="{% url 'core:alumni_directory' %}" class="{% if url_name == 'alumni_directory' %}active{% endif %}"><i class="fas fa-user-graduate"></i>Alumni</a>
+                <a href="{% url 'core:committee' %}" class="{% if url_name == 'committee' %}active{% endif %}"><i class="fas fa-people-group"></i>Committee</a>
+                <a href="{% url 'core:advisory_panel' %}" class="{% if url_name == 'advisory_panel' %}active{% endif %}"><i class="fas fa-chalkboard-user"></i>Advisory panel</a>
+                <a href="{% url 'core:gallery' %}" class="{% if url_name == 'gallery' %}active{% endif %}"><i class="fas fa-images"></i>Gallery</a>
+                <a href="{% url 'core:about' %}" class="{% if url_name == 'about' %}active{% endif %}"><i class="fas fa-circle-info"></i>About CSF</a>
+            </div>
+            {% if user.is_authenticated %}
+                <div class="mobile-nav-group">
+                    <p class="mobile-nav-note"><i class="fas fa-hourglass-half"></i> Your account is waiting for committee approval.</p>
+                    <a href="{% url 'core:logout' %}" class="text-danger"><i class="fas fa-arrow-right-from-bracket"></i>Log out</a>
+                </div>
+            {% else %}
+                <div class="mobile-nav-cta">
+                    <a class="btn btn-outline-primary btn-lg" href="{% url 'core:login' %}">Log in</a>
+                    <a class="btn btn-primary btn-lg" href="{% url 'core:register' %}">Join the forum</a>
+                </div>
+            {% endif %}
+        {% endif %}
         </div>
     </nav>
+</header>
 
-    <!-- Main content – no extra padding-top -->
-    <main class="main-content">
-        {% if messages %}
-            <div class="container mt-3">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm rounded-3" role="alert">
-                        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-        {% block content %}{% endblock %}
-    </main>
+<main class="main-content" id="main-content" tabindex="-1">
+    {% if messages %}
+        <div class="toast-stack" aria-live="polite">
+            {% for message in messages %}
+                <div class="flash flash-{{ message.tags }}" role="{% if message.tags == 'danger' %}alert{% else %}status{% endif %}">
+                    <i class="flash-icon fas fa-{% if message.tags == 'success' %}circle-check{% elif message.tags == 'danger' %}circle-exclamation{% elif message.tags == 'warning' %}triangle-exclamation{% else %}circle-info{% endif %}"></i>
+                    <div>{{ message }}</div>
+                    <button type="button" class="btn-close" aria-label="Dismiss"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+</main>
 
-    <footer class="site-footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div>
-                    <p class="footer-brand">CSF,CUET</p>
-                    <p class="small-note">Connecting Cox's Bazar students and alumni at CUET through meaningful events, mentorship, and community growth.</p>
-                </div>
-                <div>
-                    <h6>Quick Links</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li><a href="{% url 'core:homepage' %}">Home</a></li>
-                        <li><a href="{% url 'core:events' %}">Events</a></li>
-                        <li><a href="{% url 'core:announcements' %}">Announcements</a></li>
-                        <li><a href="{% url 'core:member_directory' %}">Members</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h6>Contact</h6>
-                    <p class="small-note mb-1">Reach out to the forum team for support, collaborations, or event questions.</p>
-                    <p class="small-note">Stay connected with updates and new opportunities.</p>
-                </div>
-            </div>
-            <div class="text-center mt-4">
-                <p class="mb-0">&copy; 2026 Cox's Bazar Student Forum, CUET | Connecting Cox's Bazar Talent</p>
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <img src="{% static 'images/logo-mark.png' %}" alt="CSF crest" width="48" height="54">
+            <div>
+                <strong>Cox's Bazar Students' Forum</strong>
+                <p>Chittagong University of Engineering &amp; Technology, Raozan, Chattogram</p>
+                <a href="mailto:csf@cuet.ac.bd">csf@cuet.ac.bd</a>
             </div>
         </div>
-    </footer>
+        <nav class="footer-links" aria-label="Footer">
+            <div>
+                <h2>Community</h2>
+                {% if user.is_authenticated and user.status == 'active' %}<a href="{% url 'core:dashboard' %}">Forum</a>{% endif %}
+                <a href="{% url 'core:events' %}">Events</a>
+                <a href="{% url 'core:announcements' %}">Notices</a>
+                <a href="{% url 'core:gallery' %}">Gallery</a>
+            </div>
+            <div>
+                <h2>People</h2>
+                <a href="{% url 'core:alumni_directory' %}">Alumni</a>
+                <a href="{% url 'core:committee' %}">Committee</a>
+                <a href="{% url 'core:advisory_panel' %}">Advisory panel</a>
+            </div>
+            <div>
+                <h2>Forum</h2>
+                <a href="{% url 'core:about' %}">About CSF</a>
+                {% if not user.is_authenticated %}<a href="{% url 'core:register' %}">Join</a><a href="{% url 'core:login' %}">Log in</a>{% endif %}
+            </div>
+        </nav>
+    </div>
+    <div class="footer-base">
+        {% include 'core/partials/horizon.html' %}
+        <p>&copy; {% now "Y" %} Cox's Bazar Students' Forum, CUET</p>
+    </div>
+</footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="{% static 'core/js/main.js' %}" defer></script>
-    <script>
-        window.addEventListener('scroll', function() {
-            const nav = document.querySelector('.navbar');
-            if (window.scrollY > 50) nav.classList.add('navbar-scrolled');
-            else nav.classList.remove('navbar-scrolled');
-        });
-    </script>
+{% if user.is_authenticated and user.status == 'active' %}
+<nav class="tabbar" aria-label="Quick">
+    <a href="{% url 'core:dashboard' %}" class="{% if url_name == 'dashboard' or url_name == 'post_detail' %}active{% endif %}"><i class="fas fa-comments"></i><span>Forum</span></a>
+    <a href="{% url 'core:events' %}" class="{% if url_name == 'events' or url_name == 'event_detail' %}active{% endif %}"><i class="fas fa-calendar-days"></i><span>Events</span></a>
+    <a href="{% url 'core:dashboard' %}#composer" class="tabbar-new" aria-label="New topic"><i class="fas fa-plus"></i></a>
+    <a href="{% url 'core:inbox' %}" class="{% if url_name in 'inbox,conversation' %}active{% endif %}"><i class="fas fa-comment-dots"></i><span>Chats</span><b class="count-badge" data-unread-badge {% if not unread_count %}hidden{% endif %}>{{ unread_count }}</b></a>
+    <a href="{% url 'core:view_profile' %}" class="{% if url_name in 'view_profile,update_profile' %}active{% endif %}"><i class="fas fa-user"></i><span>Me</span></a>
+</nav>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+<script src="{% static 'core/js/main.js' %}?v=4.1" defer></script>
+{% if user.is_authenticated and user.status == 'active' %}
+<script>
+    // Keep the unread badges and tab title live.
+    document.addEventListener('DOMContentLoaded', function () {
+        const baseTitle = document.title.replace(/^\(\d+\) /, '');
+        function show(n) {
+            document.querySelectorAll('[data-unread-badge]').forEach(function (b) { b.textContent = n; b.hidden = !n; });
+            document.title = (n ? '(' + n + ') ' : '') + baseTitle;
+        }
+        show({{ unread_count|default:0 }});
+        setInterval(function () {
+            if (document.hidden) return;
+            fetch('{% url "core:messages_unread" %}', { headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (d) { if (d) show(d.unread); })
+                .catch(function () {});
+        }, 20000);
+    });
+</script>
+{% endif %}
+{% block extra_scripts %}{% endblock %}
 </body>
+{% endwith %}
 </html>

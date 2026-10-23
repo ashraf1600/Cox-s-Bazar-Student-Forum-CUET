@@ -1,81 +1,59 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const counters = document.querySelectorAll('.stat-counter[data-count]');
-    counters.forEach((counter) => {
-        const target = +counter.dataset.count;
-        let count = 0;
-        const step = Math.max(1, Math.floor(target / 100));
-        const interval = setInterval(() => {
-            count += step;
-            if (count >= target) {
-                counter.textContent = target.toLocaleString();
-                clearInterval(interval);
-            } else {
-                counter.textContent = count.toLocaleString();
-            }
-        }, 12);
-    });
-
-    const navbar = document.querySelector('.navbar');
-    if (navbar) {
-        const onScroll = () => {
-            if (window.scrollY > 20) {
-                navbar.classList.add('navbar-scrolled');
-            } else {
-                navbar.classList.remove('navbar-scrolled');
-            }
-        };
-        onScroll();
-        window.addEventListener('scroll', onScroll);
-    }
-
-    // AJAX Like Handler
-    const likeButtons = document.querySelectorAll('.like-btn');
-    likeButtons.forEach(btn => {
-        btn.addEventListener('click', async function() {
-            const postId = this.dataset.postId;
-            try {
-                const response = await fetch(`/post/${postId}/like/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken'),
-                        'Content-Type': 'application/json',
-                    }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    // Update counter
-                    const countSpan = this.querySelector('.likes-count');
-                    if (countSpan) {
-                        countSpan.textContent = data.likes_count;
-                    }
-                    
-                    // Toggle styling
-                    if (data.liked) {
-                        this.classList.add('liked');
-                    } else {
-                        this.classList.remove('liked');
-                    }
-                }
-            } catch (err) {
-                console.error("Error liking post:", err);
-            }
-        });
-    });
-
-    // Helper to get CSRF token from cookies
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
+    // Flash messages: dismiss on click; non-errors leave on their own after 5s.
+    document.querySelectorAll('.flash').forEach(function (el) {
+        function dismiss() {
+            el.classList.add('is-leaving');
+            setTimeout(function () { el.remove(); }, 240);
         }
-        return cookieValue;
+        el.querySelector('.btn-close').addEventListener('click', dismiss);
+        if (!el.classList.contains('flash-danger')) setTimeout(dismiss, 5000);
+    });
+
+    // Topbar gains a hairline shadow once the page scrolls under it.
+    const bar = document.querySelector('.topbar');
+    if (bar) {
+        const onScroll = function () { bar.classList.toggle('is-scrolled', window.scrollY > 4); };
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
     }
+
+    // Any link to #composer focuses the topic composer if it's on this page.
+    const composer = document.getElementById('composerText');
+    if (composer) {
+        if (location.hash === '#composer') composer.focus();
+        document.querySelectorAll('a[href$="#composer"]').forEach(function (a) {
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                composer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                composer.focus({ preventScroll: true });
+            });
+        });
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Phone menu: swap the icon, dim the page and stop it scrolling behind the drawer.
+    const nav = document.getElementById('mobileNav');
+    const btn = document.querySelector('.menu-btn');
+    if (nav && btn) {
+        const icon = btn.querySelector('i');
+        nav.addEventListener('show.bs.collapse', function () {
+            document.body.classList.add('menu-open');
+            icon.className = 'fas fa-xmark';
+        });
+        nav.addEventListener('hide.bs.collapse', function () {
+            document.body.classList.remove('menu-open');
+            icon.className = 'fas fa-bars';
+        });
+        // Tapping the dimmed page closes the menu.
+        document.addEventListener('click', function (e) {
+            if (!document.body.classList.contains('menu-open')) return;
+            if (nav.contains(e.target) || btn.contains(e.target)) return;
+            bootstrap.Collapse.getOrCreateInstance(nav).hide();
+        });
+    }
+
+    // Board chips (phones): bring the selected board into view.
+    const activeChip = document.querySelector('.board-chips a.active');
+    if (activeChip) activeChip.scrollIntoView({ block: 'nearest', inline: 'center' });
 });
