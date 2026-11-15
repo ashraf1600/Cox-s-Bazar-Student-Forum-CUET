@@ -1,0 +1,12 @@
+<div class="mod-row">
+    <span class="date-block"><span>{{ e.date|date:"M" }}</span><strong>{{ e.date|date:"j" }}</strong></span>
+    <div class="min-w-0 mod-main">
+        <strong>{{ e.title }}</strong>
+        <span>{{ e.date|date:"D, M j, Y, g:i A" }}, {{ e.venue }}</span>
+        <span><i class="fas fa-users me-1"></i>{{ e.going }} registered{% if e.capacity %} of {{ e.capacity }} seats{% endif %}{% if e.ticket_price > 0 %}, Tk {{ e.ticket_price|floatformat:"-2" }}{% else %}, free{% endif %}</span>
+    </div>
+    <div class="mod-actions">
+        {% if e.status == 'published' %}<a href="{% url 'core:event_detail' e.id %}" class="btn btn-outline-secondary btn-sm">View</a>{% endif %}
+        <a href="{% url 'core:manage_event_edit' e.id %}" class="btn btn-outline-primary btn-sm">Edit{% if e.going %} and attendees{% endif %}</a>
+    </div>
+</div>

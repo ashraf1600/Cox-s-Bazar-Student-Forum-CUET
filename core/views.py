@@ -28,7 +28,8 @@ from . import throttle
 
 
 def is_admin(user):
-    return user.is_authenticated and (user.role == 'admin' or user.is_superuser)
+    """Appointed admins, plus the current President, General Secretary and Assistant General Secretary."""
+    return user.is_authenticated and user.is_site_admin
 
 
 def parse_int(value):
@@ -135,7 +136,7 @@ def homepage(request):
         'upcoming_events': Event.objects.filter(status='published', date__gte=now).order_by('date')[:3],
         'committees': CommitteeMember.objects.filter(is_current=True).select_related('user', 'user__department').order_by('order'),
         'advisors': advisor_cards(),
-        'featured_photos': PhotoGallery.objects.order_by('-is_featured', '-uploaded_date')[:5],
+        'slides': PhotoGallery.objects.filter(is_featured=True).order_by('-uploaded_date')[:6],
     }
     return render(request, 'core/homepage.html', context)
 
@@ -841,31 +842,6 @@ def moderation(request):
         'reports': Report.objects.filter(is_resolved=False)
                        .select_related('reporter', 'post', 'post__user', 'comment', 'comment__user'),
     })
-
-
-@require_POST
-@admin_required
-def moderate_member(request, user_id):
-    member = get_object_or_404(User, id=user_id)
-    action = request.POST.get('action')
-    if action == 'approve' and member.status == 'pending':
-        member.status = 'active'
-        member.save()  # save() assigns the serial number
-        notify_approved(request, member)
-        messages.success(request, f'{member.full_name} is approved (member {member.serial_no}).')
-    elif action == 'decline' and member.status == 'pending':
-        member.status = 'inactive'
-        member.save()
-        messages.info(request, f"{member.full_name}'s request was declined.")
-    elif action == 'verify_alumni' and member.status == 'active':
-        member.member_type = 'alumni'
-        member.is_alumni = True
-        member.is_alumni_verified = True
-        member.save()
-        messages.success(request, f'{member.full_name} is now a verified alumni.')
-    else:
-        messages.error(request, 'That action is no longer available for this member.')
-    return redirect('core:moderation')
 
 
 @require_POST

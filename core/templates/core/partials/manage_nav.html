@@ -1,0 +1,17 @@
+{# Admin panel header + tabs. Context: tab (active tab name), title, sub #}
+<header class="manage-head">
+    <div>
+        <p class="manage-kicker"><i class="fas fa-shield-halved"></i> Admin panel{% if not user.is_full_admin %} (committee lead access){% endif %}</p>
+        <h1 class="page-title">{{ title }}</h1>
+        {% if sub %}<p class="page-sub">{{ sub }}</p>{% endif %}
+    </div>
+    {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-database"></i> Database admin</a>{% endif %}
+</header>
+<nav class="manage-tabs" aria-label="Admin panel">
+    <a href="{% url 'core:moderation' %}" class="{% if tab == 'approvals' %}active{% endif %}"><i class="fas fa-user-check"></i>Approvals{% if moderation_count %}<b class="count-badge count-inline">{{ moderation_count }}</b>{% endif %}</a>
+    <a href="{% url 'core:manage_members' %}" class="{% if tab == 'members' %}active{% endif %}"><i class="fas fa-users"></i>Members</a>
+    <a href="{% url 'core:manage_events' %}" class="{% if tab == 'events' %}active{% endif %}"><i class="fas fa-calendar-days"></i>Events</a>
+    <a href="{% url 'core:manage_notices' %}" class="{% if tab == 'notices' %}active{% endif %}"><i class="fas fa-bullhorn"></i>Notices</a>
+    <a href="{% url 'core:admin_gallery' %}" class="{% if tab == 'gallery' %}active{% endif %}"><i class="fas fa-images"></i>Gallery and slideshow</a>
+    <a href="{% url 'core:manage_committee' %}" class="{% if tab == 'committee' %}active{% endif %}"><i class="fas fa-people-group"></i>Committee and admins</a>
+</nav>

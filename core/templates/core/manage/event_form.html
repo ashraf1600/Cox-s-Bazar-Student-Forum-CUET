@@ -1,0 +1,54 @@
+{% extends 'core/base.html' %}
+{% load ui %}
+{% block title %}{% if event %}Edit event{% else %}New event{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="{% url 'core:moderation' %}">Admin panel</a><i class="fas fa-chevron-right"></i><a href="{% url 'core:manage_events' %}">Events</a><i class="fas fa-chevron-right"></i><span>{% if event %}{{ event.title|truncatechars:40 }}{% else %}New{% endif %}</span></nav>
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <form method="post" enctype="multipart/form-data" class="surface surface-pad" novalidate>
+                {% csrf_token %}
+                <h1 class="h3 mb-3">{% if event %}Edit event{% else %}New event{% endif %}</h1>
+                {% if form.non_field_errors %}<div class="notice notice-danger mb-3"><i class="fas fa-circle-exclamation"></i><div>{{ form.non_field_errors|join:" " }}</div></div>{% endif %}
+                <div class="row g-3">
+                    {% include 'core/partials/field.html' with field=form.title col='col-12' %}
+                    {% include 'core/partials/field.html' with field=form.date col='col-md-6' %}
+                    {% include 'core/partials/field.html' with field=form.venue col='col-md-6' %}
+                    {% include 'core/partials/field.html' with field=form.description col='col-12' %}
+                    {% include 'core/partials/field.html' with field=form.ticket_price col='col-6 col-md-4' %}
+                    {% include 'core/partials/field.html' with field=form.capacity col='col-6 col-md-4' %}
+                    {% include 'core/partials/field.html' with field=form.status col='col-md-4' %}
+                    {% include 'core/partials/field.html' with field=form.cover_image col='col-12' %}
+                    {% if event.cover_image %}<div class="col-12"><img src="{{ event.cover_image.url }}" alt="Current cover" style="max-height:140px;border-radius:6px;border:1px solid var(--line)"><div class="form-text">Current cover. It stays unless you choose a new one.</div></div>{% endif %}
+                </div>
+                <div class="form-actions">
+                    <a href="{% url 'core:manage_events' %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-outline-primary">Save</button>
+                    {% if not event or event.status == 'draft' %}<button type="submit" name="publish" value="1" class="btn btn-primary">Save and publish</button>{% endif %}
+                </div>
+            </form>
+            {% if event %}
+            <form method="post" action="{% url 'core:manage_event_delete' event.id %}" class="mt-3 text-end" data-confirm="Delete this event and its {{ attendees|length }} registration{{ attendees|length|pluralize }}? This cannot be undone.">
+                {% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm text-danger"><i class="fas fa-trash-can"></i> Delete this event</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-5">
+            <section class="surface">
+                <div class="surface-head"><h2>Registered</h2><span class="chip head-action">{{ attendees|length }}{% if event.capacity %} of {{ event.capacity }}{% endif %}</span></div>
+                {% for r in attendees %}
+                    <div class="person-row">
+                        {% avatar r.user 36 %}
+                        <a href="{% url 'core:member_profile' r.user.id %}" class="who"><strong>{{ r.user.full_name }}</strong><span>{{ r.user.department.name|default:"" }}{% if r.user.batch %}, batch {{ r.user.batch }}{% endif %}{% if r.user.phone %}, {{ r.user.phone }}{% endif %}</span></a>
+                    </div>
+                {% empty %}
+                    <p class="side-empty pt-3">{% if event %}Nobody has registered yet.{% else %}Registrations appear here after the event is published.{% endif %}</p>
+                {% endfor %}
+                {% if attendees %}<div class="p-3 border-top"><a href="{% url 'core:manage_event_csv' event.id %}" class="btn btn-outline-primary btn-sm w-100"><i class="fas fa-download"></i> Download list (CSV, opens in Excel)</a></div>{% endif %}
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

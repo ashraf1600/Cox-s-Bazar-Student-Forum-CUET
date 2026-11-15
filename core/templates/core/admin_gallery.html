@@ -3,14 +3,7 @@
 
 {% block content %}
 <div class="page">
-    <header class="page-head">
-        <div class="page-head-main">
-            {% include 'core/partials/horizon.html' %}
-            <h1 class="page-title">Manage gallery</h1>
-            <p class="page-sub">{{ photos|length }} photo{{ photos|length|pluralize }}. Upload, feature and remove activity photos.</p>
-        </div>
-        <div class="page-head-actions"><a href="{% url 'core:gallery' %}" class="btn btn-outline-primary"><i class="fas fa-eye"></i> View gallery</a></div>
-    </header>
+    {% include 'core/partials/manage_nav.html' with tab='gallery' title='Gallery and slideshow' sub="Upload activity photos. Photos marked with a star are the slides on the homepage." %}
 
     <div class="row g-4">
         <div class="col-lg-4">
@@ -42,7 +35,7 @@
                     </div>
                     <div class="form-check mb-4">
                         {{ form.is_featured }}
-                        <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">Feature on the gallery page</label>
+                        <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">Show in the homepage slideshow</label>
                     </div>
                     <button type="submit" class="btn btn-primary w-100">Upload photos</button>
                     <p class="small text-muted mt-2 mb-0">Title, category and description apply to every photo in this upload.</p>
@@ -61,14 +54,20 @@
                             {% for photo in photos %}
                             <figure class="admin-photo m-0">
                                 <img src="{{ photo.image.url }}" alt="{{ photo.title }}" loading="lazy">
-                                {% if photo.is_featured %}<span class="chip chip-gold featured-flag"><i class="fas fa-star"></i> Featured</span>{% endif %}
+                                {% if photo.is_featured %}<span class="chip chip-gold featured-flag"><i class="fas fa-star"></i> On homepage</span>{% endif %}
                                 <form method="POST" action="{% url 'core:delete_gallery_photo' photo.id %}" onsubmit="return confirm('Delete “{{ photo.title|escapejs }}”? This cannot be undone.');">
                                     {% csrf_token %}
                                     <button type="submit" class="icon-btn-danger" aria-label="Delete {{ photo.title }}"><i class="fas fa-trash-can"></i></button>
                                 </form>
+                                <form method="post" action="{% url 'core:manage_photo_feature' photo.id %}" class="admin-photo-star">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm {% if photo.is_featured %}btn-bronze{% else %}btn-outline-secondary{% endif %}" title="{% if photo.is_featured %}Remove from the homepage slideshow{% else %}Show in the homepage slideshow{% endif %}">
+                                        <i class="{% if photo.is_featured %}fas{% else %}far{% endif %} fa-star"></i> {% if photo.is_featured %}On homepage{% else %}Add to homepage{% endif %}
+                                    </button>
+                                </form>
                                 <figcaption class="admin-photo-body">
                                     <p class="admin-photo-title" title="{{ photo.title }}">{{ photo.title }}</p>
-                                    <span class="admin-photo-meta">{{ photo.category }} &middot; {{ photo.uploaded_date|date:"M j, Y" }}</span>
+                                    <span class="admin-photo-meta">{{ photo.category }}, {{ photo.uploaded_date|date:"M j, Y" }}</span>
                                 </figcaption>
                             </figure>
                             {% endfor %}

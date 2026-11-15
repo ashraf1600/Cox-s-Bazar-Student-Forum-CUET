@@ -1,0 +1,28 @@
+{% extends 'core/base.html' %}
+{% block title %}Manage notices{% endblock %}
+
+{% block content %}
+<div class="page">
+    {% include 'core/partials/manage_nav.html' with tab='notices' title='Notices' sub="Official announcements. They appear on the homepage and the Notices page for everyone, including visitors." %}
+    <div class="d-flex justify-content-end mb-3"><a href="{% url 'core:manage_notice_new' %}" class="btn btn-primary"><i class="fas fa-plus"></i> New notice</a></div>
+
+    <section class="surface">
+        {% for n in page_obj %}
+            <div class="mod-row">
+                <div class="min-w-0 mod-main">
+                    <strong>{% if n.is_pinned %}<i class="fas fa-thumbtack pin me-1" title="Pinned"></i>{% endif %}{{ n.title }}</strong>
+                    <span>{{ n.content|truncatechars:160 }}</span>
+                    <span class="text-muted">{{ n.created_at|date:"M j, Y" }}, by {{ n.admin.full_name|default:"the committee" }}</span>
+                </div>
+                <div class="mod-actions">
+                    <a href="{% url 'core:manage_notice_edit' n.id %}" class="btn btn-outline-primary btn-sm">Edit</a>
+                    <form method="post" action="{% url 'core:manage_notice_delete' n.id %}" data-confirm="Delete this notice?">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm">Delete</button></form>
+                </div>
+            </div>
+        {% empty %}
+            <p class="side-empty pt-3">No notices yet. Post the first one to welcome new members.</p>
+        {% endfor %}
+    </section>
+    {% include 'core/partials/pagination.html' %}
+</div>
+{% endblock %}

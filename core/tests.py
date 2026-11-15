@@ -15,7 +15,7 @@ from rest_framework.test import APIClient
 
 from .models import (
     User, Department, Post, Comment, Like, Message, Block, Event, EventRegistration, PhotoGallery,
-    Notification, Report,
+    Notification, Report, CommitteeMember, Announcement,
 )
 
 TEMP_MEDIA = tempfile.mkdtemp()
@@ -634,3 +634,119 @@ class LaunchFeatureTests(BaseTestCase):
         self.assertRedirects(response, reverse('core:view_profile'))
         self.member.refresh_from_db()
         self.assertTrue(self.member.check_password('Tide-Pool-9981!'))
+
+
+class AdminPanelTests(BaseTestCase):
+    """President, GS and AGS act as admins; the panel manages members, events, notices, committee."""
+
+    def setUp(self):
+        super().setUp()
+        self.gs = make_user('gs@example.com')
+        self.vp = make_user('vp@example.com')
+        CommitteeMember.objects.create(user=self.gs, designation='General Secretary', session_year='2026-27', order=2)
+        CommitteeMember.objects.create(user=self.vp, designation='Vice President', session_year='2026-27', order=3)
+
+    def fresh(self, user):
+        return User.objects.get(pk=user.pk)  # drop the cached leader flag
+
+    # who gets in
+    def test_president_gs_and_ags_get_admin_access_in_any_spelling(self):
+        titles = ('President', 'general secretary', 'G.S.', 'Assistant General Secretary', 'AGS', 'Asst. General Secretary')
+        for number, title in enumerate(titles):
+            person = make_user(f'leader{number}@example.com')
+            CommitteeMember.objects.create(user=person, designation=title, session_year='2026-27')
+            self.assertTrue(self.fresh(person).is_site_admin, title)
+        self.assertFalse(self.fresh(self.vp).is_site_admin)
+        self.assertFalse(self.fresh(self.member).is_site_admin)
+
+    def test_access_ends_when_the_committee_becomes_past_or_the_account_is_not_active(self):
+        self.assertTrue(self.fresh(self.gs).is_site_admin)
+        CommitteeMember.objects.filter(user=self.gs).update(is_current=False)
+        self.assertFalse(self.fresh(self.gs).is_site_admin)
+        CommitteeMember.objects.filter(user=self.gs).update(is_current=True)
+        User.objects.filter(pk=self.gs.pk).update(status='pending')
+        self.assertFalse(self.fresh(self.gs).is_site_admin)
+
+    def test_panel_pages_open_for_leaders_and_closed_for_others(self):
+        pages = ['moderation', 'manage_members', 'manage_events', 'manage_event_new', 'manage_notices',
+                 'manage_notice_new', 'manage_committee', 'admin_gallery']
+        self.client.force_login(self.vp)
+        for name in pages:
+            self.assertEqual(self.client.get(reverse(f'core:{name}')).status_code, 302, name)
+        self.client.force_login(self.gs)
+        for name in pages:
+            self.assertEqual(self.client.get(reverse(f'core:{name}')).status_code, 200, name)
+
+    # members
+    def test_leader_approves_deactivates_and_reactivates_members(self):
+        self.client.force_login(self.gs)
+        act = lambda user, action: self.client.post(reverse('core:moderate_member', args=[user.id]), {'action': action})
+        act(self.pending, 'approve')
+        self.assertEqual(self.fresh(self.pending).status, 'active')
+        act(self.member, 'deactivate')
+        self.assertEqual(self.fresh(self.member).status, 'inactive')
+        act(self.member, 'reactivate')
+        self.assertEqual(self.fresh(self.member).status, 'active')
+        act(self.gs, 'deactivate')                      # not yourself
+        self.assertEqual(self.fresh(self.gs).status, 'active')
+
+    def test_leader_cannot_touch_appointed_admins_or_hand_out_the_admin_role(self):
+        self.client.force_login(self.gs)
+        self.client.post(reverse('core:moderate_member', args=[self.admin.id]), {'action': 'deactivate'})
+        self.assertEqual(self.fresh(self.admin).status, 'active')
+        self.client.post(reverse('core:moderate_member', args=[self.member.id]), {'action': 'make_admin'})
+        self.assertEqual(self.fresh(self.member).role, 'member')
+        self.client.force_login(self.admin)             # an appointed admin can
+        self.client.post(reverse('core:moderate_member', args=[self.member.id]), {'action': 'make_admin'})
+        self.assertEqual(self.fresh(self.member).role, 'admin')
+
+    # events and notices
+    def test_leader_creates_publishes_and_exports_an_event(self):
+        self.client.force_login(self.gs)
+        when = (timezone.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M')
+        data = {'title': 'Iftar Party', 'description': 'Bring a friend', 'date': when, 'venue': 'CUET Auditorium',
+                'ticket_price': '0', 'capacity': '50', 'status': 'draft'}
+        self.client.post(reverse('core:manage_event_new'), data)
+        event = Event.objects.get(title='Iftar Party')
+        self.assertEqual((event.status, event.creator), ('draft', self.gs))
+        self.assertEqual(self.client.get(reverse('core:event_detail', args=[event.id])).status_code, 404)  # drafts are hidden
+        self.client.post(reverse('core:manage_event_edit', args=[event.id]), {**data, 'publish': '1'})
+        event.refresh_from_db()
+        self.assertEqual(event.status, 'published')
+        EventRegistration.objects.create(event=event, user=self.member)
+        csv_text = self.client.get(reverse('core:manage_event_csv', args=[event.id])).content.decode('utf-8-sig')
+        self.assertIn(self.member.email, csv_text)
+        self.client.post(reverse('core:manage_event_delete', args=[event.id]))
+        self.assertFalse(Event.objects.filter(id=event.id).exists())
+
+    def test_leader_posts_edits_and_deletes_a_notice(self):
+        self.client.force_login(self.gs)
+        self.client.post(reverse('core:manage_notice_new'), {'title': 'Fee collection', 'content': 'Starts Sunday', 'is_pinned': 'on'})
+        notice = Announcement.objects.get(title='Fee collection')
+        self.assertTrue(notice.is_pinned and notice.admin == self.gs)
+        self.client.post(reverse('core:manage_notice_edit', args=[notice.id]), {'title': 'Fee collection', 'content': 'Starts Monday'})
+        notice.refresh_from_db()
+        self.assertEqual((notice.content, notice.is_pinned), ('Starts Monday', False))
+        self.client.post(reverse('core:manage_notice_delete', args=[notice.id]))
+        self.assertFalse(Announcement.objects.exists())
+
+    # committee
+    def test_committee_can_be_built_and_a_session_archived(self):
+        self.client.force_login(self.gs)
+        self.client.post(reverse('core:manage_committee'), {
+            'user': self.member.id, 'designation': 'Assistant  General Secretary', 'session_year': '2026-27', 'order': 3, 'is_current': 'on'})
+        self.assertTrue(self.fresh(self.member).is_site_admin)   # the new AGS has access straight away
+        self.client.post(reverse('core:manage_committee_archive'), {'session_year': '2026-27'})
+        self.assertFalse(CommitteeMember.objects.filter(is_current=True).exists())
+        self.assertFalse(self.fresh(self.member).is_site_admin)
+        self.assertFalse(self.fresh(self.gs).is_site_admin)
+
+    # slideshow
+    def test_featured_photos_become_homepage_slides(self):
+        gallery_photo = PhotoGallery.objects.create(title='Sports day', image=photo(600, 400), uploaded_by=self.admin)
+        self.assertNotContains(self.client.get(reverse('core:homepage')), 'data-slideshow')
+        self.client.force_login(self.gs)
+        self.client.post(reverse('core:manage_photo_feature', args=[gallery_photo.id]))
+        home = self.client.get(reverse('core:homepage'))
+        self.assertContains(home, 'data-slideshow')
+        self.assertContains(home, 'Sports day')

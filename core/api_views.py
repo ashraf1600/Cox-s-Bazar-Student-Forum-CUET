@@ -16,7 +16,12 @@ from .views import parse_int, verified_alumni
 
 
 def _is_admin(user):
-    return bool(user and user.is_authenticated and (user.role == 'admin' or user.is_superuser))
+    """Site admins: appointed admins and the current President, GS and AGS."""
+    return bool(user and user.is_authenticated and user.is_site_admin)
+
+
+def _is_full_admin(user):
+    return bool(user and user.is_authenticated and user.is_full_admin)
 
 
 def _is_active_member(user):
@@ -120,6 +125,8 @@ class AdminUserRoleAPIView(APIView):
         new_member_type = request.data.get('member_type')
         new_role = request.data.get('role')
 
+        if new_role and not _is_full_admin(request.user):
+            return Response({"detail": "Only an appointed admin can change admin roles."}, status=status.HTTP_403_FORBIDDEN)
         if target_user.is_superuser and not request.user.is_superuser:
             return Response({"detail": "Only a superuser can change another superuser."}, status=status.HTTP_403_FORBIDDEN)
 

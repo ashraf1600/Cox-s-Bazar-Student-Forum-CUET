@@ -3,6 +3,7 @@ import re
 from django.db import models, transaction, IntegrityError
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
+from django.utils.functional import cached_property
 
 STUDENT_EMAIL_DOMAIN = '@student.cuet.ac.bd'
 
@@ -104,8 +105,26 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.full_name} ({self.serial_no or 'Pending'})"
 
     @property
-    def is_site_admin(self):
+    def is_full_admin(self):
+        """Appointed admins (role = admin) and superusers. Only they can hand out the admin role."""
         return self.is_authenticated and (self.role == 'admin' or self.is_superuser)
+
+    @cached_property
+    def is_committee_leader(self):
+        """Current President, General Secretary or Assistant General Secretary.
+
+        They run the forum day to day, so they get admin powers for as long as they hold
+        the post; moving the committee to "past" removes the access automatically.
+        """
+        if not self.pk or self.status != 'active':
+            return False
+        designations = CommitteeMember.objects.filter(user_id=self.pk, is_current=True).values_list('designation', flat=True)
+        return any(is_leadership_designation(d) for d in designations)
+
+    @property
+    def is_site_admin(self):
+        """Can use the admin panel: approve members, post events and notices, moderate."""
+        return self.is_authenticated and (self.is_full_admin or self.is_committee_leader)
 
     @property
     def is_active_member(self):
@@ -156,6 +175,25 @@ class User(AbstractBaseUser, PermissionsMixin):
                 self.serial_no = self._next_non_student_serial()
 
 # CommitteeMember
+# Committee posts that come with admin access, in every spelling people actually type.
+LEADERSHIP_DESIGNATIONS = {
+    'president',
+    'general secretary', 'gs', 'gen secretary', 'general sec',
+    'assistant general secretary', 'ags', 'asst general secretary', 'assistant gs', 'asst gs',
+}
+STANDARD_DESIGNATIONS = [
+    'President', 'Vice President', 'General Secretary', 'Assistant General Secretary',
+    'Organizing Secretary', 'Treasurer', 'Office Secretary', 'Publicity Secretary',
+    'Cultural Secretary', 'Sports Secretary', 'IT Secretary', 'Executive Member',
+]
+
+
+def is_leadership_designation(designation):
+    # 'G.S.' -> 'gs', 'Asst. General-Secretary' -> 'asst general secretary'
+    normalized = ' '.join((designation or '').lower().replace('.', '').replace('-', ' ').split())
+    return normalized in LEADERSHIP_DESIGNATIONS
+
+
 class CommitteeMember(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='committee_roles')
@@ -167,6 +205,11 @@ class CommitteeMember(models.Model):
     # To avoid admin error, we'll add a property or use user__full_name in list_display.
     def __str__(self):
         return f"{self.user.full_name} - {self.designation}"
+
+    @property
+    def grants_admin(self):
+        return self.is_current and is_leadership_designation(self.designation)
+
     class Meta:
         ordering = ['order', 'designation']
 
