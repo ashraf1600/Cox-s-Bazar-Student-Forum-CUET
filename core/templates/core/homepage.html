@@ -28,9 +28,22 @@
                 <li><strong>{{ stats.topics }}</strong><span>topics</span></li>
             </ul>
         </div>
-        <figure class="arch-photo">
-            <img src="{% static 'images/campus.webp' %}" alt="Members of the Cox's Bazar Students' Forum together at CUET" width="720" height="960">
-            <figcaption>Members of the forum at CUET</figcaption>
+        <figure class="arch-photo{% if slides %} slideshow{% endif %}" {% if slides %}data-slideshow aria-roledescription="carousel" aria-label="Photos from the forum"{% endif %}>
+            <div class="arch-frame">
+                <img src="{% static 'images/campus.webp' %}" alt="Members of the Cox's Bazar Students' Forum together at CUET" width="720" height="960" class="slide is-active" data-caption="Members of the forum at CUET">
+                {% for photo in slides %}
+                    <img src="{{ photo.image.url }}" alt="{{ photo.title }}" class="slide" loading="lazy" data-caption="{{ photo.title }}">
+                {% endfor %}
+            </div>
+            <figcaption><span data-slide-caption>Members of the forum at CUET</span></figcaption>
+            {% if slides %}
+            <div class="slide-controls">
+                <button type="button" class="slide-arrow" data-slide-prev aria-label="Previous photo"><i class="fas fa-chevron-left"></i></button>
+                <div class="slide-dots" data-slide-dots></div>
+                <button type="button" class="slide-arrow" data-slide-next aria-label="Next photo"><i class="fas fa-chevron-right"></i></button>
+                <button type="button" class="slide-arrow" data-slide-toggle aria-label="Pause slideshow"><i class="fas fa-pause"></i></button>
+            </div>
+            {% endif %}
         </figure>
     </div>
 </section>

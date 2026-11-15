@@ -106,3 +106,82 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+// Homepage slideshow: cross-fades the photos in the arch frame every few seconds.
+document.addEventListener('DOMContentLoaded', function () {
+    const show = document.querySelector('[data-slideshow]');
+    if (!show) return;
+    let slides = Array.from(show.querySelectorAll('.slide'));
+    const caption = show.querySelector('[data-slide-caption]');
+    const dotsBox = show.querySelector('[data-slide-dots]');
+    const toggle = show.querySelector('[data-slide-toggle]');
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let index = 0, timer = null, paused = calm;
+
+    // A photo that fails to load (deleted file) is dropped instead of showing a broken slide.
+    slides.forEach(function (img) {
+        img.addEventListener('error', function () {
+            img.remove();
+            slides = slides.filter(function (s) { return s !== img; });
+            build();
+            go(0);
+        });
+    });
+
+    function build() {
+        dotsBox.replaceChildren();
+        slides.forEach(function (_, i) {
+            const dot = document.createElement('button');
+            dot.type = 'button';
+            dot.className = 'slide-dot';
+            dot.setAttribute('aria-label', 'Photo ' + (i + 1) + ' of ' + slides.length);
+            dot.addEventListener('click', function () { go(i); restart(); });
+            dotsBox.appendChild(dot);
+        });
+        show.querySelector('.slide-controls').hidden = slides.length < 2;
+    }
+
+    function go(next) {
+        if (!slides.length) return;
+        index = (next + slides.length) % slides.length;
+        slides.forEach(function (s, i) { s.classList.toggle('is-active', i === index); });
+        Array.from(dotsBox.children).forEach(function (d, i) {
+            d.classList.toggle('is-active', i === index);
+            d.setAttribute('aria-current', i === index ? 'true' : 'false');
+        });
+        caption.textContent = slides[index].dataset.caption || '';
+    }
+
+    function stop() { clearInterval(timer); timer = null; }
+    function restart() {
+        stop();
+        if (!paused && slides.length > 1) timer = setInterval(function () { go(index + 1); }, 4500);
+    }
+    function setPaused(value) {
+        paused = value;
+        toggle.querySelector('i').className = paused ? 'fas fa-play' : 'fas fa-pause';
+        toggle.setAttribute('aria-label', paused ? 'Play slideshow' : 'Pause slideshow');
+        restart();
+    }
+
+    show.querySelector('[data-slide-prev]').addEventListener('click', function () { go(index - 1); restart(); });
+    show.querySelector('[data-slide-next]').addEventListener('click', function () { go(index + 1); restart(); });
+    toggle.addEventListener('click', function () { setPaused(!paused); });
+    show.addEventListener('mouseenter', stop);
+    show.addEventListener('mouseleave', restart);
+    document.addEventListener('visibilitychange', function () { document.hidden ? stop() : restart(); });
+
+    // Swipe on phones.
+    let startX = null;
+    show.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; }, { passive: true });
+    show.addEventListener('touchend', function (e) {
+        if (startX === null) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 40) { go(index + (dx < 0 ? 1 : -1)); restart(); }
+        startX = null;
+    });
+
+    build();
+    go(0);
+    setPaused(calm);
+});

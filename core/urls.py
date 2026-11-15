@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from . import views, api_views, messaging_views
+from . import views, api_views, messaging_views, manage_views
 
 app_name = 'core'
 
@@ -51,7 +51,22 @@ urlpatterns = [
     path('report/', views.report_content, name='report_content'),
     path('notifications/', views.notifications, name='notifications'),
     path('manage/', views.moderation, name='moderation'),
-    path('manage/member/<int:user_id>/', views.moderate_member, name='moderate_member'),
+    path('manage/member/<int:user_id>/', manage_views.member_action, name='moderate_member'),
+    path('manage/members/', manage_views.members, name='manage_members'),
+    path('manage/events/', manage_views.events, name='manage_events'),
+    path('manage/events/new/', manage_views.event_edit, name='manage_event_new'),
+    path('manage/events/<int:event_id>/', manage_views.event_edit, name='manage_event_edit'),
+    path('manage/events/<int:event_id>/delete/', manage_views.event_delete, name='manage_event_delete'),
+    path('manage/events/<int:event_id>/attendees.csv', manage_views.event_attendees_csv, name='manage_event_csv'),
+    path('manage/notices/', manage_views.notices, name='manage_notices'),
+    path('manage/notices/new/', manage_views.notice_edit, name='manage_notice_new'),
+    path('manage/notices/<int:notice_id>/', manage_views.notice_edit, name='manage_notice_edit'),
+    path('manage/notices/<int:notice_id>/delete/', manage_views.notice_delete, name='manage_notice_delete'),
+    path('manage/committee/', manage_views.committee, name='manage_committee'),
+    path('manage/committee/<int:member_id>/', manage_views.committee, name='manage_committee_edit'),
+    path('manage/committee/<int:member_id>/action/', manage_views.committee_action, name='manage_committee_action'),
+    path('manage/committee/archive/', manage_views.committee_archive_session, name='manage_committee_archive'),
+    path('manage/gallery/<int:photo_id>/feature/', manage_views.photo_feature, name='manage_photo_feature'),
     path('manage/report/<int:report_id>/', views.resolve_report, name='resolve_report'),
     path('guidelines/', views.guidelines, name='guidelines'),
     path('robots.txt', views.robots_txt, name='robots_txt'),

@@ -1,0 +1,15 @@
+{% load ui %}
+<div class="mod-row">
+    {% avatar cm.user 40 %}
+    <div class="min-w-0 mod-main">
+        <strong>{{ cm.user.full_name }} {% if cm.grants_admin %}<span class="chip chip-primary"><i class="fas fa-shield-halved"></i> Admin access</span>{% endif %}</strong>
+        <span>{{ cm.designation }}, session {{ cm.session_year }}</span>
+    </div>
+    <form method="post" action="{% url 'core:manage_committee_action' cm.id %}" class="mod-actions">
+        {% csrf_token %}
+        <a href="{% url 'core:manage_committee_edit' cm.id %}#committeeForm" class="btn btn-outline-primary btn-sm">Edit</a>
+        {% if cm.is_current %}<button type="submit" name="action" value="to_past" class="btn btn-outline-secondary btn-sm">Move to past</button>
+        {% else %}<button type="submit" name="action" value="to_current" class="btn btn-outline-secondary btn-sm">Make current</button>{% endif %}
+        <button type="submit" name="action" value="remove" class="btn btn-outline-secondary btn-sm" data-confirm-click="Remove {{ cm.user.full_name }} ({{ cm.designation }}, {{ cm.session_year }}) from the committee records?" aria-label="Remove"><i class="fas fa-trash-can"></i></button>
+    </form>
+</div>

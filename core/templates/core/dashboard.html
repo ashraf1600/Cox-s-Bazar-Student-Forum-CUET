@@ -41,7 +41,7 @@
             <a href="{% url 'core:member_directory' %}"><i class="fas fa-address-book"></i>Members</a>
             <a href="{% url 'core:alumni_directory' %}"><i class="fas fa-user-graduate"></i>Alumni</a>
             <a href="{% url 'core:events' %}"><i class="fas fa-calendar-days"></i>Events</a>
-            {% if is_admin %}<a href="{% url 'core:admin_gallery' %}"><i class="fas fa-images"></i>Manage gallery</a>{% endif %}
+            {% if is_admin %}<a href="{% url 'core:moderation' %}"><i class="fas fa-shield-halved"></i>Admin panel{% if moderation_count %}<span class="count-badge">{{ moderation_count }}</span>{% endif %}</a>{% endif %}
         </nav>
     </aside>
 

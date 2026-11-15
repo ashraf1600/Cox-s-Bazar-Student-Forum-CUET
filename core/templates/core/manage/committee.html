@@ -1,0 +1,74 @@
+{% extends 'core/base.html' %}
+{% load ui %}
+{% block title %}Committee and admins{% endblock %}
+
+{% block content %}
+<div class="page">
+    {% include 'core/partials/manage_nav.html' with tab='committee' title='Committee and admins' sub="Who is on the committee, and who can use this admin panel." %}
+
+    <section class="surface mb-4">
+        <div class="surface-head"><h2>Who has admin access right now</h2></div>
+        <div class="surface-body">
+            <p class="text-muted mb-3">The current <strong>President</strong>, <strong>General Secretary</strong> and <strong>Assistant General Secretary</strong> get admin access automatically, for as long as they hold the post. Appointed admins keep it until an appointed admin removes it.</p>
+            <div class="access-grid">
+                {% for cm in leaders %}
+                    <div class="access-card">{% avatar cm.user 40 %}<div class="min-w-0"><strong>{{ cm.user.full_name }}</strong><span>{{ cm.designation }}, session {{ cm.session_year }}</span></div><span class="chip chip-primary">Committee lead</span></div>
+                {% endfor %}
+                {% for a in appointed %}
+                    <div class="access-card">{% avatar a 40 %}<div class="min-w-0"><strong>{{ a.full_name }}</strong><span>{{ a.email }}</span></div><span class="chip chip-dark">Appointed admin</span></div>
+                {% endfor %}
+            </div>
+            {% if current_sessions|length > 1 %}
+                <div class="notice notice-warn mt-3"><i class="fas fa-triangle-exclamation"></i><div><strong>More than one session is marked as current ({{ current_sessions|join:", " }}).</strong> Old office holders keep admin access until their session is moved to past committees. Use the buttons below.</div></div>
+            {% endif %}
+        </div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <section class="surface mb-4">
+                <div class="surface-head"><h2>Current committee</h2><span class="chip head-action">{{ current|length }}</span></div>
+                {% if current_sessions %}
+                <div class="px-3 pt-3 d-flex gap-2 flex-wrap">
+                    {% for s in current_sessions %}
+                        <form method="post" action="{% url 'core:manage_committee_archive' %}" data-confirm="Move every member of session {{ s }} to past committees? Its President, GS and AGS lose admin access.">
+                            {% csrf_token %}<input type="hidden" name="session_year" value="{{ s }}">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="fas fa-box-archive"></i> Move session {{ s }} to past</button>
+                        </form>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% for cm in current %}{% include 'core/manage/_committee_row.html' %}{% empty %}<p class="side-empty pt-3">No current committee yet. Add members with the form.</p>{% endfor %}
+            </section>
+
+            {% if past %}
+            <section class="surface">
+                <div class="surface-head"><h2>Past committees</h2><span class="chip head-action">{{ past|length }}</span></div>
+                {% for cm in past %}{% include 'core/manage/_committee_row.html' %}{% endfor %}
+            </section>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <form method="post" class="surface surface-pad rsvp-card" id="committeeForm" novalidate>
+                {% csrf_token %}
+                <h2 class="h5 mb-3">{% if editing %}Edit {{ editing.user.full_name }}{% else %}Add a committee member{% endif %}</h2>
+                {% if form.non_field_errors %}<div class="notice notice-danger mb-3"><i class="fas fa-circle-exclamation"></i><div>{{ form.non_field_errors|join:" " }}</div></div>{% endif %}
+                <div class="row g-3">
+                    {% include 'core/partials/field.html' with field=form.user col='col-12' %}
+                    {% include 'core/partials/field.html' with field=form.designation col='col-12' %}
+                    {% include 'core/partials/field.html' with field=form.session_year col='col-7' %}
+                    {% include 'core/partials/field.html' with field=form.order col='col-5' %}
+                    <div class="col-12"><div class="form-check">{{ form.is_current }}<label class="form-check-label" for="{{ form.is_current.id_for_label }}">Part of the current committee</label></div></div>
+                </div>
+                <datalist id="designationOptions">{% for d in designations %}<option value="{{ d }}">{% endfor %}</datalist>
+                <p class="form-text mt-3">Only approved members can be added. President, General Secretary and Assistant General Secretary of the current committee get admin access.</p>
+                <div class="form-actions">
+                    {% if editing %}<a href="{% url 'core:manage_committee' %}" class="btn btn-outline-secondary">Cancel</a>{% endif %}
+                    <button type="submit" class="btn btn-primary">{% if editing %}Save changes{% else %}Add to committee{% endif %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

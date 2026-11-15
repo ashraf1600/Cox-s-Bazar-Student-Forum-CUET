@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="page">
-    {% include 'core/partials/page_head.html' with title='Approvals and reports' sub="New member requests, alumni waiting to be verified, and content members have reported." %}
+    {% include 'core/partials/manage_nav.html' with tab='approvals' title='Approvals and reports' sub="New member requests, alumni waiting to be verified, and content members have reported." %}
 
     <section class="surface mb-4">
         <div class="surface-head"><h2>New member requests</h2><span class="chip head-action{% if pending_members %} chip-gold{% endif %}">{{ pending_members|length }}</span></div>

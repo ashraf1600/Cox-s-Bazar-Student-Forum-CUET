@@ -1,0 +1,28 @@
+{% extends 'core/base.html' %}
+{% block title %}Manage events{% endblock %}
+
+{% block content %}
+<div class="page">
+    {% include 'core/partials/manage_nav.html' with tab='events' title='Events' sub="Create events, publish drafts and see who has registered." %}
+    <div class="d-flex justify-content-end mb-3"><a href="{% url 'core:manage_event_new' %}" class="btn btn-primary"><i class="fas fa-plus"></i> New event</a></div>
+
+    {% if drafts %}
+    <section class="surface mb-4">
+        <div class="surface-head"><h2>Drafts</h2><span class="chip chip-gold head-action">Only admins can see these</span></div>
+        {% for e in drafts %}{% include 'core/manage/_event_row.html' %}{% endfor %}
+    </section>
+    {% endif %}
+
+    <section class="surface mb-4">
+        <div class="surface-head"><h2>Upcoming</h2><span class="chip head-action">{{ upcoming|length }}</span></div>
+        {% for e in upcoming %}{% include 'core/manage/_event_row.html' %}{% empty %}<p class="side-empty pt-3">No published events ahead. Create one to let members register.</p>{% endfor %}
+    </section>
+
+    {% if past %}
+    <section class="surface">
+        <div class="surface-head"><h2>Past</h2></div>
+        {% for e in past %}{% include 'core/manage/_event_row.html' %}{% endfor %}
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

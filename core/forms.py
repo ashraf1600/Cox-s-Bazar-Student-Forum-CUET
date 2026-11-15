@@ -3,8 +3,11 @@ from django.contrib.auth import password_validation
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.utils import timezone
 
-from .images import AVATAR_MAX_SIDE, GALLERY_MAX_SIDE, POST_MAX_SIDE, prepare_image
-from .models import User, Department, Post, Comment, Message, PhotoGallery, Report, is_student_email
+from .images import AVATAR_MAX_SIDE, COVER_MAX_SIDE, GALLERY_MAX_SIDE, POST_MAX_SIDE, prepare_image
+from .models import (
+    User, Department, Post, Comment, Message, PhotoGallery, Report, Event, Announcement, CommitteeMember,
+    is_student_email,
+)
 
 MIN_BATCH, MAX_BATCH = 1, 99
 MIN_GRADUATION_YEAR = 1968  # CUET was founded in 1968
@@ -307,3 +310,94 @@ class StyledPasswordChangeForm(PasswordChangeForm):
         self.fields['new_password1'].label = 'New password'
         self.fields['new_password1'].help_text = 'At least 8 characters. Avoid common passwords or ones close to your name or email.'
         self.fields['new_password2'].label = 'New password again'
+
+
+# ── Admin panel forms ─────────────────────────────────────────────────────
+
+class EventForm(forms.ModelForm):
+    date = forms.DateTimeField(
+        label='Date and time',
+        input_formats=['%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', '%Y-%m-%dT%H:%M:%S'],
+        widget=forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
+    )
+
+    class Meta:
+        model = Event
+        fields = ['title', 'description', 'date', 'venue', 'cover_image', 'ticket_price', 'capacity', 'status']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Annual Iftar Party 2027'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 6,
+                                                 'placeholder': 'What is happening, who it is for, what to bring, who to contact.'}),
+            'venue': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. CUET Auditorium'}),
+            'cover_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'ticket_price': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'step': '1'}),
+            'capacity': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+        }
+        labels = {'cover_image': 'Cover photo', 'ticket_price': 'Entry fee (Tk)', 'capacity': 'Seats', 'status': 'Visibility'}
+        help_texts = {
+            'ticket_price': 'Leave 0 for a free event.',
+            'capacity': 'Leave 0 for unlimited seats.',
+            'status': 'Drafts are visible to admins only. Published events appear on the Events page.',
+        }
+
+    def clean_cover_image(self):
+        return prepare_image(self.cleaned_data.get('cover_image'), COVER_MAX_SIDE)
+
+    def clean_capacity(self):
+        capacity = self.cleaned_data.get('capacity') or 0
+        if capacity < 0:
+            raise forms.ValidationError('Seats cannot be negative.')
+        return capacity
+
+    def clean_ticket_price(self):
+        price = self.cleaned_data.get('ticket_price') or 0
+        if price < 0:
+            raise forms.ValidationError('The entry fee cannot be negative.')
+        return price
+
+
+class AnnouncementForm(forms.ModelForm):
+    class Meta:
+        model = Announcement
+        fields = ['title', 'content', 'image', 'is_pinned']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Membership fee collection starts Sunday'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 7}),
+            'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'is_pinned': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {'content': 'Notice', 'image': 'Image (optional)', 'is_pinned': 'Pin to the top'}
+
+    def clean_image(self):
+        return prepare_image(self.cleaned_data.get('image'), COVER_MAX_SIDE)
+
+
+class CommitteeMemberForm(forms.ModelForm):
+    user = forms.ModelChoiceField(
+        queryset=User.objects.filter(status='active').order_by('full_name'),
+        label='Member', empty_label='Choose a member',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+
+    class Meta:
+        model = CommitteeMember
+        fields = ['user', 'designation', 'session_year', 'order', 'is_current']
+        widgets = {
+            'designation': forms.TextInput(attrs={'class': 'form-control', 'list': 'designationOptions', 'placeholder': 'e.g. General Secretary'}),
+            'session_year': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 2026-27'}),
+            'order': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'is_current': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {'designation': 'Post', 'session_year': 'Session', 'order': 'Position in the list', 'is_current': 'Part of the current committee'}
+        help_texts = {'order': 'Lower numbers come first. President is usually 1.'}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['user'].label_from_instance = lambda u: f"{u.full_name} ({u.email})"
+
+    def clean_designation(self):
+        return ' '.join(self.cleaned_data['designation'].split())
+
+    def clean_session_year(self):
+        return self.cleaned_data['session_year'].strip()
