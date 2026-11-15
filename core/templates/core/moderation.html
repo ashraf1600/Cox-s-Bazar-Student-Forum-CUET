@@ -1,0 +1,75 @@
+{% extends 'core/base.html' %}
+{% load ui %}
+{% block title %}Approvals and reports{% endblock %}
+
+{% block content %}
+<div class="page">
+    {% include 'core/partials/page_head.html' with title='Approvals and reports' sub="New member requests, alumni waiting to be verified, and content members have reported." %}
+
+    <section class="surface mb-4">
+        <div class="surface-head"><h2>New member requests</h2><span class="chip head-action{% if pending_members %} chip-gold{% endif %}">{{ pending_members|length }}</span></div>
+        {% for m in pending_members %}
+            <div class="mod-row">
+                {% avatar m 52 %}
+                <div class="min-w-0 mod-main">
+                    <strong>{{ m.full_name }}</strong>
+                    <span>{{ m.get_member_type_display }}{% if m.department %}, {{ m.department.name }}{% endif %}{% if m.batch %}, batch {{ m.batch }}{% endif %}{% if m.graduation_year %}, graduated {{ m.graduation_year }}{% endif %}</span>
+                    <span><a href="mailto:{{ m.email }}">{{ m.email }}</a>{% if m.phone %}, <a href="tel:{{ m.phone }}">{{ m.phone }}</a>{% endif %}{% if m.upazila %}, {{ m.upazila }}{% endif %}</span>
+                    {% if m.designation %}<span>{{ m.designation }}</span>{% endif %}
+                    <span class="text-muted">Requested {{ m.date_joined|date:"M j, Y" }}</span>
+                </div>
+                <form method="post" action="{% url 'core:moderate_member' m.id %}" class="mod-actions">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="approve" class="btn btn-primary btn-sm">Approve</button>
+                    <button type="submit" name="action" value="decline" class="btn btn-outline-secondary btn-sm" data-confirm-click="Decline {{ m.full_name }}'s request? They will not be able to log in.">Decline</button>
+                </form>
+            </div>
+        {% empty %}
+            <p class="side-empty pt-3">No one is waiting for approval.</p>
+        {% endfor %}
+    </section>
+
+    <section class="surface mb-4">
+        <div class="surface-head"><h2>Reported content</h2><span class="chip head-action{% if reports %} chip-danger{% endif %}">{{ reports|length }}</span></div>
+        {% for r in reports %}
+            <div class="mod-row">
+                {% avatar r.target_author 44 %}
+                <div class="min-w-0 mod-main">
+                    <strong>{{ r.target_author.full_name }}'s {% if r.comment_id %}reply{% else %}topic{% endif %}</strong>
+                    <span class="mod-quote">{{ r.target_text|truncatechars:260 }}</span>
+                    <span><span class="chip chip-danger">{{ r.get_reason_display }}</span> reported by {{ r.reporter.full_name }}, {{ r.created_at|ago }}</span>
+                    {% if r.note %}<span>Note: {{ r.note }}</span>{% endif %}
+                </div>
+                <form method="post" action="{% url 'core:resolve_report' r.id %}" class="mod-actions">
+                    {% csrf_token %}
+                    <a href="{% url 'core:post_detail' r.thread_id %}{% if r.comment_id %}#reply-{{ r.comment_id }}{% endif %}" class="btn btn-outline-primary btn-sm">Open</a>
+                    <button type="submit" name="action" value="dismiss" class="btn btn-outline-secondary btn-sm">Dismiss</button>
+                    <button type="submit" name="action" value="remove" class="btn btn-sm btn-danger" data-confirm-click="Remove this {% if r.comment_id %}reply{% else %}topic and all its replies{% endif %}? This cannot be undone.">Remove</button>
+                </form>
+            </div>
+        {% empty %}
+            <p class="side-empty pt-3">Nothing has been reported.</p>
+        {% endfor %}
+    </section>
+
+    <section class="surface">
+        <div class="surface-head"><h2>Alumni waiting to be verified</h2><span class="chip head-action">{{ unverified_alumni|length }}</span></div>
+        {% for m in unverified_alumni %}
+            <div class="mod-row">
+                {% avatar m 44 %}
+                <div class="min-w-0 mod-main">
+                    <strong><a href="{% url 'core:member_profile' m.id %}">{{ m.full_name }}</a></strong>
+                    <span>{% if m.department %}{{ m.department.name }}{% endif %}{% if m.batch %}, batch {{ m.batch }}{% endif %}{% if m.graduation_year %}, graduated {{ m.graduation_year }}{% endif %}</span>
+                    {% if m.designation or m.company %}<span>{{ m.designation }}{% if m.company %} at {{ m.company }}{% endif %}</span>{% endif %}
+                </div>
+                <form method="post" action="{% url 'core:moderate_member' m.id %}" class="mod-actions">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="verify_alumni" class="btn btn-primary btn-sm">Verify alumni</button>
+                </form>
+            </div>
+        {% empty %}
+            <p class="side-empty pt-3">No alumni are waiting. Verified alumni appear in the public alumni directory.</p>
+        {% endfor %}
+    </section>
+</div>
+{% endblock %}

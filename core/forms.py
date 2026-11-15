@@ -1,9 +1,10 @@
 from django import forms
 from django.contrib.auth import password_validation
-from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm, SetPasswordForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.utils import timezone
 
-from .models import User, Department, Post, Comment, Message, PhotoGallery, is_student_email
+from .images import AVATAR_MAX_SIDE, GALLERY_MAX_SIDE, POST_MAX_SIDE, prepare_image
+from .models import User, Department, Post, Comment, Message, PhotoGallery, Report, is_student_email
 
 MIN_BATCH, MAX_BATCH = 1, 99
 MIN_GRADUATION_YEAR = 1968  # CUET was founded in 1968
@@ -80,6 +81,9 @@ class RegistrationForm(forms.ModelForm):
         if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError('Email is already registered.')
         return email
+
+    def clean_profile_photo(self):
+        return prepare_image(self.cleaned_data.get('profile_photo'), AVATAR_MAX_SIDE)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -174,28 +178,59 @@ class ProfileUpdateForm(forms.ModelForm):
             'work_address': 'Work Address',
         }
 
+    def clean_profile_photo(self):
+        return prepare_image(self.cleaned_data.get('profile_photo'), AVATAR_MAX_SIDE)
+
 class LoginForm(AuthenticationForm):
     username = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
+    def confirm_login_allowed(self, user):
+        super().confirm_login_allowed(user)
+        # Pending accounts may sign in (to finish their profile); deactivated ones may not.
+        if user.status == 'inactive':
+            raise forms.ValidationError(
+                'This account has been deactivated. Contact the committee if you think this is a mistake.',
+                code='inactive',
+            )
+
 
 class PostForm(forms.ModelForm):
+    content = forms.CharField(
+        max_length=Post.MAX_LENGTH, strip=True,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': "What's on your mind?"}),
+        error_messages={'required': 'Write something before posting.',
+                        'max_length': f'Topics can be up to {Post.MAX_LENGTH} characters.'},
+    )
+
     class Meta:
         model = Post
         fields = ['content', 'image', 'category']
         widgets = {
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': "What's on your mind?"}),
             'image': forms.FileInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
         }
-        
+
+    def clean_image(self):
+        return prepare_image(self.cleaned_data.get('image'), POST_MAX_SIDE)
+
+
 class CommentForm(forms.ModelForm):
+    content = forms.CharField(
+        max_length=Comment.MAX_LENGTH, strip=True,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        error_messages={'max_length': f'Replies can be up to {Comment.MAX_LENGTH} characters.'},
+    )
+
     class Meta:
         model = Comment
         fields = ['content']
-        widgets = {
-            'content': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Write a comment...'}),
-        }
+
+
+class ReportForm(forms.ModelForm):
+    class Meta:
+        model = Report
+        fields = ['reason', 'note']
 
 
 
@@ -220,6 +255,9 @@ class PhotoGalleryForm(forms.ModelForm):
             'category': forms.Select(attrs={'class': 'form-control'}),
             'is_featured': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+    def clean_image(self):
+        return prepare_image(self.cleaned_data.get('image'), GALLERY_MAX_SIDE)
 
 
 class SwitchToAlumniForm(forms.Form):
@@ -258,3 +296,14 @@ class StyledSetPasswordForm(SetPasswordForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
+
+
+class StyledPasswordChangeForm(PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+        self.fields['old_password'].label = 'Current password'
+        self.fields['new_password1'].label = 'New password'
+        self.fields['new_password1'].help_text = 'At least 8 characters. Avoid common passwords or ones close to your name or email.'
+        self.fields['new_password2'].label = 'New password again'

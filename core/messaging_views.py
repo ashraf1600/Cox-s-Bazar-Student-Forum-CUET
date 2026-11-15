@@ -9,7 +9,7 @@ from datetime import timedelta
 from django.contrib import messages
 from django.db.models import Q, Count, OuterRef, Subquery, IntegerField, Max
 from django.db.models.functions import Coalesce
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
@@ -17,7 +17,7 @@ from django.utils.dateformat import format as format_date
 from django.views.decorators.http import require_GET, require_POST
 
 from .forms import MessageForm
-from .models import User, Message, Block
+from .models import User, Message, Block, Notification
 from .views import active_member_required
 
 THREAD_LIMIT = 200            # newest messages shown when a conversation opens
@@ -112,6 +112,9 @@ def conversation(request, user_id):
     partner = get_object_or_404(User.objects.select_related('department'), id=user_id)
     if partner.id == me.id:
         return redirect('core:inbox')
+    # Only approved members can be looked up; others only if you already have a conversation.
+    if partner.status != 'active' and not Message.objects.between(me, partner).exists():
+        raise Http404('No such member.')
 
     # Opening the conversation marks everything they sent you as read.
     Message.objects.filter(sender=partner, recipient=me, is_read=False).update(is_read=True)
@@ -204,7 +207,10 @@ def poll(request, user_id):
 @active_member_required
 def unread_status(request):
     """Lightweight endpoint the navbar polls to keep the unread badge live."""
-    return JsonResponse({'unread': Message.objects.filter(recipient=request.user, is_read=False).count()})
+    return JsonResponse({
+        'unread': Message.objects.filter(recipient=request.user, is_read=False).count(),
+        'notifications': Notification.objects.filter(recipient=request.user, is_read=False).count(),
+    })
 
 
 @require_GET

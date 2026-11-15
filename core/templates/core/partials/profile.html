@@ -1,6 +1,12 @@
 {% load ui %}
 {# Shared profile layout. Context: person, is_self (bool), can_message (bool) #}
 <div class="page">
+    {% if is_self and person.status != 'active' %}
+    <div class="notice notice-warn mb-3" role="status">
+        <i class="fas fa-hourglass-half"></i>
+        <div><strong>Your account is waiting for approval.</strong> A committee member will review it soon. Meanwhile, fill in your profile: a photo, department and batch help them recognise you. The forum, member directory and messages open once you're approved.</div>
+    </div>
+    {% endif %}
     <section class="profile-head">
         <div class="profile-band">{% include 'core/partials/horizon.html' %}</div>
         <div class="profile-head-body">
@@ -22,7 +28,7 @@
             <div class="profile-actions">
                 {% if is_self %}
                     <a href="{% url 'core:update_profile' %}" class="btn btn-primary"><i class="fas fa-pen"></i> Edit profile</a>
-                    {% if person.member_type == 'running_student' %}<a href="{% url 'core:switch_to_alumni' %}" class="btn btn-outline-primary"><i class="fas fa-graduation-cap"></i> I've graduated</a>{% endif %}
+                    {% if person.member_type == 'running_student' and person.status == 'active' %}<a href="{% url 'core:switch_to_alumni' %}" class="btn btn-outline-primary"><i class="fas fa-graduation-cap"></i> I've graduated</a>{% endif %}
                 {% elif can_message %}
                     <a href="{% url 'core:conversation' person.id %}" class="btn btn-primary"><i class="fas fa-comment-dots"></i> Message</a>
                 {% endif %}
@@ -104,7 +110,7 @@
                         <span>{{ t.created_at|ago }}</span>
                     </a>
                 {% empty %}
-                    <p class="side-empty pt-3">{% if is_self %}You haven't started a topic yet. <a href="{% url 'core:dashboard' %}#composer">Start one</a>{% else %}No topics yet.{% endif %}</p>
+                    <p class="side-empty pt-3">{% if is_self and person.status == 'active' %}You haven't started a topic yet. <a href="{% url 'core:dashboard' %}#composer">Start one</a>{% elif is_self %}You can start topics once you're approved.{% else %}No topics yet.{% endif %}</p>
                 {% endfor %}
                 {% endwith %}
             </section>

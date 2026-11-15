@@ -2,13 +2,21 @@ import shutil
 import tempfile
 from datetime import timedelta
 
+from io import BytesIO
+
 from django.core import mail
+from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from .models import User, Department, Post, Comment, Like, Message, Block, Event, EventRegistration, PhotoGallery
+from .models import (
+    User, Department, Post, Comment, Like, Message, Block, Event, EventRegistration, PhotoGallery,
+    Notification, Report,
+)
 
 TEMP_MEDIA = tempfile.mkdtemp()
 STRONG_PASSWORD = 'Sea-Breeze-2026!'
@@ -27,6 +35,7 @@ class BaseTestCase(TestCase):
         shutil.rmtree(TEMP_MEDIA, ignore_errors=True)
 
     def setUp(self):
+        cache.clear()  # rate-limit counters live in the cache
         self.dept, _ = Department.objects.get_or_create(name='CSE')
         self.member = make_user('u2104001@student.cuet.ac.bd', batch=21, department=self.dept)
         self.other = make_user('u2104002@student.cuet.ac.bd', batch=21, department=self.dept)
@@ -352,7 +361,7 @@ class MessagingTests(BaseTestCase):
 
     def test_unread_endpoint(self):
         Message.objects.create(sender=self.other, recipient=self.member, body='x')
-        self.assertEqual(self.client.get(reverse('core:messages_unread')).json(), {'unread': 1})
+        self.assertEqual(self.client.get(reverse('core:messages_unread')).json(), {'unread': 1, 'notifications': 0})
 
 
 class ForumTests(BaseTestCase):
@@ -398,3 +407,230 @@ class ForumTests(BaseTestCase):
         stats = self.client.get(reverse('core:homepage')).context['stats']
         self.assertEqual(stats['members'], User.objects.filter(status='active').count())
         self.assertEqual(stats['topics'], 2)
+
+
+class AccessControlTests(BaseTestCase):
+    """Who can open what. See the access-control notes at the top of views.py."""
+
+    PUBLIC = ['homepage', 'about', 'events', 'announcements', 'gallery', 'committee',
+              'committee_directory', 'advisory_panel', 'alumni_directory', 'login', 'register']
+    MEMBERS_ONLY = ['dashboard', 'member_directory', 'inbox', 'switch_to_alumni']
+
+    def test_public_pages_open_to_everyone(self):
+        for name in self.PUBLIC:
+            self.assertEqual(self.client.get(reverse(f'core:{name}')).status_code, 200, name)
+
+    def test_member_pages_send_visitors_to_login_and_back(self):
+        for name in self.MEMBERS_ONLY + ['view_profile', 'update_profile']:
+            response = self.client.get(reverse(f'core:{name}'))
+            self.assertEqual(response.status_code, 302, name)
+            self.assertTrue(response['Location'].startswith(reverse('core:login')), name)
+        post = Post.objects.create(user=self.member, content='x')
+        self.assertEqual(self.client.get(reverse('core:post_detail', args=[post.id])).status_code, 302)
+        self.assertEqual(self.client.get(reverse('core:member_profile', args=[self.member.id])).status_code, 302)
+
+    def test_login_redirect_keeps_the_query_string(self):
+        response = self.client.get(reverse('core:dashboard') + '?category=Blood+Request')
+        self.assertIn('next=%2Fdashboard%2F%3Fcategory%3DBlood%2BRequest', response['Location'])
+
+    def test_pending_member_can_finish_profile_but_not_enter_forum(self):
+        self.client.force_login(self.pending)
+        self.assertEqual(self.client.get(reverse('core:view_profile')).status_code, 200)
+        self.assertEqual(self.client.get(reverse('core:update_profile')).status_code, 200)
+        for name in self.MEMBERS_ONLY:
+            response = self.client.get(reverse(f'core:{name}'))
+            self.assertRedirects(response, reverse('core:view_profile'), msg_prefix=name)
+
+    def test_pending_member_lands_on_profile_after_login(self):
+        self.pending.set_password('pass12345!x')
+        self.pending.save()
+        response = self.client.post(reverse('core:login'), {'username': self.pending.email, 'password': 'pass12345!x'})
+        self.assertRedirects(response, reverse('core:view_profile'))
+
+    def test_deactivated_account_cannot_log_in(self):
+        self.member.status = 'inactive'
+        self.member.set_password('pass12345!x')
+        self.member.save()
+        response = self.client.post(reverse('core:login'), {'username': self.member.email, 'password': 'pass12345!x'})
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_deactivated_session_is_ended(self):
+        self.client.force_login(self.member)
+        User.objects.filter(pk=self.member.pk).update(status='inactive')
+        self.assertRedirects(self.client.get(reverse('core:view_profile')), reverse('core:login'))
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_logout_requires_post(self):
+        self.client.force_login(self.member)
+        self.assertEqual(self.client.get(reverse('core:logout')).status_code, 405)
+        self.assertIn('_auth_user_id', self.client.session)
+        self.client.post(reverse('core:logout'))
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_admin_pages_are_admin_only(self):
+        self.client.force_login(self.member)
+        self.assertEqual(self.client.get(reverse('core:admin_gallery')).status_code, 302)
+        self.client.force_login(self.admin)
+        self.assertEqual(self.client.get(reverse('core:admin_gallery')).status_code, 200)
+
+    def test_advisor_phone_numbers_are_members_only(self):
+        phone = '+8801716963388'  # chief advisor, see views.ADVISORS
+        self.assertNotContains(self.client.get(reverse('core:advisory_panel')), phone)
+        self.client.force_login(self.member)
+        self.assertContains(self.client.get(reverse('core:advisory_panel')), phone)
+
+    def test_cannot_open_chat_with_unapproved_member_by_url(self):
+        self.client.force_login(self.member)
+        self.assertEqual(self.client.get(reverse('core:conversation', args=[self.pending.id])).status_code, 404)
+        self.assertEqual(self.client.get(reverse('core:conversation', args=[self.other.id])).status_code, 200)
+
+
+def photo(width=3000, height=2000, name='phone.jpg'):
+    buffer = BytesIO()
+    Image.new('RGB', (width, height), (30, 60, 120)).save(buffer, format='JPEG')
+    return SimpleUploadedFile(name, buffer.getvalue(), content_type='image/jpeg')
+
+
+class LaunchFeatureTests(BaseTestCase):
+    """Search, notifications, reply deletion, reports, moderation, donor filters, limits."""
+
+    def setUp(self):
+        super().setUp()
+        self.client.force_login(self.member)
+        self.topic = Post.objects.create(user=self.member, content='Where to buy a scientific calculator?', category='Help Needed')
+
+    def reply(self, user, text, post=None):
+        self.client.force_login(user)
+        return self.client.post(reverse('core:add_comment', args=[(post or self.topic).id]), {'content': text})
+
+    def search(self, q):
+        return [p.id for p in self.client.get(reverse('core:dashboard'), {'q': q}).context['page_obj']]
+
+    # search
+    def test_search_matches_topics_authors_and_replies(self):
+        Post.objects.create(user=self.other, content='Iftar plan for Ramadan')
+        Comment.objects.create(post=self.topic, user=self.other, content='Try New Market, Anderkilla')
+        self.assertEqual(self.search('calculator'), [self.topic.id])
+        self.assertEqual(self.search('anderkilla'), [self.topic.id])     # found through a reply
+        self.assertEqual(len(self.search(self.other.full_name)), 1)        # found by author
+        self.assertEqual(self.search('zzzz-nothing'), [])
+
+    # notifications
+    def test_reply_notifies_author_and_earlier_repliers_once(self):
+        self.reply(self.other, 'Try New Market')
+        self.assertEqual(Notification.objects.filter(recipient=self.member, is_read=False).count(), 1)
+        self.reply(self.admin, 'Or Zahur Hawkers')
+        # the author still has ONE unread row for this topic (refreshed); the first replier gets one too
+        self.assertEqual(Notification.objects.filter(recipient=self.member, is_read=False).count(), 1)
+        self.assertEqual(Notification.objects.get(recipient=self.member).actor, self.admin)
+        self.assertEqual(Notification.objects.filter(recipient=self.other).count(), 1)
+        self.assertFalse(Notification.objects.filter(recipient=self.admin).exists())  # not for your own reply
+
+    def test_opening_the_topic_marks_it_read(self):
+        self.reply(self.other, 'Try New Market')
+        self.client.force_login(self.member)
+        self.assertEqual(self.client.get(reverse('core:messages_unread')).json()['notifications'], 1)
+        self.client.get(reverse('core:post_detail', args=[self.topic.id]))
+        self.assertEqual(self.client.get(reverse('core:messages_unread')).json()['notifications'], 0)
+
+    def test_notifications_page_and_mark_all_read(self):
+        self.reply(self.other, 'Try New Market')
+        self.client.force_login(self.member)
+        self.assertContains(self.client.get(reverse('core:notifications')), 'replied in your topic')
+        self.client.post(reverse('core:notifications'))
+        self.assertFalse(Notification.objects.filter(recipient=self.member, is_read=False).exists())
+
+    # deleting replies
+    def test_reply_can_be_deleted_by_its_author_or_an_admin_only(self):
+        first = Comment.objects.create(post=self.topic, user=self.other, content='one')
+        second = Comment.objects.create(post=self.topic, user=self.other, content='two')
+        self.client.post(reverse('core:delete_comment', args=[first.id]))           # self.member is not the author
+        self.assertTrue(Comment.objects.filter(id=first.id).exists())
+        self.client.force_login(self.other)
+        self.client.post(reverse('core:delete_comment', args=[first.id]))
+        self.assertFalse(Comment.objects.filter(id=first.id).exists())
+        self.client.force_login(self.admin)
+        self.client.post(reverse('core:delete_comment', args=[second.id]))
+        self.assertFalse(Comment.objects.filter(id=second.id).exists())
+
+    # reports and moderation
+    def test_report_reaches_admins_and_can_remove_content(self):
+        self.client.force_login(self.other)
+        self.client.post(reverse('core:report_content'), {'post_id': self.topic.id, 'reason': 'spam', 'note': 'ad'})
+        self.client.post(reverse('core:report_content'), {'post_id': self.topic.id, 'reason': 'spam'})  # no duplicates
+        self.assertEqual(Report.objects.count(), 1)
+        self.assertEqual(self.client.get(reverse('core:moderation')).status_code, 302)  # members can't open it
+        self.client.force_login(self.admin)
+        self.assertContains(self.client.get(reverse('core:moderation')), 'scientific calculator')
+        self.client.post(reverse('core:resolve_report', args=[Report.objects.get().id]), {'action': 'remove'})
+        self.assertFalse(Post.objects.filter(id=self.topic.id).exists())
+
+    def test_admin_approves_and_declines_members_in_the_site(self):
+        self.client.post(reverse('core:moderate_member', args=[self.pending.id]), {'action': 'approve'})
+        self.pending.refresh_from_db()
+        self.assertEqual(self.pending.status, 'pending')  # a normal member can't approve
+        self.client.force_login(self.admin)
+        self.assertContains(self.client.get(reverse('core:moderation')), self.pending.email)
+        self.client.post(reverse('core:moderate_member', args=[self.pending.id]), {'action': 'approve'})
+        self.pending.refresh_from_db()
+        self.assertEqual(self.pending.status, 'active')
+        self.assertTrue(self.pending.serial_no)
+        self.assertEqual(len(mail.outbox), 1)
+        newcomer = make_user('new@example.com', status='pending')
+        self.client.post(reverse('core:moderate_member', args=[newcomer.id]), {'action': 'decline'})
+        newcomer.refresh_from_db()
+        self.assertEqual(newcomer.status, 'inactive')
+
+    # donors
+    def test_member_directory_filters_by_blood_group_and_upazila(self):
+        User.objects.filter(pk=self.other.pk).update(blood_group='O-', upazila='Ramu')
+        User.objects.filter(pk=self.admin.pk).update(blood_group='A+', upazila='Ramu')
+        found = self.client.get(reverse('core:member_directory'), {'blood_group': 'O-', 'upazila': 'Ramu'}).context['page_obj']
+        self.assertEqual([m.id for m in found], [self.other.id])
+
+    # limits
+    def test_login_is_paused_after_repeated_wrong_passwords(self):
+        self.client.logout()
+        for _ in range(8):
+            wrong = self.client.post(reverse('core:login'), {'username': self.member.email, 'password': 'wrong'})
+            self.assertEqual(wrong.status_code, 200)
+        blocked = self.client.post(reverse('core:login'), {'username': self.member.email, 'password': STRONG_PASSWORD})
+        self.assertEqual(blocked.status_code, 429)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_posting_is_rate_limited(self):
+        for i in range(6):
+            self.client.post(reverse('core:dashboard'), {'content': f'topic {i}', 'category': 'General'})
+        self.client.post(reverse('core:dashboard'), {'content': 'one too many', 'category': 'General'})
+        self.assertFalse(Post.objects.filter(content='one too many').exists())
+
+    def test_overlong_topic_and_reply_are_rejected(self):
+        self.client.post(reverse('core:dashboard'), {'content': 'x' * 5001, 'category': 'General'})
+        self.assertEqual(Post.objects.count(), 1)
+        self.client.post(reverse('core:add_comment', args=[self.topic.id]), {'content': 'y' * 2001})
+        self.assertEqual(self.topic.comments.count(), 0)
+
+    def test_large_photo_is_shrunk_and_non_images_refused(self):
+        self.client.post(reverse('core:dashboard'), {'content': 'with photo', 'category': 'General', 'image': photo()})
+        saved = Post.objects.get(content='with photo')
+        with Image.open(saved.image.path) as image:
+            self.assertLessEqual(max(image.size), 1600)
+        fake = SimpleUploadedFile('virus.jpg', b'not really an image', content_type='image/jpeg')
+        self.client.post(reverse('core:dashboard'), {'content': 'fake photo', 'category': 'General', 'image': fake})
+        self.assertFalse(Post.objects.filter(content='fake photo').exists())
+
+    # pages
+    def test_new_public_pages(self):
+        self.client.logout()
+        self.assertEqual(self.client.get(reverse('core:guidelines')).status_code, 200)
+        self.assertContains(self.client.get(reverse('core:robots_txt')), 'Disallow: /dashboard/')
+        self.assertEqual(self.client.get(reverse('core:healthz')).content, b'ok')
+        self.assertContains(self.client.get('/no-such-page/'), 'find that page', status_code=404)
+
+    def test_password_change(self):
+        response = self.client.post(reverse('password_change'), {
+            'old_password': STRONG_PASSWORD, 'new_password1': 'Tide-Pool-9981!', 'new_password2': 'Tide-Pool-9981!'})
+        self.assertRedirects(response, reverse('core:view_profile'))
+        self.member.refresh_from_db()
+        self.assertTrue(self.member.check_password('Tide-Pool-9981!'))

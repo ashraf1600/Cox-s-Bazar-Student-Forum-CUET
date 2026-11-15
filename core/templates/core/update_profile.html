@@ -55,7 +55,7 @@
             <a href="{% url 'core:view_profile' %}" class="btn btn-outline-secondary px-4">Cancel</a>
             <button type="submit" class="btn btn-primary px-4">Save changes</button>
         </div>
-        <p class="small text-muted mt-3 mb-0 text-end">To change your email, batch or department, message a committee admin.</p>
+        <p class="small text-muted mt-3 mb-0 text-end">To change your email, batch or department, message a committee admin. <a href="{% url 'password_change' %}">Change password</a></p>
     </form>
 </div>
 {% endblock %}

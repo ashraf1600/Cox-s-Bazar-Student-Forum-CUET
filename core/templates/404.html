@@ -1,0 +1,15 @@
+{% extends 'core/base.html' %}
+{% block title %}Page not found{% endblock %}
+{% block content %}
+<div class="page">
+    <div class="surface error-page">
+        {% include 'core/partials/horizon.html' %}
+        <h1>We can't find that page</h1>
+        <p>The link may be old, or the topic or member may have been removed.</p>
+        <div class="d-flex gap-2 justify-content-center flex-wrap">
+            {% if user.is_authenticated and user.status == 'active' %}<a href="{% url 'core:dashboard' %}" class="btn btn-primary">Go to the forum</a>{% endif %}
+            <a href="{% url 'core:homepage' %}" class="btn btn-outline-primary">Go to the homepage</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -36,6 +36,38 @@
     </div>
 </div>
 
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <form class="modal-content" method="post" action="{% url 'core:report_content' %}">
+            {% csrf_token %}
+            <input type="hidden" name="post_id" id="reportPostId">
+            <input type="hidden" name="comment_id" id="reportCommentId">
+            <div class="modal-header">
+                <h2 class="modal-title" id="reportModalLabel">Report to the admins</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted">You are reporting <span id="reportWhat">this</span>. Only the admins see who reported it.</p>
+                <fieldset class="mb-3">
+                    <legend class="form-label">What is wrong with it?</legend>
+                    {% for value, label in report_reasons %}
+                        <div class="form-check py-1">
+                            <input class="form-check-input" type="radio" name="reason" id="reason_{{ value }}" value="{{ value }}" {% if forloop.first %}checked{% endif %}>
+                            <label class="form-check-label" for="reason_{{ value }}">{{ label }}</label>
+                        </div>
+                    {% endfor %}
+                </fieldset>
+                <label class="form-label" for="reportNote">Anything the admins should know <span class="text-muted fw-normal">(optional)</span></label>
+                <textarea class="form-control" name="note" id="reportNote" rows="2" maxlength="500"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Send report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const csrf = '{{ csrf_token }}';
@@ -54,6 +86,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     icon.classList.toggle('far', !data.liked);
                 })
                 .catch(function () {});
+        });
+    });
+
+    document.getElementById('reportModal').addEventListener('show.bs.modal', function (event) {
+        const b = event.relatedTarget;
+        document.getElementById('reportPostId').value = b.getAttribute('data-report-post') || '';
+        document.getElementById('reportCommentId').value = b.getAttribute('data-report-comment') || '';
+        document.getElementById('reportWhat').textContent = b.getAttribute('data-report-what') || 'this';
+    });
+
+    document.querySelectorAll('.copy-link-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const url = location.origin + btn.dataset.link;
+            const label = btn.querySelector('span');
+            const done = function () { label.textContent = 'Link copied'; setTimeout(function () { label.textContent = 'Copy link'; }, 1600); };
+            if (navigator.clipboard) navigator.clipboard.writeText(url).then(done).catch(function () { prompt('Copy this link', url); });
+            else prompt('Copy this link', url);
         });
     });
 

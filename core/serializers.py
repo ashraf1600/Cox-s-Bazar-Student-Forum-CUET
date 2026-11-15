@@ -1,6 +1,8 @@
+from django import forms
 from django.contrib.auth import password_validation
 from rest_framework import serializers, exceptions
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from .images import POST_MAX_SIDE, prepare_image
 from .models import (
     User, Department, CommitteeMember, PhotoGallery, Event, EventRegistration,
     Post, Comment, Like, Announcement, Message, is_student_email,
@@ -198,3 +200,16 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = ['id', 'user', 'content', 'image', 'category', 'likes_count', 'comments', 'user_has_liked', 'created_at']
         read_only_fields = ['likes_count', 'created_at']
+
+    def validate_content(self, value):
+        value = value.strip()
+        if len(value) > Post.MAX_LENGTH:
+            raise serializers.ValidationError(f'Topics can be up to {Post.MAX_LENGTH} characters.')
+        return value
+
+    def validate_image(self, value):
+        # Same size check and resizing as the website's form.
+        try:
+            return prepare_image(value, POST_MAX_SIDE)
+        except forms.ValidationError as error:
+            raise serializers.ValidationError(error.messages)

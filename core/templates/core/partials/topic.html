@@ -39,20 +39,25 @@
         </div>
     </div>
 
-    {% if user == post.user or is_admin %}
     <div class="dropdown topic-menu">
         <button class="menu-dot" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Topic options"><i class="fas fa-ellipsis"></i></button>
         <div class="dropdown-menu dropdown-menu-end">
+            <button class="dropdown-item copy-link-btn" data-link="{% url 'core:post_detail' post.id %}"><i class="fas fa-link"></i><span>Copy link</span></button>
             {% if user == post.user %}
             <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}" data-content="{{ post.content }}" data-category="{{ post.category }}" data-image-url="{% if post.image %}{{ post.image.url }}{% endif %}">
                 <i class="fas fa-pen"></i><span>Edit topic</span>
             </button>
+            {% else %}
+            <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#reportModal" data-report-post="{{ post.id }}" data-report-what="this topic by {{ post.user.full_name }}">
+                <i class="fas fa-flag"></i><span>Report topic</span>
+            </button>
             {% endif %}
+            {% if user == post.user or is_admin %}
             <button class="dropdown-item text-danger delete-post-btn" data-post-id="{{ post.id }}">
                 <i class="fas fa-trash-can"></i><span>Delete topic</span>
             </button>
+            {% endif %}
         </div>
     </div>
-    {% endif %}
 </article>
 {% endwith %}

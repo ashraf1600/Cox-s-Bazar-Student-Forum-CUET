@@ -57,3 +57,52 @@ document.addEventListener('DOMContentLoaded', function () {
     const activeChip = document.querySelector('.board-chips a.active');
     if (activeChip) activeChip.scrollIntoView({ block: 'nearest', inline: 'center' });
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Forms/buttons that need a "are you sure?" first.
+    document.querySelectorAll('form[data-confirm]').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            if (!confirm(form.dataset.confirm)) { e.preventDefault(); e.stopImmediatePropagation(); }
+        });
+    });
+    document.querySelectorAll('[data-confirm-click]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            if (!confirm(btn.dataset.confirmClick)) e.preventDefault();
+        });
+    });
+
+    // A second tap on a slow connection must not post twice: lock the button after the first submit.
+    document.querySelectorAll('form[method="post" i]').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            if (e.defaultPrevented) return;
+            if (form.dataset.submitted) { e.preventDefault(); return; }
+            form.dataset.submitted = '1';
+            setTimeout(function () {
+                form.querySelectorAll('button[type="submit"]').forEach(function (b) {
+                    b.setAttribute('aria-disabled', 'true');
+                    b.classList.add('is-busy');
+                });
+            }, 0);
+            // If the page is restored from the back/forward cache, unlock again.
+            window.addEventListener('pageshow', function () {
+                delete form.dataset.submitted;
+                form.querySelectorAll('.is-busy').forEach(function (b) { b.classList.remove('is-busy'); b.removeAttribute('aria-disabled'); });
+            }, { once: true });
+        });
+    });
+
+    // Live character count on fields with a limit, shown once you get close.
+    document.querySelectorAll('textarea[maxlength]').forEach(function (area) {
+        const max = parseInt(area.getAttribute('maxlength'), 10);
+        const note = document.createElement('div');
+        note.className = 'char-count';
+        note.hidden = true;
+        area.insertAdjacentElement('afterend', note);
+        area.addEventListener('input', function () {
+            const left = max - area.value.length;
+            note.hidden = left > max * 0.1;
+            note.textContent = left + ' characters left';
+            note.classList.toggle('is-low', left <= 50);
+        });
+    });
+});

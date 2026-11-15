@@ -1,0 +1,12 @@
+{% extends 'core/base.html' %}
+{% block title %}Not allowed{% endblock %}
+{% block content %}
+<div class="page">
+    <div class="surface error-page">
+        {% include 'core/partials/horizon.html' %}
+        <h1>You don't have access to this page</h1>
+        <p>It may be for admins only, or for the member who created it.</p>
+        <a href="{% url 'core:homepage' %}" class="btn btn-primary">Go to the homepage</a>
+    </div>
+</div>
+{% endblock %}

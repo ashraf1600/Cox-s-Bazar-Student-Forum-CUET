@@ -1,0 +1,37 @@
+{% extends 'core/base.html' %}
+{% load ui %}
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="page page-narrow">
+    <header class="page-head">
+        <div class="page-head-main">
+            {% include 'core/partials/horizon.html' %}
+            <h1 class="page-title">Notifications</h1>
+            <p class="page-sub">Replies in topics you started or joined.</p>
+        </div>
+        {% if has_unread %}
+        <form method="post" class="page-head-actions">{% csrf_token %}<button type="submit" class="btn btn-outline-primary">Mark all as read</button></form>
+        {% endif %}
+    </header>
+
+    <div class="surface">
+        {% for n in page_obj %}
+            <a href="{% url 'core:post_detail' n.post_id %}{% if n.comment_id %}#reply-{{ n.comment_id }}{% endif %}" class="alert-row{% if not n.is_read %} is-unread{% endif %}">
+                {% if n.actor %}{% avatar n.actor 40 %}{% else %}<span class="avatar avatar-initials avatar-hue-0" style="--avatar-size:40px">?</span>{% endif %}
+                <span class="min-w-0">
+                    <span class="alert-line"><strong>{{ n.actor.full_name|default:"A former member" }}</strong> replied in {% if n.post.user_id == user.id %}your topic{% else %}a topic you joined{% endif %}</span>
+                    <span class="alert-quote">{{ n.post.content|truncatechars:90 }}</span>
+                    {% if n.comment %}<span class="alert-reply">“{{ n.comment.content|truncatechars:120 }}”</span>{% endif %}
+                    <time datetime="{{ n.created_at|date:'c' }}">{{ n.created_at|ago }}</time>
+                </span>
+                {% if not n.is_read %}<span class="alert-dot" aria-label="Unread"></span>{% endif %}
+            </a>
+        {% empty %}
+            {% url 'core:dashboard' as forum_url %}
+            {% include 'core/partials/empty_state.html' with icon='fa-bell' title='No notifications yet' text='When someone replies to a topic you started or joined, it shows up here.' action_url=forum_url action_label='Go to the forum' %}
+        {% endfor %}
+    </div>
+    {% include 'core/partials/pagination.html' %}
+</div>
+{% endblock %}

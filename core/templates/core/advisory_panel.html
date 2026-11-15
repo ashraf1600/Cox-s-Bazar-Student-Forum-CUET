@@ -24,10 +24,11 @@
                 </div>
                 <div class="person-foot">
                     <div class="actions">
-                        <a href="mailto:{{ advisor.email }}" class="social-btn" aria-label="Email {{ advisor.name }}" title="{{ advisor.email }}"><i class="fas fa-envelope"></i></a>
-                        {% if advisor.phone %}<a href="tel:{{ advisor.phone }}" class="social-btn" aria-label="Call {{ advisor.name }}" title="{{ advisor.phone }}"><i class="fas fa-phone"></i></a>{% endif %}
+                        {% if is_member or advisor.email_is_official %}<a href="mailto:{{ advisor.email }}" class="social-btn" aria-label="Email {{ advisor.name }}" title="{{ advisor.email }}"><i class="fas fa-envelope"></i></a>{% endif %}
+                        {% if is_member and advisor.phone %}<a href="tel:{{ advisor.phone }}" class="social-btn" aria-label="Call {{ advisor.name }}" title="{{ advisor.phone }}"><i class="fas fa-phone"></i></a>{% endif %}
                         {% if advisor.linkedin %}<a href="{{ advisor.linkedin }}" target="_blank" rel="noopener noreferrer" class="social-btn" aria-label="{{ advisor.name }} on LinkedIn"><i class="fab fa-linkedin-in"></i></a>{% endif %}
                     </div>
+                    {% if not is_member and advisor.phone %}<a href="{% url 'core:login' %}?next={{ request.path|urlencode }}" class="small fw-semibold ms-2">Log in for phone</a>{% endif %}
                 </div>
             </article>
         {% endfor %}

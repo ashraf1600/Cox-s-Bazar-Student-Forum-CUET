@@ -6,8 +6,9 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from .models import (
     User, Department, CommitteeMember, Announcement, Post, Comment, Like, Event,
-    EventRegistration, PhotoGallery, Message, Block,
+    EventRegistration, PhotoGallery, Message, Block, Notification, Report,
 )
+from .notify import notify_approved
 
 
 class CustomUserCreationForm(BaseUserCreationForm):
@@ -22,22 +23,6 @@ class CustomUserChangeForm(UserChangeForm):
         fields = '__all__'
 
 
-def _notify_approved(request, user):
-    login_url = request.build_absolute_uri(reverse('core:login'))
-    send_mail(
-        subject='Your CSF-CUET membership has been approved',
-        message=(
-            f"Hi {user.full_name},\n\n"
-            f"Your Cox's Bazar Student Forum (CUET) account has been approved.\n"
-            f"Your member serial number is {user.serial_no}.\n\n"
-            f"You can now log in: {login_url}\n"
-        ),
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=True,
-    )
-
-
 # Action to approve pending members
 @admin.action(description='Approve selected members')
 def approve_members(modeladmin, request, queryset):
@@ -46,7 +31,7 @@ def approve_members(modeladmin, request, queryset):
     for user in queryset.filter(status='pending'):
         user.status = 'active'
         user.save()
-        _notify_approved(request, user)
+        notify_approved(request, user)
         approved += 1
     modeladmin.message_user(request, f'{approved} member(s) approved.')
 
@@ -202,3 +187,18 @@ admin.site.register(CommitteeMember, CommitteeMemberAdmin)
 admin.site.register(Post, PostAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Like, LikeAdmin)
+
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ['created_at', 'reporter', 'reason', 'post', 'comment', 'is_resolved']
+    list_filter = ['is_resolved', 'reason']
+    search_fields = ['reporter__full_name', 'note']
+    raw_id_fields = ['reporter', 'post', 'comment', 'resolved_by']
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ['created_at', 'recipient', 'actor', 'post', 'is_read']
+    list_filter = ['is_read']
+    raw_id_fields = ['recipient', 'actor', 'post', 'comment']

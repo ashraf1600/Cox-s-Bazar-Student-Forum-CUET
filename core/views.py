@@ -6,16 +6,25 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import IntegrityError
 from django.db.models import Q, Exists, OuterRef, Count
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
-from .models import User, Department, CommitteeMember, Announcement, Post, Comment, Like, Event, EventRegistration, PhotoGallery
+from .models import (
+    User, Department, CommitteeMember, Announcement, Post, Comment, Like, Event, EventRegistration,
+    PhotoGallery, Notification, Report,
+)
 from .boards import board_list, board_for
-from .forms import RegistrationForm, LoginForm, ProfileUpdateForm, PostForm, CommentForm, PhotoGalleryForm, SwitchToAlumniForm
+from .forms import (
+    RegistrationForm, LoginForm, ProfileUpdateForm, PostForm, CommentForm, PhotoGalleryForm,
+    SwitchToAlumniForm, ReportForm,
+)
+from .images import GALLERY_MAX_SIDE, prepare_image
+from .notify import notify_approved
+from . import throttle
 
 
 def is_admin(user):
@@ -45,14 +54,50 @@ def redirect_back(request, fallback):
     return redirect(fallback)
 
 
-def active_member_required(view_func):
+# ── Access control ────────────────────────────────────────────────────────
+# Public:            home, about, events, notices, gallery, committee, advisory panel,
+#                    alumni directory, login/register/password reset.
+# Signed in (any):   your own profile, view and edit (pending members can finish it
+#                    while they wait for approval), logout.
+# Approved members:  forum, threads, posting, member directory and profiles,
+#                    messaging, event registration, switching to alumni.
+# Admins:            gallery management (Django admin has its own staff check).
+
+def redirect_to_login(request):
+    """Send an anonymous visitor to login, coming back to the exact page (query string included)."""
+    return redirect(f"{reverse('core:login')}?{urlencode({'next': request.get_full_path()})}")
+
+
+def end_deactivated_session(request):
+    """An admin deactivated this account while it was logged in: sign it out."""
+    logout(request)
+    messages.error(request, 'Your account has been deactivated. Contact the committee if you think this is a mistake.')
+    return redirect('core:login')
+
+
+def signed_in_required(view_func):
+    """Any signed-in account that hasn't been deactivated, including ones awaiting approval."""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect(f"{reverse('core:login')}?next={request.path}")
+            return redirect_to_login(request)
+        if request.user.status == 'inactive':
+            return end_deactivated_session(request)
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
+def active_member_required(view_func):
+    """Approved members only. Pending accounts go to their profile, where they can finish it."""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request)
+        if request.user.status == 'inactive':
+            return end_deactivated_session(request)
         if request.user.status != 'active':
-            messages.warning(request, 'Your account is pending approval.')
-            return redirect('core:homepage')
+            messages.info(request, 'That page opens once the committee approves your account. Meanwhile, finish your profile.')
+            return redirect('core:view_profile')
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
@@ -61,7 +106,7 @@ def admin_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect(f"{reverse('core:login')}?next={request.path}")
+            return redirect_to_login(request)
         if not is_admin(request.user):
             messages.error(request, 'Only admins can access that page.')
             return redirect('core:homepage')
@@ -105,9 +150,10 @@ def committee_page(request):
         'past_committees': past_committees,
     })
 
+@throttle.rate_limit('register', 8, 60 * 60, 'Too many sign-ups from this connection. Try again in an hour.')
 def register(request):
     if request.user.is_authenticated:
-        return redirect('core:dashboard')
+        return redirect('core:dashboard' if request.user.status == 'active' else 'core:view_profile')
 
     if request.method == 'POST':
         form = RegistrationForm(request.POST, request.FILES)
@@ -140,6 +186,16 @@ def member_directory(request):
         members = members.filter(department_id=department_id)
     if batch is not None:
         members = members.filter(batch=batch)
+    blood_group = request.GET.get('blood_group', '')
+    if blood_group in dict(User.BLOOD_GROUPS):
+        members = members.filter(blood_group=blood_group)
+    else:
+        blood_group = ''
+    upazila = request.GET.get('upazila', '')
+    if upazila in dict(User.UPAZILA_CHOICES):
+        members = members.filter(upazila=upazila)
+    else:
+        upazila = ''
 
     members = members.order_by('full_name')
     paginator = Paginator(members, 20)
@@ -156,6 +212,11 @@ def member_directory(request):
         'search_query': search_query,
         'selected_department': str(department_id or ''),
         'selected_batch': str(batch or ''),
+        'blood_groups': [value for value, _ in User.BLOOD_GROUPS],
+        'upazilas': [value for value, _ in User.UPAZILA_CHOICES],
+        'selected_blood_group': blood_group,
+        'selected_upazila': upazila,
+        'has_filters': bool(search_query or department_id or batch or blood_group or upazila),
     })
 
 @active_member_required
@@ -239,29 +300,43 @@ def committee_directory(request):
     })
 
 
+LOGIN_MAX_FAILURES = 8
+
+
 @ensure_csrf_cookie
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('core:dashboard')
+        return redirect('core:dashboard' if request.user.status == 'active' else 'core:view_profile')
 
     next_url = request.POST.get('next') or request.GET.get('next', '')
     if request.method == 'POST':
+        # Password guessing: after 8 wrong tries for one email from one address, pause for 15 minutes.
+        attempt_key = f"login:{throttle.client_ip(request)}:{request.POST.get('username', '').strip().lower()[:100]}"
+        if throttle.hits(attempt_key) >= LOGIN_MAX_FAILURES:
+            form = LoginForm(request)
+            messages.error(request, 'Too many wrong passwords. Try again in 15 minutes, or reset your password.')
+            return render(request, 'core/login.html', {'form': form, 'next': next_url}, status=429)
         form = LoginForm(request, data=request.POST)
-        if form.is_valid():
+        if not form.is_valid():
+            throttle.over_limit(attempt_key, LOGIN_MAX_FAILURES, 15 * 60)
+        else:
+            throttle.clear(attempt_key)
             # AuthenticationForm has already authenticated the user.
             user = form.get_user()
             login(request, user)
             messages.success(request, f'Welcome back, {user.full_name}!')
             if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
                 return HttpResponseRedirect(next_url)
-            return redirect('core:dashboard')
+            return redirect('core:dashboard' if user.status == 'active' else 'core:view_profile')
     else:
         form = LoginForm()
 
     return render(request, 'core/login.html', {'form': form, 'next': next_url})
 
 
+@require_POST
 def logout_view(request):
+    """POST only, so another site can't log members out with a hidden link or image."""
     logout(request)
     messages.info(request, 'You have been logged out.')
     return redirect('core:homepage')
@@ -280,6 +355,7 @@ def profile_completeness(user):
 
 
 @active_member_required
+@throttle.rate_limit('post', 6, 5 * 60, 'You are posting very quickly. Wait a few minutes before starting another topic.')
 def dashboard(request):
     me = request.user
     if request.method == 'POST':
@@ -288,9 +364,9 @@ def dashboard(request):
             post = form.save(commit=False)
             post.user = me
             post.save()
-            messages.success(request, 'Your post is live.')
-            return redirect('core:dashboard')
-        messages.error(request, 'Your post could not be published. Please check the form.')
+            messages.success(request, 'Topic posted.')
+            return redirect('core:post_detail', post_id=post.id)
+        messages.error(request, 'Your topic was not posted. ' + ' '.join(e for errs in form.errors.values() for e in errs))
     else:
         form = PostForm()
 
@@ -305,6 +381,12 @@ def dashboard(request):
     )
     if active_category:
         posts = posts.filter(category=active_category)
+    query = request.GET.get('q', '').strip()[:100]
+    if query:
+        posts = posts.filter(
+            Q(content__icontains=query) | Q(user__full_name__icontains=query)
+            | Exists(Comment.objects.filter(post=OuterRef('pk'), content__icontains=query))
+        )
     sort = request.GET.get('sort', 'latest')
     if sort == 'top':
         posts = posts.order_by('-likes_count', '-reply_count', '-created_at')
@@ -329,6 +411,7 @@ def dashboard(request):
         'boards': boards,
         'total_topics': sum(b['topics'] for b in boards),
         'sort': sort,
+        'query': query,
         'greeting': greeting,
         'first_name': me.full_name.split()[0] if me.full_name else '',
         'completeness': profile_completeness(me),
@@ -343,12 +426,14 @@ def dashboard(request):
         'new_members': User.objects.filter(status='active').exclude(id=me.id)
                            .select_related('department').order_by('-date_joined')[:5],
         'is_admin': is_admin(me),
+        'report_reasons': Report.REASON_CHOICES,
     }
     return render(request, 'core/dashboard.html', context)
 
 
 @require_POST
 @active_member_required
+@throttle.rate_limit('like', 60, 60)
 def like_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     like, created = Like.objects.get_or_create(post=post, user=request.user)
@@ -369,6 +454,7 @@ def post_detail(request, post_id):
         ),
         id=post_id,
     )
+    Notification.objects.filter(recipient=me, post=post, is_read=False).update(is_read=True)
     replies = post.comments.select_related('user', 'user__department')
     participants = {post.user_id: post.user}
     for reply in replies:
@@ -383,11 +469,13 @@ def post_detail(request, post_id):
         'related': related,
         'categories': [value for value, _ in Post.CATEGORY_CHOICES],
         'is_admin': is_admin(me),
+        'report_reasons': Report.REASON_CHOICES,
     })
 
 
 @require_POST
 @active_member_required
+@throttle.rate_limit('comment', 15, 5 * 60, 'You are replying very quickly. Wait a few minutes and try again.')
 def add_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     form = CommentForm(request.POST)
@@ -396,12 +484,63 @@ def add_comment(request, post_id):
         comment.post = post
         comment.user = request.user
         comment.save()
+        Notification.notify_reply(comment)
         messages.success(request, 'Reply posted.')
         if request.POST.get('next', '').endswith(f'/post/{post.id}/'):
             return HttpResponseRedirect(f"{reverse('core:post_detail', args=[post.id])}#reply-{comment.id}")
     else:
-        messages.error(request, 'Write something before posting a reply.')
+        messages.error(request, ' '.join(form.errors.get('content', [])) or 'Write something before posting a reply.')
     return redirect_back(request, 'core:dashboard')
+
+
+@require_POST
+@active_member_required
+def delete_comment(request, comment_id):
+    """Authors can delete their own reply; admins can remove any reply."""
+    comment = get_object_or_404(Comment.objects.select_related('post'), id=comment_id)
+    if comment.user_id != request.user.id and not is_admin(request.user):
+        messages.error(request, 'You can only delete your own replies.')
+    else:
+        comment.delete()
+        messages.success(request, 'Reply deleted.')
+    return redirect('core:post_detail', post_id=comment.post_id)
+
+
+@require_POST
+@active_member_required
+@throttle.rate_limit('report', 10, 60 * 60, 'You have sent a lot of reports. The admins will look at them soon.')
+def report_content(request):
+    """Flag a topic or a reply for the admins. One open report per member per item."""
+    post = comment = None
+    if request.POST.get('comment_id'):
+        comment = get_object_or_404(Comment, id=parse_int(request.POST.get('comment_id')))
+    else:
+        post = get_object_or_404(Post, id=parse_int(request.POST.get('post_id')))
+    form = ReportForm(request.POST)
+    if form.is_valid():
+        Report.objects.get_or_create(
+            reporter=request.user, post=post, comment=comment, is_resolved=False,
+            defaults={'reason': form.cleaned_data['reason'], 'note': form.cleaned_data['note']},
+        )
+        messages.success(request, 'Reported. An admin will take a look.')
+    else:
+        messages.error(request, 'That report could not be sent. Pick a reason and try again.')
+    return redirect_back(request, 'core:dashboard')
+
+
+@active_member_required
+def notifications(request):
+    """Replies in topics you started or joined, newest first."""
+    me = request.user
+    if request.method == 'POST':
+        Notification.objects.filter(recipient=me, is_read=False).update(is_read=True)
+        return redirect('core:notifications')
+    items = Notification.objects.filter(recipient=me).select_related('actor', 'post', 'comment')
+    page_obj = Paginator(items, 20).get_page(request.GET.get('page'))
+    return render(request, 'core/notifications.html', {
+        'page_obj': page_obj,
+        'has_unread': Notification.objects.filter(recipient=me, is_read=False).exists(),
+    })
 
 def announcements_page(request):
     """Public: the same notices already appear on the homepage."""
@@ -464,12 +603,12 @@ def event_rsvp(request, event_id):
     return redirect('core:event_detail', event_id=event.id)
 
 
-@active_member_required
+@signed_in_required
 def view_profile(request):
     """Display the logged-in user's profile."""
     return render(request, 'core/view_profile.html', {'profile_user': request.user})
 
-@active_member_required
+@signed_in_required
 def update_profile(request):
     """Allow the user to update their profile information."""
     if request.method == 'POST':
@@ -569,8 +708,13 @@ ADVISORS = [
 
 
 def advisor_cards():
-    """ADVISORS with a resolved image URL; shared by the homepage teaser and the advisory page."""
-    return [{**advisor, 'image_url': static(advisor['image']) if advisor['image'] else ''} for advisor in ADVISORS]
+    """ADVISORS with a resolved image URL; shared by the homepage teaser and the advisory page.
+    Official @cuet.ac.bd emails may be shown publicly; phone numbers are for approved members only."""
+    return [{
+        **advisor,
+        'image_url': static(advisor['image']) if advisor['image'] else '',
+        'email_is_official': advisor['email'].lower().endswith('cuet.ac.bd'),
+    } for advisor in ADVISORS]
 
 
 def advisory_panel(request):
@@ -589,8 +733,10 @@ def advisory_panel(request):
             'education': '',
             'linkedin': member.linkedin,
             'image_url': member.profile_photo.url if member.profile_photo else '',
+            'email_is_official': member.email.lower().endswith('cuet.ac.bd'),
         })
-    return render(request, 'core/advisory_panel.html', {'advisors': advisors})
+    is_member = request.user.is_authenticated and request.user.status == 'active'
+    return render(request, 'core/advisory_panel.html', {'advisors': advisors, 'is_member': is_member})
 
 
 def gallery_view(request):
@@ -616,18 +762,17 @@ def admin_gallery_view(request):
         form = PhotoGalleryForm(request.POST, request.FILES)
         images = request.FILES.getlist('image')
         if form.is_valid():
-            # The form only validates the first file; check every uploaded file is a real image.
-            image_field = forms.ImageField()
-            bad_files = []
+            # The form only validates the first file; check and resize every uploaded file.
+            prepared, bad_files = [], []
             for image in images:
                 try:
-                    image_field.clean(image)
+                    prepared.append(prepare_image(image, GALLERY_MAX_SIDE))
                 except forms.ValidationError:
                     bad_files.append(image.name)
             if bad_files:
-                messages.error(request, f"These files are not valid images: {', '.join(bad_files)}")
+                messages.error(request, f"These files could not be used (not an image, or over 10 MB): {', '.join(bad_files)}")
             else:
-                for image in images:
+                for image in prepared:
                     PhotoGallery.objects.create(
                         title=form.cleaned_data['title'],
                         description=form.cleaned_data['description'],
@@ -682,3 +827,84 @@ def switch_to_alumni(request):
             'designation': request.user.designation
         })
     return render(request, 'core/switch_to_alumni.html', {'form': form})
+
+
+# ── Moderation (site admins) ──────────────────────────────────────────────
+
+@admin_required
+def moderation(request):
+    """One place for admins: approve new members, verify alumni, handle reports."""
+    return render(request, 'core/moderation.html', {
+        'pending_members': User.objects.filter(status='pending').select_related('department').order_by('date_joined'),
+        'unverified_alumni': User.objects.filter(status='active', member_type='alumni', is_alumni_verified=False)
+                                 .select_related('department').order_by('full_name'),
+        'reports': Report.objects.filter(is_resolved=False)
+                       .select_related('reporter', 'post', 'post__user', 'comment', 'comment__user'),
+    })
+
+
+@require_POST
+@admin_required
+def moderate_member(request, user_id):
+    member = get_object_or_404(User, id=user_id)
+    action = request.POST.get('action')
+    if action == 'approve' and member.status == 'pending':
+        member.status = 'active'
+        member.save()  # save() assigns the serial number
+        notify_approved(request, member)
+        messages.success(request, f'{member.full_name} is approved (member {member.serial_no}).')
+    elif action == 'decline' and member.status == 'pending':
+        member.status = 'inactive'
+        member.save()
+        messages.info(request, f"{member.full_name}'s request was declined.")
+    elif action == 'verify_alumni' and member.status == 'active':
+        member.member_type = 'alumni'
+        member.is_alumni = True
+        member.is_alumni_verified = True
+        member.save()
+        messages.success(request, f'{member.full_name} is now a verified alumni.')
+    else:
+        messages.error(request, 'That action is no longer available for this member.')
+    return redirect('core:moderation')
+
+
+@require_POST
+@admin_required
+def resolve_report(request, report_id):
+    report = get_object_or_404(Report, id=report_id, is_resolved=False)
+    if request.POST.get('action') == 'remove':
+        target = report.comment or report.post
+        target.delete()  # cascades to this and any other reports on the same item
+        messages.success(request, 'The reported content was removed.')
+    else:
+        report.is_resolved = True
+        report.resolved_by = request.user
+        report.save(update_fields=['is_resolved', 'resolved_by'])
+        messages.info(request, 'Report dismissed.')
+    return redirect('core:moderation')
+
+
+# ── Small public pages ────────────────────────────────────────────────────
+
+def guidelines(request):
+    return render(request, 'core/guidelines.html')
+
+
+def robots_txt(request):
+    """Public pages may be indexed; member areas and the API are kept out of search engines."""
+    lines = [
+        'User-agent: *',
+        'Disallow: /admin/', 'Disallow: /api/', 'Disallow: /dashboard/', 'Disallow: /post/',
+        'Disallow: /members/', 'Disallow: /inbox/', 'Disallow: /messages/', 'Disallow: /profile/',
+        'Disallow: /manage/', 'Disallow: /notifications/', 'Disallow: /swagger/', 'Disallow: /redoc/',
+    ]
+    return HttpResponse('\n'.join(lines) + '\n', content_type='text/plain')
+
+
+def healthz(request):
+    return HttpResponse('ok', content_type='text/plain')
+
+
+def csrf_failure(request, reason=''):
+    """Friendly page when a form was open so long that its security token expired."""
+    return render(request, '403_csrf.html', status=403)

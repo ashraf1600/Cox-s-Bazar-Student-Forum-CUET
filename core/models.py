@@ -190,6 +190,8 @@ class Post(models.Model):
     #     ('Job Opportunity', 'Job Opportunity'),
     #     ('Event', 'Event'),
     # ]
+    MAX_LENGTH = 5000
+
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField()
@@ -205,6 +207,8 @@ class Post(models.Model):
 # Comment
 class Comment(models.Model):
     id = models.AutoField(primary_key=True)
+    MAX_LENGTH = 2000
+
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
@@ -354,3 +358,75 @@ class PhotoGallery(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Notification(models.Model):
+    """Tells a member that someone replied in a topic they started or joined.
+
+    One unread row per (recipient, post): further replies refresh it instead of piling up.
+    """
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='+')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='notifications')
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, null=True, blank=True, related_name='+')
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['recipient', 'is_read', '-created_at'])]
+
+    def __str__(self):
+        return f"{self.actor} replied in topic {self.post_id} → {self.recipient}"
+
+    @classmethod
+    def notify_reply(cls, comment):
+        """Notify the topic's author and everyone who replied earlier (except the replier)."""
+        post = comment.post
+        recipient_ids = set(post.comments.exclude(pk=comment.pk).values_list('user_id', flat=True))
+        recipient_ids.add(post.user_id)
+        recipient_ids.discard(comment.user_id)
+        active_ids = User.objects.filter(id__in=recipient_ids, status='active').values_list('id', flat=True)
+        for user_id in active_ids:
+            updated = cls.objects.filter(recipient_id=user_id, post=post, is_read=False).update(
+                actor=comment.user, comment=comment, created_at=timezone.now())
+            if not updated:
+                cls.objects.create(recipient_id=user_id, actor=comment.user, post=post, comment=comment)
+
+
+class Report(models.Model):
+    """A member flags a topic or a reply for the admins to look at."""
+    REASON_CHOICES = [
+        ('spam', 'Spam or advertising'),
+        ('abuse', 'Harassment or abusive language'),
+        ('misinformation', 'False or misleading'),
+        ('wrong_board', 'Posted on the wrong board'),
+        ('other', 'Something else'),
+    ]
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reports_made')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True, related_name='reports')
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, null=True, blank=True, related_name='reports')
+    reason = models.CharField(max_length=20, choices=REASON_CHOICES, default='other')
+    note = models.CharField(max_length=500, blank=True)
+    is_resolved = models.BooleanField(default=False)
+    resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['is_resolved', '-created_at']
+        indexes = [models.Index(fields=['is_resolved', '-created_at'])]
+
+    def __str__(self):
+        return f"Report by {self.reporter} on {'reply' if self.comment_id else 'topic'} ({self.get_reason_display()})"
+
+    @property
+    def target_author(self):
+        return self.comment.user if self.comment_id else self.post.user
+
+    @property
+    def target_text(self):
+        return self.comment.content if self.comment_id else self.post.content
+
+    @property
+    def thread_id(self):
+        return self.comment.post_id if self.comment_id else self.post_id
