@@ -1,0 +1,12 @@
+{% extends 'core/base.html' %}
+{% block title %}Please try again{% endblock %}
+{% block content %}
+<div class="page">
+    <div class="surface error-page">
+        {% include 'core/partials/horizon.html' %}
+        <h1>That page was open for too long</h1>
+        <p>For your security, forms expire after a while. Go back, refresh the page and send it again. Nothing was lost on our side.</p>
+        <a href="javascript:history.back()" class="btn btn-primary">Go back</a>
+    </div>
+</div>
+{% endblock %}

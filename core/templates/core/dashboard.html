@@ -47,8 +47,20 @@
 
     {# ── Centre: topics ── #}
     <div class="min-w-0">
+        {% if is_admin and moderation_count %}
+        <a href="{% url 'core:moderation' %}" class="notice notice-warn mb-3 text-decoration-none">
+            <i class="fas fa-user-check"></i>
+            <div><strong>{{ moderation_count }} item{{ moderation_count|pluralize }} waiting for an admin.</strong> Review new member requests and reports.</div>
+        </a>
+        {% endif %}
+
         <header class="forum-head">
-            {% if active_board %}
+            {% if query %}
+                <div>
+                    <h1>Search results</h1>
+                    <p>{{ page_obj.paginator.count }} topic{{ page_obj.paginator.count|pluralize }} mention “{{ query }}”{% if active_board %} on {{ active_board.name }}{% endif %}. <a href="?{% if active_category %}category={{ active_category|urlencode }}{% endif %}">Clear search</a></p>
+                </div>
+            {% elif active_board %}
                 <div class="board-head">
                     <span class="swatch b-{{ active_board.slug }}"><i class="fas {{ active_board.icon }}"></i></span>
                     <div>
@@ -56,6 +68,9 @@
                         <p>{{ active_board.blurb }}</p>
                     </div>
                 </div>
+                {% if active_board.slug == 'blood' %}
+                    <a href="{% url 'core:member_directory' %}?donors=1" class="btn btn-outline-primary btn-sm"><i class="fas fa-droplet"></i> Find donors by blood group</a>
+                {% endif %}
             {% else %}
                 <div>
                     <h1>All topics</h1>
@@ -68,7 +83,7 @@
             {% csrf_token %}
             <div class="composer-row">
                 {% avatar user 40 %}
-                <textarea name="content" id="composerText" rows="1" placeholder="Start a topic: ask a question, share a job, request blood…" aria-label="New topic" required>{{ form.content.value|default:"" }}</textarea>
+                <textarea name="content" id="composerText" rows="1" maxlength="5000" placeholder="Start a topic: ask a question, share a job, request blood…" aria-label="New topic" required>{{ form.content.value|default:"" }}</textarea>
             </div>
             {% for error in form.content.errors %}<div class="field-error ms-5 ps-2">{{ error }}</div>{% endfor %}
             {% for error in form.image.errors %}<div class="field-error ms-5 ps-2">{{ error }}</div>{% endfor %}
@@ -84,6 +99,12 @@
             </div>
         </form>
 
+        <form class="forum-search" action="{% url 'core:dashboard' %}" method="get" role="search">
+            {% if active_category %}<input type="hidden" name="category" value="{{ active_category }}">{% endif %}
+            <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+            <input type="search" name="q" value="{{ query }}" placeholder="Search topics and replies" aria-label="Search topics and replies">
+        </form>
+
         <nav class="board-chips" aria-label="Boards">
             <a href="?" class="{% if not active_category %}active{% endif %}">All</a>
             {% for b in boards %}<a href="?category={{ b.name|urlencode }}" class="b-{{ b.slug }}{% if active_category == b.name %} active{% endif %}">{{ b.name }}</a>{% endfor %}
@@ -92,9 +113,9 @@
         <div class="surface" style="border-radius: var(--r) var(--r) 0 0; border-bottom: 0;">
             <nav class="sort-tabs px-2" aria-label="Sort topics">
                 {% with cat=active_category|urlencode %}
-                <a href="?{% if active_category %}category={{ cat }}{% endif %}" class="{% if sort == 'latest' %}active{% endif %}">Latest</a>
-                <a href="?sort=top{% if active_category %}&category={{ cat }}{% endif %}" class="{% if sort == 'top' %}active{% endif %}">Top</a>
-                <a href="?sort=unanswered{% if active_category %}&category={{ cat }}{% endif %}" class="{% if sort == 'unanswered' %}active{% endif %}">Unanswered</a>
+                <a href="?{% if active_category %}category={{ cat }}{% endif %}{% if query %}&q={{ query|urlencode }}{% endif %}" class="{% if sort == 'latest' %}active{% endif %}">Latest</a>
+                <a href="?sort=top{% if active_category %}&category={{ cat }}{% endif %}{% if query %}&q={{ query|urlencode }}{% endif %}" class="{% if sort == 'top' %}active{% endif %}">Top</a>
+                <a href="?sort=unanswered{% if active_category %}&category={{ cat }}{% endif %}{% if query %}&q={{ query|urlencode }}{% endif %}" class="{% if sort == 'unanswered' %}active{% endif %}">Unanswered</a>
                 {% endwith %}
             </nav>
         </div>
@@ -102,7 +123,9 @@
             {% for post in page_obj %}
                 {% include 'core/partials/topic.html' %}
             {% empty %}
-                {% if sort == 'unanswered' %}
+                {% if query %}
+                    {% include 'core/partials/empty_state.html' with icon='fa-magnifying-glass' title='No topics match your search' text='Try fewer or different words, or ask it as a new topic.' action_url='?' action_label='Show all topics' %}
+                {% elif sort == 'unanswered' %}
                     {% include 'core/partials/empty_state.html' with icon='fa-check-double' title='Every topic has a reply' text='Nothing is waiting for an answer here.' action_url='?' action_label='Show all topics' %}
                 {% elif active_board %}
                     {% include 'core/partials/empty_state.html' with icon=active_board.icon title='No topics on this board yet' text='Start the first one with the box above.' %}
@@ -165,7 +188,7 @@
     </aside>
 </div>
 </div>
-{% include 'core/partials/topic_tools.html' %}
+{% include 'core/partials/topic_tools.html' with report_reasons=report_reasons %}
 {% endblock %}
 
 {% block extra_scripts %}

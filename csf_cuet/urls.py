@@ -1,6 +1,16 @@
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from core.forms import StyledPasswordResetForm, StyledSetPasswordForm
+from django.contrib.messages.views import SuccessMessageMixin
+from django.urls import reverse_lazy
+from core.forms import StyledPasswordResetForm, StyledSetPasswordForm, StyledPasswordChangeForm
+
+
+class PasswordChangeAndStayView(SuccessMessageMixin, auth_views.PasswordChangeView):
+    template_name = 'core/auth/password_change.html'
+    form_class = StyledPasswordChangeForm
+    success_url = reverse_lazy('core:view_profile')
+    success_message = 'Your password has been changed.'
+
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
@@ -33,6 +43,7 @@ urlpatterns = [
         template_name='core/auth/password_reset_confirm.html', form_class=StyledSetPasswordForm), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
         template_name='core/auth/password_reset_complete.html'), name='password_reset_complete'),
+    path('password-change/', PasswordChangeAndStayView.as_view(), name='password_change'),
     path('', include('core.urls')),
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

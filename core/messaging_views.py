@@ -17,7 +17,7 @@ from django.utils.dateformat import format as format_date
 from django.views.decorators.http import require_GET, require_POST
 
 from .forms import MessageForm
-from .models import User, Message, Block
+from .models import User, Message, Block, Notification
 from .views import active_member_required
 
 THREAD_LIMIT = 200            # newest messages shown when a conversation opens
@@ -207,7 +207,10 @@ def poll(request, user_id):
 @active_member_required
 def unread_status(request):
     """Lightweight endpoint the navbar polls to keep the unread badge live."""
-    return JsonResponse({'unread': Message.objects.filter(recipient=request.user, is_read=False).count()})
+    return JsonResponse({
+        'unread': Message.objects.filter(recipient=request.user, is_read=False).count(),
+        'notifications': Notification.objects.filter(recipient=request.user, is_read=False).count(),
+    })
 
 
 @require_GET

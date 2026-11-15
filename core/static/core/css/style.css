@@ -1129,3 +1129,67 @@ a.info-value:hover { color: var(--crest); }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* ======================================================================
+   LAUNCH ADDITIONS: search, notifications, moderation, reports, errors
+   ====================================================================== */
+.count-inline { position: static !important; display: inline-block; border: 0 !important; margin-left: 6px; vertical-align: 1px; }
+.user-btn { position: relative; }
+.user-btn .count-badge { top: -2px; right: -4px; }
+
+.forum-search { position: relative; margin-bottom: 12px; display: none; }
+.forum-search i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: .9rem; }
+.forum-search input { width: 100%; height: 44px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface); padding: 0 16px 0 40px; font-size: 16px; }
+.forum-search input:focus { outline: none; border-color: var(--crest); box-shadow: 0 0 0 3px rgba(34,44,124,.12); }
+
+.reply-actions { display: flex; gap: 2px; margin: 4px 0 -6px -8px; }
+.act-sm { font-size: .78rem; padding: 4px 8px; }
+.reply-actions .act { opacity: .75; }
+.reply:hover .reply-actions .act, .reply-actions .act:focus-visible { opacity: 1; }
+
+.alert-row { display: flex; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line-soft); text-decoration: none; color: inherit; align-items: flex-start; }
+.alert-row:last-child { border-bottom: 0; }
+.alert-row:hover { background: var(--paper); color: inherit; }
+.alert-row.is-unread { background: var(--crest-50); }
+.alert-row .min-w-0 { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.alert-line { font-size: .95rem; }
+.alert-quote { font-size: .84rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.alert-reply { font-size: .9rem; color: var(--ink-2); }
+.alert-row time { font-size: .76rem; color: var(--muted); }
+.alert-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--crest); margin-top: 6px; flex-shrink: 0; }
+
+.mod-row { display: flex; gap: 14px; padding: 16px 20px; border-bottom: 1px solid var(--line-soft); align-items: flex-start; }
+.mod-row:last-child { border-bottom: 0; }
+.mod-main { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: .88rem; color: var(--ink-2); }
+.mod-main strong { font-size: 1rem; color: var(--ink); }
+.mod-main strong a { color: inherit; text-decoration: none; }
+.mod-quote { background: var(--paper); border-left: 3px solid var(--line); padding: 8px 12px; border-radius: 0 var(--r-sm) var(--r-sm) 0; margin: 4px 0; overflow-wrap: anywhere; color: var(--ink); }
+.mod-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; flex-shrink: 0; }
+.btn-danger { --bs-btn-bg: var(--danger); --bs-btn-border-color: var(--danger); --bs-btn-hover-bg: #8f1a20; --bs-btn-hover-border-color: #8f1a20; }
+
+.error-page { text-align: center; padding: 56px 24px; max-width: 560px; margin: 32px auto; border-top: 5px solid var(--bronze); }
+.error-page .horizon { width: 150px; color: var(--bronze); margin: 0 auto 18px; }
+.error-page h1 { font-size: 2rem; font-stretch: 72%; font-weight: 800; color: var(--crest-900); }
+.error-page p { color: var(--muted); max-width: 42ch; margin: 0 auto 20px; }
+
+.guidelines h2 { font-size: 1.2rem; margin: 26px 0 6px; color: var(--crest-900); }
+.guidelines h2:first-child { margin-top: 0; }
+.guidelines p { color: var(--ink-2); margin: 0; }
+
+.char-count { font-size: .76rem; color: var(--muted); text-align: right; margin-top: 4px; }
+.char-count.is-low { color: var(--danger); font-weight: 600; }
+.is-busy { opacity: .6; pointer-events: none; }
+
+@media (max-width: 991.98px) {
+    .forum-search { display: block; }
+}
+@media (max-width: 767.98px) {
+    .mod-row { flex-wrap: wrap; padding: 14px; }
+    .mod-row > .avatar { --avatar-size: 40px !important; }
+    .mod-main { flex-basis: calc(100% - 60px); }
+    .mod-actions { width: 100%; justify-content: stretch; }
+    .mod-actions .btn { flex: 1; }
+    .reply-actions .act { opacity: 1; min-height: 36px; }
+    .alert-row { padding: 14px; }
+    .error-page { padding: 40px 18px; margin: 12px auto; }
+}

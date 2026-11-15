@@ -14,20 +14,23 @@
             <article class="surface op" data-post-id="{{ post.id }}">
                 <div class="op-board">
                     <span class="board-tag b-{{ board.slug }}">{{ board.name }}</span>
-                    {% if user == post.user or is_admin %}
                     <div class="dropdown">
                         <button class="menu-dot" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Topic options"><i class="fas fa-ellipsis"></i></button>
                         <div class="dropdown-menu dropdown-menu-end">
+                            <button class="dropdown-item copy-link-btn" data-link="{% url 'core:post_detail' post.id %}"><i class="fas fa-link"></i><span>Copy link</span></button>
                             {% if user == post.user %}
                             <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}" data-content="{{ post.content }}" data-category="{{ post.category }}" data-image-url="{% if post.image %}{{ post.image.url }}{% endif %}">
                                 <i class="fas fa-pen"></i><span>Edit topic</span>
                             </button>
+                            {% else %}
+                            <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#reportModal" data-report-post="{{ post.id }}" data-report-what="this topic by {{ post.user.full_name }}"><i class="fas fa-flag"></i><span>Report topic</span></button>
                             {% endif %}
+                            {% if user == post.user or is_admin %}
                             <button class="dropdown-item text-danger delete-post-btn" data-post-id="{{ post.id }}"><i class="fas fa-trash-can"></i><span>Delete topic</span></button>
+                            {% endif %}
                         </div>
                     </div>
-                    {% endif %}
-                </div>
+                                    </div>
 
                 <div class="op-author">
                     <a href="{% url 'core:member_profile' post.user.id %}" tabindex="-1">{% avatar post.user 48 %}</a>
@@ -70,6 +73,17 @@
                                 <a class="num" href="#reply-{{ reply.id }}" title="Link to this reply">#{{ forloop.counter }}</a>
                             </div>
                             <div class="reply-body">{{ reply.content|linebreaksbr|urlize }}</div>
+                            <div class="reply-actions">
+                                {% if reply.user_id == user.id or is_admin %}
+                                    <form method="post" action="{% url 'core:delete_comment' reply.id %}" class="d-inline" data-confirm="Delete this reply? This cannot be undone.">
+                                        {% csrf_token %}
+                                        <button type="submit" class="act act-sm"><i class="far fa-trash-can"></i> Delete</button>
+                                    </form>
+                                {% endif %}
+                                {% if reply.user_id != user.id %}
+                                    <button type="button" class="act act-sm" data-bs-toggle="modal" data-bs-target="#reportModal" data-report-comment="{{ reply.id }}" data-report-what="this reply by {{ reply.user.full_name }}"><i class="far fa-flag"></i> Report</button>
+                                {% endif %}
+                            </div>
                         </div>
                     </article>
                 {% endfor %}
@@ -80,7 +94,7 @@
                     {% avatar user 36 %}
                     <div class="flex-grow-1">
                         <label for="replyText" class="visually-hidden">Your reply</label>
-                        <textarea name="content" id="replyText" class="form-control" rows="3" placeholder="{% if replies %}Add to the discussion{% else %}Be the first to reply{% endif %}" required></textarea>
+                        <textarea name="content" id="replyText" class="form-control" rows="3" maxlength="2000" placeholder="{% if replies %}Add to the discussion{% else %}Be the first to reply{% endif %}" required></textarea>
                         <div class="reply-form-actions"><button type="submit" class="btn btn-primary btn-sm px-3">Post reply</button></div>
                     </div>
                 </form>
@@ -123,5 +137,5 @@
     </div>
 </div>
 {% url 'core:dashboard' as forum_url %}
-{% include 'core/partials/topic_tools.html' with after_delete_url=forum_url %}
+{% include 'core/partials/topic_tools.html' with after_delete_url=forum_url report_reasons=report_reasons %}
 {% endblock %}
