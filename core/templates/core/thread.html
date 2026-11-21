@@ -13,11 +13,16 @@
         <div class="min-w-0">
             <article class="surface op" data-post-id="{{ post.id }}">
                 <div class="op-board">
-                    <span class="board-tag b-{{ board.slug }}">{{ board.name }}</span>
+                    <span class="d-flex align-items-center gap-2"><span class="board-tag b-{{ board.slug }}">{{ board.name }}</span>{% if post.is_pinned %}<span class="pinned-tag"><i class="fas fa-thumbtack"></i> Pinned</span>{% endif %}</span>
                     <div class="dropdown">
                         <button class="menu-dot" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Topic options"><i class="fas fa-ellipsis"></i></button>
                         <div class="dropdown-menu dropdown-menu-end">
                             <button class="dropdown-item copy-link-btn" data-link="{% url 'core:post_detail' post.id %}"><i class="fas fa-link"></i><span>Copy link</span></button>
+                            {% if is_admin %}
+                            <form method="post" action="{% url 'core:toggle_pin' post.id %}">{% csrf_token %}
+                                <button type="submit" class="dropdown-item"><i class="fas fa-thumbtack"></i><span>{% if post.is_pinned %}Unpin topic{% else %}Pin to top of forum{% endif %}</span></button>
+                            </form>
+                            {% endif %}
                             {% if user == post.user %}
                             <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}" data-content="{{ post.content }}" data-category="{{ post.category }}" data-image-url="{% if post.image %}{{ post.image.url }}{% endif %}">
                                 <i class="fas fa-pen"></i><span>Edit topic</span>
@@ -38,7 +43,7 @@
                         <strong><a href="{% url 'core:member_profile' post.user.id %}">{{ post.user.full_name }}</a></strong>
                         <div class="d-flex gap-2 align-items-center flex-wrap">
                             {% include 'core/partials/flair.html' with person=post.user %}
-                            <time class="topic-time" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"F j, Y, g:i A" }}</time>
+                            <time class="topic-time" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"F j, Y, g:i A" }}</time>{% if post.edited_at %}<span class="edited-mark" title="Edited {{ post.edited_at|date:'F j, Y, g:i a' }}">edited</span>{% endif %}
                         </div>
                     </div>
                 </div>
@@ -70,10 +75,25 @@
                                 {% include 'core/partials/flair.html' with person=reply.user %}
                                 {% if reply.user_id == post.user_id %}<span class="chip chip-primary">Author</span>{% endif %}
                                 <time class="topic-time" datetime="{{ reply.created_at|date:'c' }}" title="{{ reply.created_at|date:'F j, Y, g:i a' }}">{{ reply.created_at|ago }}</time>
+                                {% if reply.edited_at %}<span class="edited-mark" title="Edited {{ reply.edited_at|date:'F j, Y, g:i a' }}">edited</span>{% endif %}
                                 <a class="num" href="#reply-{{ reply.id }}" title="Link to this reply">#{{ forloop.counter }}</a>
                             </div>
                             <div class="reply-body">{{ reply.content|linebreaksbr|urlize }}</div>
+                            {% if reply.user_id == user.id %}
+                            <form method="post" action="{% url 'core:edit_comment' reply.id %}" class="reply-edit" id="edit-{{ reply.id }}" hidden>
+                                {% csrf_token %}
+                                <label class="visually-hidden" for="editText{{ reply.id }}">Edit your reply</label>
+                                <textarea name="content" id="editText{{ reply.id }}" class="form-control" rows="3" maxlength="2000" required>{{ reply.content }}</textarea>
+                                <div class="d-flex gap-2 justify-content-end mt-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-edit-cancel="{{ reply.id }}">Cancel</button>
+                                    <button type="submit" class="btn btn-primary btn-sm">Save reply</button>
+                                </div>
+                            </form>
+                            {% endif %}
                             <div class="reply-actions">
+                                {% if reply.user_id == user.id %}
+                                    <button type="button" class="act act-sm" data-edit-open="{{ reply.id }}"><i class="far fa-pen-to-square"></i> Edit</button>
+                                {% endif %}
                                 {% if reply.user_id == user.id or is_admin %}
                                     <form method="post" action="{% url 'core:delete_comment' reply.id %}" class="d-inline" data-confirm="Delete this reply? This cannot be undone.">
                                         {% csrf_token %}

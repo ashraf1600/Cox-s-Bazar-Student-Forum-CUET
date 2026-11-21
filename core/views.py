@@ -23,7 +23,7 @@ from .forms import (
     SwitchToAlumniForm, ReportForm,
 )
 from .images import GALLERY_MAX_SIDE, prepare_image
-from .notify import notify_approved
+from .notify import email_reply_alerts, notify_approved
 from . import throttle
 
 
@@ -395,7 +395,8 @@ def dashboard(request):
         posts = posts.filter(reply_count=0).order_by('-created_at')
     else:
         sort = 'latest'
-        posts = posts.order_by('-created_at')
+        # Pinned topics stay on top of the plain list, but not inside search results.
+        posts = posts.order_by('-created_at') if query else posts.order_by('-is_pinned', '-created_at')
     page_obj = Paginator(posts, 10).get_page(request.GET.get('page'))
     boards = board_list()
 
@@ -485,12 +486,43 @@ def add_comment(request, post_id):
         comment.post = post
         comment.user = request.user
         comment.save()
-        Notification.notify_reply(comment)
+        email_reply_alerts(request, comment, Notification.notify_reply(comment))
         messages.success(request, 'Reply posted.')
         if request.POST.get('next', '').endswith(f'/post/{post.id}/'):
             return HttpResponseRedirect(f"{reverse('core:post_detail', args=[post.id])}#reply-{comment.id}")
     else:
         messages.error(request, ' '.join(form.errors.get('content', [])) or 'Write something before posting a reply.')
+    return redirect_back(request, 'core:dashboard')
+
+
+@require_POST
+@active_member_required
+def edit_comment(request, comment_id):
+    """Authors can fix their own reply. It is marked "edited" so readers know it changed."""
+    comment = get_object_or_404(Comment, id=comment_id)
+    if comment.user_id != request.user.id:
+        messages.error(request, 'You can only edit your own replies.')
+        return redirect('core:post_detail', post_id=comment.post_id)
+    form = CommentForm(request.POST, instance=comment)
+    if form.is_valid() and form.cleaned_data['content']:
+        if form.cleaned_data['content'] != Comment.objects.get(pk=comment.pk).content:
+            comment = form.save(commit=False)
+            comment.edited_at = timezone.now()
+            comment.save()
+        messages.success(request, 'Reply updated.')
+    else:
+        messages.error(request, ' '.join(form.errors.get('content', [])) or 'A reply cannot be empty. Delete it instead.')
+    return HttpResponseRedirect(f"{reverse('core:post_detail', args=[comment.post_id])}#reply-{comment.id}")
+
+
+@require_POST
+@admin_required
+def toggle_pin(request, post_id):
+    """Admins pin important topics (fee deadlines, urgent blood requests) to the top of the forum."""
+    post = get_object_or_404(Post, id=post_id)
+    post.is_pinned = not post.is_pinned
+    post.save(update_fields=['is_pinned'])
+    messages.success(request, 'Topic pinned to the top of the forum.' if post.is_pinned else 'Topic unpinned.')
     return redirect_back(request, 'core:dashboard')
 
 
@@ -629,8 +661,12 @@ def edit_post(request, post_id):
     post = get_object_or_404(Post, id=post_id, user=request.user)
     form = PostForm(request.POST, request.FILES, instance=post)
     if form.is_valid():
-        form.save()
-        messages.success(request, 'Post updated.')
+        post = form.save(commit=False)
+        if request.POST.get('remove_image') and 'image' not in request.FILES:
+            post.image = None  # the old file is deleted by the pre_save signal
+        post.edited_at = timezone.now()
+        post.save()
+        messages.success(request, 'Topic updated.')
     else:
         errors = '; '.join(f"{field}: {' '.join(errs)}" for field, errs in form.errors.items())
         messages.error(request, f'Post was not updated. {errors}')

@@ -148,7 +148,7 @@ class ProfileUpdateForm(forms.ModelForm):
         fields = [
             'full_name', 'phone', 'address', 'dob', 'upazila', 'blood_group', 'gender',
             'profile_photo', 'linkedin', 'facebook', 'twitter', 'instagram',
-            'company', 'designation', 'work_address'
+            'company', 'designation', 'work_address', 'email_on_reply',
         ]
         widgets = {
             'full_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -165,6 +165,7 @@ class ProfileUpdateForm(forms.ModelForm):
             'company': forms.TextInput(attrs={'class': 'form-control'}),
             'designation': forms.TextInput(attrs={'class': 'form-control'}),
             'work_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'email_on_reply': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         labels = {
             'full_name': 'Full Name',

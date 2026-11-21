@@ -1246,3 +1246,11 @@ a.info-value:hover { color: var(--crest); }
     .mod-actions.dropdown > .btn { width: 100%; }
     .slide-arrow { width: 38px; height: 38px; }
 }
+
+/* Pinned topics, "edited" marks, inline reply editing */
+.pinned-tag { display: inline-flex; align-items: center; gap: 5px; margin-left: 10px; font-size: .76rem; font-weight: 700; color: var(--bronze-600); }
+.pinned-tag i { font-size: .7rem; transform: rotate(35deg); }
+.topic.is-pinned { background: var(--bronze-50); box-shadow: inset 3px 0 0 var(--bronze); }
+.edited-mark { font-size: .76rem; color: var(--muted); font-style: italic; }
+.reply-edit { margin-top: 6px; }
+.reply-edit textarea { font-size: .95rem; }
