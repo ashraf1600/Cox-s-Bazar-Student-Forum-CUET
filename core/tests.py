@@ -1,4 +1,10 @@
 import os
+from io import StringIO
+from unittest import mock
+
+import cloudinary
+from django.core.management import call_command
+from django.core.management.base import CommandError
 import shutil
 import tempfile
 from datetime import timedelta
@@ -836,3 +842,96 @@ class ForumExtrasTests(BaseTestCase):
     def test_email_preference_is_on_the_profile_form(self):
         self.client.force_login(self.member)
         self.assertContains(self.client.get(reverse('core:update_profile')), 'Email me when someone replies')
+
+
+class LaunchSetupTests(BaseTestCase):
+    """Cloudinary photo storage, the photo-move command, ensure_admin and launch_check."""
+
+    CLOUD = {'default': {'BACKEND': 'core.storage.CloudinaryMediaStorage'},
+             'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'}}
+
+    def fake_upload(self, file, public_id, **kwargs):
+        self.uploaded.append((public_id, file.read()))
+        return {'public_id': public_id, 'format': 'jpg', 'secure_url': f'https://res.cloudinary.com/demo/{public_id}.jpg'}
+
+    def setUp(self):
+        super().setUp()
+        self.uploaded, self.destroyed = [], []
+        patches = [
+            mock.patch('cloudinary.uploader.upload', side_effect=self.fake_upload),
+            mock.patch('cloudinary.uploader.destroy', side_effect=lambda public_id, **k: self.destroyed.append(public_id)),
+        ]
+        for p in patches:
+            p.start()
+            self.addCleanup(p.stop)
+        cloudinary.config(cloud_name='demo', api_key='k', api_secret='s')
+
+    def test_uploads_go_to_cloudinary_and_get_a_cdn_url(self):
+        from django.core.files.storage import storages
+        with self.settings(STORAGES=self.CLOUD, USE_CLOUDINARY=True):
+            storages._storages = {}
+            self.addCleanup(lambda: setattr(storages, '_storages', {}))
+            self.client.force_login(self.member)
+            self.client.post(reverse('core:dashboard'), {'content': 'cloud photo', 'category': 'General', 'image': photo(900, 600)})
+            post = Post.objects.get(content='cloud photo')
+            self.assertTrue(post.image.name.startswith('csf/post_images/'))
+            self.assertTrue(post.image.name.endswith('.jpg'))
+            self.assertTrue(post.image.url.startswith('https://res.cloudinary.com/demo/image/upload/'))
+            self.assertEqual(len(self.uploaded), 1)
+            post.delete()                                   # deleting the topic deletes the photo too
+            self.assertEqual(self.destroyed, [post.image.name.rsplit('.', 1)[0]])
+
+    def test_two_uploads_with_the_same_name_do_not_clash(self):
+        from core.storage import CloudinaryMediaStorage
+        storage = CloudinaryMediaStorage()
+        first = storage.save('post_images/photo.jpg', photo(10, 10))
+        second = storage.save('post_images/photo.jpg', photo(10, 10))
+        self.assertNotEqual(first, second)
+
+    def test_move_media_to_cloud_uploads_local_files_once(self):
+        PhotoGallery.objects.create(title='Old photo', image=photo(300, 200, 'old.jpg'), uploaded_by=self.admin)
+        User.objects.filter(pk=self.member.pk).update(profile_photo='profile_photos/not-on-this-pc.jpg')
+        with self.settings(USE_CLOUDINARY=True):
+            from django.core.files.storage import storages
+            with self.settings(STORAGES=self.CLOUD):
+                storages._storages = {}
+                self.addCleanup(lambda: setattr(storages, '_storages', {}))
+                out = StringIO()
+                call_command('move_media_to_cloud', stdout=out)
+                self.assertIn('Uploaded 1, already on Cloudinary 0, missing locally 1', out.getvalue())
+                self.assertTrue(PhotoGallery.objects.get(title='Old photo').image.name.startswith('csf/gallery/'))
+                out = StringIO()
+                call_command('move_media_to_cloud', stdout=out)   # second run: nothing to do
+                self.assertIn('Uploaded 0, already on Cloudinary 1', out.getvalue())
+        self.assertEqual(len(self.uploaded), 1)
+
+    def test_move_media_refuses_without_cloudinary(self):
+        with self.settings(USE_CLOUDINARY=False):
+            with self.assertRaises(CommandError):
+                call_command('move_media_to_cloud', stdout=StringIO())
+
+    def test_ensure_admin_creates_once_and_repairs(self):
+        env = {'DJANGO_ADMIN_EMAIL': 'Chief@Example.com', 'DJANGO_ADMIN_PASSWORD': 'long-enough-pass-1'}
+        with mock.patch.dict(os.environ, env):
+            call_command('ensure_admin', stdout=StringIO())
+            boss = User.objects.get(email='chief@example.com')
+            self.assertTrue(boss.is_superuser and boss.status == 'active')
+            User.objects.filter(pk=boss.pk).update(status='inactive', is_staff=False)
+            call_command('ensure_admin', stdout=StringIO())      # repairs, never duplicates
+        boss.refresh_from_db()
+        self.assertEqual((boss.status, boss.is_staff), ('active', True))
+        self.assertEqual(User.objects.filter(email__iexact='chief@example.com').count(), 1)
+        self.assertTrue(boss.check_password('long-enough-pass-1'))
+
+    def test_ensure_admin_needs_a_real_password_to_create(self):
+        with mock.patch.dict(os.environ, {'DJANGO_ADMIN_EMAIL': 'x@example.com', 'DJANGO_ADMIN_PASSWORD': 'short'}):
+            with self.assertRaises(CommandError):
+                call_command('ensure_admin', stdout=StringIO())
+
+    def test_launch_check_lists_what_is_missing(self):
+        out = StringIO()
+        call_command('launch_check', stdout=out)
+        text = out.getvalue()
+        self.assertIn('TODO', text)
+        self.assertIn('Database is PostgreSQL', text)
+        self.assertIn('Uploaded photos are stored permanently', text)
