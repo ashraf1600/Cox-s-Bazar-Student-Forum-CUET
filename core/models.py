@@ -80,6 +80,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     address = models.TextField(blank=True)
     dob = models.DateField(null=True, blank=True)
     profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)
+    email_on_reply = models.BooleanField(
+        default=False, verbose_name='Email me about replies',
+        help_text='One email per topic when someone replies; no more until you open it.')
     upazila = models.CharField(max_length=100, choices=UPAZILA_CHOICES, blank=True)
     linkedin = models.URLField(blank=True)
     facebook = models.URLField(blank=True)
@@ -241,7 +244,9 @@ class Post(models.Model):
     image = models.ImageField(upload_to='post_images/', null=True, blank=True)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='General')
     likes_count = models.IntegerField(default=0)
+    is_pinned = models.BooleanField(default=False, help_text='Pinned topics stay at the top of "Latest".')
     created_at = models.DateTimeField(auto_now_add=True)
+    edited_at = models.DateTimeField(null=True, blank=True)
     class Meta:
         ordering = ['-created_at']
     def __str__(self):
@@ -256,6 +261,7 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    edited_at = models.DateTimeField(null=True, blank=True)
     class Meta:
         ordering = ['created_at']
     def __str__(self):
@@ -424,17 +430,23 @@ class Notification(models.Model):
 
     @classmethod
     def notify_reply(cls, comment):
-        """Notify the topic's author and everyone who replied earlier (except the replier)."""
+        """Notify the topic's author and everyone who replied earlier (except the replier).
+
+        Returns the members who had no unread alert for this topic yet, i.e. the ones who
+        should get an email if they asked for one (at most one email per topic until read).
+        """
         post = comment.post
         recipient_ids = set(post.comments.exclude(pk=comment.pk).values_list('user_id', flat=True))
         recipient_ids.add(post.user_id)
         recipient_ids.discard(comment.user_id)
-        active_ids = User.objects.filter(id__in=recipient_ids, status='active').values_list('id', flat=True)
-        for user_id in active_ids:
-            updated = cls.objects.filter(recipient_id=user_id, post=post, is_read=False).update(
+        newly_alerted = []
+        for user in User.objects.filter(id__in=recipient_ids, status='active'):
+            updated = cls.objects.filter(recipient=user, post=post, is_read=False).update(
                 actor=comment.user, comment=comment, created_at=timezone.now())
             if not updated:
-                cls.objects.create(recipient_id=user_id, actor=comment.user, post=post, comment=comment)
+                cls.objects.create(recipient=user, actor=comment.user, post=post, comment=comment)
+                newly_alerted.append(user)
+        return newly_alerted
 
 
 class Report(models.Model):

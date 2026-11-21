@@ -26,6 +26,10 @@
                         </div>
                     </div>
                     <div id="currentImagePreview" class="mt-3"></div>
+                    <div class="form-check mt-2" id="removeImageWrap" hidden>
+                        <input class="form-check-input" type="checkbox" name="remove_image" value="1" id="removeImage">
+                        <label class="form-check-label" for="removeImage">Remove this photo from the topic</label>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -122,9 +126,12 @@ document.addEventListener('DOMContentLoaded', function () {
             img.style.cssText = 'max-height:120px;border-radius:6px;border:1px solid var(--line)';
             const label = document.createElement('div');
             label.className = 'form-text';
-            label.textContent = 'Current photo. It stays unless you choose a new one.';
+            label.textContent = 'Current photo. It stays unless you choose a new one or remove it.';
             preview.append(img, label);
         }
+        const removeWrap = document.getElementById('removeImageWrap');
+        removeWrap.hidden = !imageUrl;
+        document.getElementById('removeImage').checked = false;
     });
 
     document.querySelectorAll('.delete-post-btn').forEach(function (btn) {

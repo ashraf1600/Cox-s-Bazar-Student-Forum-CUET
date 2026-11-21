@@ -185,3 +185,26 @@ document.addEventListener('DOMContentLoaded', function () {
     go(0);
     setPaused(calm);
 });
+
+// Edit a reply in place: swap the text for a small form, and back on Cancel.
+document.addEventListener('DOMContentLoaded', function () {
+    function toggle(id, editing) {
+        const form = document.getElementById('edit-' + id);
+        if (!form) return;
+        const reply = form.closest('.reply');
+        reply.querySelector('.reply-body').hidden = editing;
+        reply.querySelector('.reply-actions').hidden = editing;
+        form.hidden = !editing;
+        if (editing) {
+            const area = form.querySelector('textarea');
+            area.focus();
+            area.setSelectionRange(area.value.length, area.value.length);
+        }
+    }
+    document.querySelectorAll('[data-edit-open]').forEach(function (b) {
+        b.addEventListener('click', function () { toggle(b.dataset.editOpen, true); });
+    });
+    document.querySelectorAll('[data-edit-cancel]').forEach(function (b) {
+        b.addEventListener('click', function () { toggle(b.dataset.editCancel, false); });
+    });
+});

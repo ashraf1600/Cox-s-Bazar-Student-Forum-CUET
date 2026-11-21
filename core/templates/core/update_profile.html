@@ -51,6 +51,13 @@
             {% include 'core/partials/field.html' with field=form.instagram %}
         </div>
 
+        <h2 class="form-section-title mt-4">Notifications</h2>
+        <div class="form-check">
+            {{ form.email_on_reply }}
+            <label class="form-check-label fw-semibold" for="{{ form.email_on_reply.id_for_label }}">Email me when someone replies to my topics or topics I've joined</label>
+            <div class="form-text">At most one email per topic until you open it. Replies always show under the bell icon either way.</div>
+        </div>
+
         <div class="form-actions">
             <a href="{% url 'core:view_profile' %}" class="btn btn-outline-secondary px-4">Cancel</a>
             <button type="submit" class="btn btn-primary px-4">Save changes</button>

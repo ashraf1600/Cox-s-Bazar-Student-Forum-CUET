@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 from datetime import timedelta
@@ -750,3 +751,88 @@ class AdminPanelTests(BaseTestCase):
         home = self.client.get(reverse('core:homepage'))
         self.assertContains(home, 'data-slideshow')
         self.assertContains(home, 'Sports day')
+
+
+class ForumExtrasTests(BaseTestCase):
+    """Pinned topics, editing replies, removing a topic's photo, opt-in reply emails."""
+
+    def setUp(self):
+        super().setUp()
+        self.old = Post.objects.create(user=self.other, content='Membership fee due Sunday')
+        self.new = Post.objects.create(user=self.member, content='Anyone going home this weekend?')
+
+    def latest(self, **params):
+        return [p.id for p in self.client.get(reverse('core:dashboard'), params).context['page_obj']]
+
+    # pinning
+    def test_admin_pins_a_topic_to_the_top_of_latest(self):
+        self.client.force_login(self.member)
+        self.client.post(reverse('core:toggle_pin', args=[self.old.id]))          # members can't pin
+        self.assertFalse(Post.objects.get(id=self.old.id).is_pinned)
+        self.client.force_login(self.admin)
+        self.client.post(reverse('core:toggle_pin', args=[self.old.id]))
+        self.assertTrue(Post.objects.get(id=self.old.id).is_pinned)
+        self.assertEqual(self.latest()[:2], [self.old.id, self.new.id])
+        self.assertEqual(self.latest(q='e')[:2], [self.new.id, self.old.id])    # search ignores pins
+        self.client.post(reverse('core:toggle_pin', args=[self.old.id]))
+        self.assertEqual(self.latest()[:2], [self.new.id, self.old.id])
+
+    # editing replies
+    def test_only_the_author_can_edit_a_reply_and_it_is_marked_edited(self):
+        reply = Comment.objects.create(post=self.old, user=self.member, content='I will pay Friday')
+        self.client.force_login(self.other)
+        self.client.post(reverse('core:edit_comment', args=[reply.id]), {'content': 'hacked'})
+        reply.refresh_from_db()
+        self.assertEqual((reply.content, reply.edited_at), ('I will pay Friday', None))
+        self.client.force_login(self.member)
+        response = self.client.post(reverse('core:edit_comment', args=[reply.id]), {'content': 'I will pay Saturday'})
+        self.assertTrue(response['Location'].endswith(f'#reply-{reply.id}'))
+        reply.refresh_from_db()
+        self.assertEqual(reply.content, 'I will pay Saturday')
+        self.assertIsNotNone(reply.edited_at)
+        self.assertContains(self.client.get(reverse('core:post_detail', args=[self.old.id])), 'edited')
+
+    def test_reply_cannot_be_edited_to_empty_or_too_long(self):
+        reply = Comment.objects.create(post=self.old, user=self.member, content='keep me')
+        self.client.force_login(self.member)
+        self.client.post(reverse('core:edit_comment', args=[reply.id]), {'content': '   '})
+        self.client.post(reverse('core:edit_comment', args=[reply.id]), {'content': 'x' * 2001})
+        reply.refresh_from_db()
+        self.assertEqual(reply.content, 'keep me')
+
+    # removing a photo
+    def test_author_can_remove_a_topics_photo_when_editing(self):
+        self.client.force_login(self.member)
+        self.client.post(reverse('core:dashboard'), {'content': 'with photo', 'category': 'General', 'image': photo(800, 600)})
+        topic = Post.objects.get(content='with photo')
+        path = topic.image.path
+        self.client.post(reverse('core:edit_post', args=[topic.id]),
+                         {'content': 'with photo', 'category': 'General', 'remove_image': '1'})
+        topic.refresh_from_db()
+        self.assertFalse(topic.image)
+        self.assertFalse(os.path.exists(path))     # file is deleted from storage too
+        self.assertIsNotNone(topic.edited_at)
+
+    # reply emails
+    def test_reply_email_only_for_members_who_opted_in_and_once_per_topic(self):
+        User.objects.filter(pk=self.other.pk).update(email_on_reply=True)   # author of self.old
+        self.client.force_login(self.member)
+        self.client.post(reverse('core:add_comment', args=[self.old.id]), {'content': 'First reply'})
+        self.client.post(reverse('core:add_comment', args=[self.old.id]), {'content': 'Second reply'})
+        self.assertEqual(len(mail.outbox), 1)                                # not one per reply
+        self.assertIn('replied in your topic', mail.outbox[0].subject)
+        self.assertEqual(mail.outbox[0].to, [self.other.email])
+        self.client.force_login(self.other)
+        self.client.get(reverse('core:post_detail', args=[self.old.id]))     # reading it resets
+        self.client.force_login(self.member)
+        self.client.post(reverse('core:add_comment', args=[self.old.id]), {'content': 'Third reply'})
+        self.assertEqual(len(mail.outbox), 2)
+
+    def test_no_reply_email_by_default(self):
+        self.client.force_login(self.member)
+        self.client.post(reverse('core:add_comment', args=[self.old.id]), {'content': 'Hello'})
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_email_preference_is_on_the_profile_form(self):
+        self.client.force_login(self.member)
+        self.assertContains(self.client.get(reverse('core:update_profile')), 'Email me when someone replies')
