@@ -180,6 +180,12 @@ python manage.py runserver
 
 ---
 
+## ☁️ Deploying
+
+See **[DEPLOY.md](DEPLOY.md)** for launching on Render's free plan with a permanent database (Neon), photo storage (Cloudinary) and email (Gmail), plus moving existing data over.
+
+---
+
 ## 👨‍💻 Developer
 
 **Ashraful Islam**

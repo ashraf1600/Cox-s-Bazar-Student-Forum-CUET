@@ -154,9 +154,16 @@ MESSAGE_TAGS = {message_constants.ERROR: 'danger'}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Uploaded photos: Cloudinary when CLOUDINARY_URL is set (production on a free host),
+# otherwise the local media/ folder. See DEPLOY.md.
+USE_CLOUDINARY = bool(os.environ.get('CLOUDINARY_URL', '').strip())
+
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": (
+            "core.storage.CloudinaryMediaStorage" if USE_CLOUDINARY
+            else "django.core.files.storage.FileSystemStorage"
+        ),
     },
     "staticfiles": {
         "BACKEND": (
